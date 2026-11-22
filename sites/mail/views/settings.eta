@@ -1,0 +1,75 @@
+<% layout('layout') %>
+<% const v = it.values || {}, e = it.errors || {}; %>
+<section class="settings">
+  <h1>Settings</h1>
+  <nav class="tabs" aria-label="Settings sections">
+    <a href="/settings"<% if (it.tab === 'general') { %> aria-current="page" class="on"<% } %>>General</a>
+    <a href="/settings/labels"<% if (it.tab === 'labels') { %> aria-current="page" class="on"<% } %>>Labels</a>
+    <a href="/settings/filters"<% if (it.tab === 'filters') { %> aria-current="page" class="on"<% } %>>Filters</a>
+  </nav>
+  <% if (it.tab === 'general') { %>
+  <form method="post" action="/settings" class="form">
+    <%~ it.csrfInput() %>
+    <%~ include('kit/field', { name: 'display_name', label: 'Name', value: v.display_name, error: e.display_name, required: true }) %>
+    <%~ include('kit/field', { name: 'page_size', label: 'Maximum page size', value: String(v.page_size), error: e.page_size, type: 'select', options: ['10', '15', '20', '25', '50', '100'] }) %>
+    <%~ include('kit/field', { name: 'signature', label: 'Signature', value: v.signature, error: e.signature, type: 'textarea' }) %>
+    <fieldset>
+      <legend>Vacation responder</legend>
+      <%~ include('kit/field', { name: 'vacation_on', label: 'Vacation responder on', value: v.vacation_on, type: 'checkbox' }) %>
+      <%~ include('kit/field', { name: 'vacation_subject', label: 'Subject', value: v.vacation_subject, error: e.vacation_subject }) %>
+      <%~ include('kit/field', { name: 'vacation_body', label: 'Message', value: v.vacation_body, error: e.vacation_body, type: 'textarea' }) %>
+    </fieldset>
+    <button type="submit" class="primary">Save changes</button>
+  </form>
+  <% } else if (it.tab === 'labels') { %>
+  <table class="grid">
+    <thead><tr><th>Label</th><th>Conversations</th><th>Actions</th></tr></thead>
+    <tbody>
+    <% for (const l of it.rows) { %>
+      <tr>
+        <td><i class="dot" style="background:<%= l.color %>"></i> <a href="/label/<%= encodeURIComponent(l.name) %>"><%= l.name %></a></td>
+        <td><%= l.threads %></td>
+        <td>
+          <form method="post" action="/settings/labels/<%= l.id %>" class="inline"><%~ it.csrfInput() %><input name="name" value="<%= l.name %>" aria-label="New name for <%= l.name %>"> <button name="action" value="rename">Rename</button></form>
+          <form method="post" action="/settings/labels/<%= l.id %>" class="inline" data-confirm="Delete the label? Conversations keep their other labels."><%~ it.csrfInput() %><button name="action" value="delete" class="danger">Remove</button></form>
+        </td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+  <h2>Create new label</h2>
+  <form method="post" action="/settings/labels" class="inline"><%~ it.csrfInput() %><input name="name" aria-label="Label name" placeholder="Label name" required maxlength="60"> <input type="color" name="color" value="#888888" aria-label="Color"> <button type="submit">Create</button></form>
+  <% } else { %>
+  <% if (!it.rows.length) { %><p class="empty">You have no filters.</p><% } else { %>
+  <table class="grid">
+    <thead><tr><th>Matches</th><th>Do this</th><th></th></tr></thead>
+    <tbody>
+    <% for (const f of it.rows) { %>
+      <tr>
+        <td><%= [f.match_from && `from:(${f.match_from})`, f.match_to && `to:(${f.match_to})`, f.match_subject && `subject:(${f.match_subject})`, f.match_words && `has the words: ${f.match_words}`].filter(Boolean).join(' ') %></td>
+        <td><%= [f.skip_inbox && 'Skip the Inbox', f.mark_read && 'Mark as read', f.star && 'Star it', f.label_name && `Apply label "${f.label_name}"`, f.trash && 'Delete it'].filter(Boolean).join(', ') || '(nothing)' %></td>
+        <td><form method="post" action="/settings/filters/<%= f.id %>/delete" class="inline"><%~ it.csrfInput() %><button class="danger">Delete</button></form></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+  <% } %>
+  <h2>Create a new filter</h2>
+  <form method="post" action="/settings/filters" class="form filter-form">
+    <%~ it.csrfInput() %>
+    <%~ include('kit/field', { name: 'match_from', label: 'From' }) %>
+    <%~ include('kit/field', { name: 'match_to', label: 'To' }) %>
+    <%~ include('kit/field', { name: 'match_subject', label: 'Subject' }) %>
+    <%~ include('kit/field', { name: 'match_words', label: 'Has the words' }) %>
+    <fieldset><legend>When a message matches</legend>
+      <%~ include('kit/field', { name: 'skip_inbox', label: 'Skip the Inbox (Archive it)', type: 'checkbox' }) %>
+      <%~ include('kit/field', { name: 'mark_read', label: 'Mark as read', type: 'checkbox' }) %>
+      <%~ include('kit/field', { name: 'star', label: 'Star it', type: 'checkbox' }) %>
+      <%~ include('kit/field', { name: 'trash', label: 'Delete it', type: 'checkbox' }) %>
+      <% if (it.labels.length) { %><%~ include('kit/field', { name: 'add_label_id', label: 'Apply the label', type: 'select', options: [['', 'Choose label...'], ...it.labels.map((l) => [String(l.id), l.name])] }) %><% } %>
+      <%~ include('kit/field', { name: 'apply_existing', label: 'Also apply filter to matching conversations', type: 'checkbox' }) %>
+    </fieldset>
+    <button type="submit" class="primary">Create filter</button>
+  </form>
+  <% } %>
+</section>

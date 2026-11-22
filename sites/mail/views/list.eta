@@ -1,0 +1,64 @@
+<% layout('layout') %>
+<form class="mail-list" method="post" action="/threads/action">
+  <%~ it.csrfInput() %>
+  <input type="hidden" name="return" value="<%= it.returnTo %>">
+  <div class="toolbar" role="toolbar" aria-label="Conversation actions">
+    <label class="select-all" title="Select all"><input type="checkbox" data-select-all aria-label="Select all conversations"></label>
+    <% const F = it.folder; %>
+    <% if (F === 'trash') { %>
+      <button name="action" value="untrash" title="Move out of Trash">Restore</button>
+      <button name="action" value="delete" title="Delete forever" data-confirm="Delete the selected conversations forever?">Delete forever</button>
+    <% } else if (F === 'spam') { %>
+      <button name="action" value="notspam">Not spam</button>
+      <button name="action" value="trash">Delete</button>
+    <% } else { %>
+      <% if (F === 'inbox' || !F) { %><button name="action" value="archive" title="Archive">Archive</button><% } else if (F !== 'sent' && F !== 'drafts') { %><button name="action" value="inbox" title="Move to Inbox">Move to Inbox</button><% } %>
+      <button name="action" value="spam" title="Report spam">Report spam</button>
+      <button name="action" value="trash" title="Delete">Delete</button>
+    <% } %>
+    <button name="action" value="read">Mark as read</button>
+    <button name="action" value="unread">Mark as unread</button>
+    <button name="action" value="star">Star</button>
+    <button name="action" value="unstar">Unstar</button>
+    <% if (it.labels.length) { %>
+    <select name="action" class="label-action" aria-label="Label as" data-submit-on-change>
+      <option value="">Label as&hellip;</option>
+      <% for (const l of it.labels) { %><option value="label:<%= l.id %>"><%= l.name %></option><% } %>
+      <% if (it.label) { %><option value="unlabel:<%= it.label.id %>">Remove label "<%= it.label.name %>"</option><% } %>
+    </select>
+    <% } %>
+    <span class="pager-info">
+      <% if (it.total) { %><%= it.pager.from %>&ndash;<%= it.pager.to %> of <%= it.fmt.number(it.total) %><% } %>
+      <% if (it.pager.prev) { %><a href="<%= it.pager.prev %>" rel="prev" aria-label="Newer">&lsaquo; Newer</a><% } %>
+      <% if (it.pager.next) { %><a href="<%= it.pager.next %>" rel="next" aria-label="Older">Older &rsaquo;</a><% } %>
+    </span>
+  </div>
+  <% if (it.folder === 'inbox') { %>
+  <nav class="tabs" aria-label="Inbox categories">
+    <% for (const c of it.M.CATEGORIES) { %><a href="/mail/inbox<%= c === 'primary' ? '' : '?category=' + c %>"<% if (it.category === c) { %> aria-current="page" class="on"<% } %>><%= c[0].toUpperCase() + c.slice(1) %></a><% } %>
+  </nav>
+  <% } %>
+  <% if (it.q) { %><h1 class="list-title">Search results for <q><%= it.q %></q></h1><% } else if (it.label) { %><h1 class="list-title"><%= it.label.name %></h1><% } %>
+  <% if (!it.rows.length) { %>
+    <p class="empty"><%= it.q ? 'No messages matched your search.' : it.folder === 'inbox' ? 'Your inbox is empty.' : 'No conversations here.' %></p>
+  <% } else { %>
+  <table class="threads">
+    <tbody>
+    <% for (const r of it.rows) { %>
+      <tr class="row<%= r.unread ? ' unread' : '' %>" data-href="/thread/<%= r.id %>?from=<%= encodeURIComponent(it.returnTo) %>">
+        <td class="c-sel"><input type="checkbox" name="ids" value="<%= r.id %>" aria-label="Select conversation"></td>
+        <td class="c-star"><span class="star<%= r.starred ? ' on' : '' %>" title="<%= r.starred ? 'Starred' : 'Not starred' %>"><%= r.starred ? '★' : '☆' %></span></td>
+        <td class="c-from"><%= r.people || '(no sender)' %><% if (r.n > 1) { %> <span class="n"><%= r.n %></span><% } %><% if (r.has_draft) { %> <span class="draft-tag">Draft</span><% } %></td>
+        <td class="c-subj">
+          <% for (const l of r.labels) { %><span class="chip" style="border-color:<%= l.color %>"><%= l.name %></span><% } %>
+          <a href="/thread/<%= r.id %>?from=<%= encodeURIComponent(it.returnTo) %>"><span class="subj"><%= r.subject || '(no subject)' %></span></a>
+          <span class="snip"> &ndash; <%= r.snippet %></span>
+        </td>
+        <td class="c-att"><%= r.has_att ? '\u{1F4CE}' : '' %></td>
+        <td class="c-date" title="<%= it.fullDate(r.last_at) %>"><%= it.listDate(r.last_at) %></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table>
+  <% } %>
+</form>

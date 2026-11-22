@@ -1,0 +1,31 @@
+<% layout('layout') %>
+<% const v = it.v, e = it.errors || {}; %>
+<section class="compose">
+  <h1><%= { new: 'New message', reply: 'Reply', 'reply-all': 'Reply all', forward: 'Forward', draft: 'Draft' }[v.mode] || 'New message' %></h1>
+  <form method="post" action="/compose" class="compose-form" novalidate>
+    <%~ it.csrfInput() %>
+    <input type="hidden" name="inReplyTo" value="<%= v.inReplyTo %>">
+    <input type="hidden" name="threadId" value="<%= v.threadId %>">
+    <input type="hidden" name="draftId" value="<%= v.draftId %>">
+    <input type="hidden" name="mode" value="<%= v.mode %>">
+    <% if (it.addrs.length > 1) { %>
+    <div class="cf-row"><label for="cf-from">From</label>
+      <select id="cf-from" name="from"><% for (const a of it.addrs) { %><option value="<%= a.email %>"<%= v.from === a.email ? ' selected' : '' %>><%= it.user.display_name %> &lt;<%= a.email %>&gt;<%= a.label ? ` (${a.label})` : '' %></option><% } %></select></div>
+    <% } %>
+    <div class="cf-row<%= e.to ? ' has-error' : '' %>"><label for="cf-to">To</label>
+      <input id="cf-to" name="to" value="<%= v.to %>" autocomplete="off" data-autocomplete="/api/contacts" aria-describedby="cf-to-err">
+      <button type="button" class="link" data-show="#cf-ccbcc">Cc/Bcc</button></div>
+    <% if (e.to) { %><p class="field-error" id="cf-to-err" role="alert"><%= e.to %></p><% } %>
+    <div id="cf-ccbcc"<%= v.cc || v.bcc ? '' : ' hidden' %>>
+      <div class="cf-row"><label for="cf-cc">Cc</label><input id="cf-cc" name="cc" value="<%= v.cc %>" autocomplete="off" data-autocomplete="/api/contacts"></div>
+      <div class="cf-row"><label for="cf-bcc">Bcc</label><input id="cf-bcc" name="bcc" value="<%= v.bcc %>" autocomplete="off" data-autocomplete="/api/contacts"></div>
+    </div>
+    <div class="cf-row"><label for="cf-subject">Subject</label><input id="cf-subject" name="subject" value="<%= v.subject %>"></div>
+    <textarea name="body" aria-label="Message body" rows="18"><%= v.body %></textarea>
+    <div class="cf-actions">
+      <button type="submit" name="action" value="send" class="primary">Send</button>
+      <button type="submit" name="action" value="draft">Save draft</button>
+      <button type="submit" name="action" value="discard" class="link" formnovalidate>Discard</button>
+    </div>
+  </form>
+</section>

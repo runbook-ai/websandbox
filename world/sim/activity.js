@@ -4,6 +4,7 @@
 // itself is only the rendering of it.
 const { rng } = require('../lib/rng');
 const { names } = require('../lib/names');
+const { familyOf } = require('./world');
 
 const HOUR = 3600000, DAY = 24 * HOUR;
 const PREFIX = { community: 'c', devblog: 'd', makers: 'k', micro: 'x' };
@@ -142,6 +143,34 @@ function simulate(personas, world, { seed, topics, networks }) {
   return items;
 }
 
+// What an email is about, so a mailbox isn't fifty variations of "quick favor".
+const GIST = {
+  'colleague-request': {
+    software: ['review a pull request before the release', 'look at a failing nightly job', 'cover the on-call shift this weekend', 'estimate a feature for the planning meeting', 'share the API keys rotation checklist', 'pair on a tricky bug'],
+    healthcare: ['swap a shift next week', 'double-check a patient handoff note', 'cover a training session', 'restock supplies before the inspection', 'sign off on the new protocol'],
+    education: ['proofread the parent newsletter', 'cover a class period', 'share last year\'s lesson plans', 'chaperone the field trip', 'enter grades before the deadline'],
+    'retail-food': ['swap a weekend shift', 'count inventory before close', 'train the new hire on the register', 'check a supplier delivery', 'fix the holiday schedule'],
+    trades: ['bring a tool to the job site', 'confirm the material order', 'cover an early start', 'check measurements on a job', 'sign the safety checklist'],
+    office: ['send the numbers for the monthly report', 'approve an expense report', 'review a contract draft', 'set up a client call', 'update the shared budget sheet', 'book a meeting room'],
+    other: ['help with a scheduling mix-up', 'send a document they need', 'cover a meeting', 'check some numbers', 'pick up something on the way in'],
+  },
+  'colleague-update': ['a project status update', 'feedback from a customer or client', 'a schedule change', 'an equipment or system problem', 'a new policy from management', 'someone joining or leaving the team', 'results of a meeting they missed', 'a deadline moving'],
+  'family-news': ['a new job', 'a move to a new place', 'a kid\'s school event', 'a health update', 'holiday plans', 'a new pet', 'a family reunion', 'a home repair saga'],
+  'intro-request': ['finding a reliable contractor', 'someone hiring in their field', 'a mentor for a career change', 'a good accountant', 'a landlord with an open apartment', 'someone who knows a local nonprofit'],
+  newsletter: ['this week\'s news and links', 'a how-to feature with tips', 'an upcoming event roundup', 'a reader Q&A', 'a sale or member offer', 'a seasonal guide'],
+  'vendor-quote': { software: ['laptops and monitors', 'a software license renewal', 'a cloud hosting plan'], healthcare: ['medical supplies', 'uniforms', 'a cleaning contract'], education: ['classroom supplies', 'a field trip bus', 'printing'], 'retail-food': ['kitchen equipment repair', 'a produce delivery contract', 'store signage'], trades: ['lumber and materials', 'equipment rental', 'safety gear'], office: ['office furniture', 'catering for an event', 'printing and copier lease'], other: ['an office refresh', 'event catering', 'a cleaning contract'] },
+};
+
+function gistFor(r, intent, owner, other) {
+  const g = GIST[intent];
+  if (intent === 'friend-plan') {
+    const hob = [...(owner.bio.hobbies || []), ...((other && other.bio.hobbies) || [])];
+    return hob.length ? `plans around ${r.pick(hob).toLowerCase()}` : 'getting together soon';
+  }
+  if (!g) return null;
+  return Array.isArray(g) ? r.pick(g) : r.pick(g[familyOf(owner.occupation)] || g.other);
+}
+
 // Mail: per mailbox owner, emails from colleagues, friends, newsletters and vendors, and replies.
 function simulateMail(personas, world, { seed, networks, owners }) {
   const t0 = Date.parse(world.start);
@@ -185,6 +214,7 @@ function simulateMail(personas, world, { seed, networks, owners }) {
           if (intent === 'friend-plan') spec.facts.push(new Date(ts + r.int(2, 9) * DAY).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' }));
           if (intent === 'colleague-request') spec.facts.push(r.pick(['Thursday 2pm', 'end of day Friday', 'Monday morning', 'next Wednesday']));
         }
+        if (intent !== 'reply') { const g = gistFor(r, intent, o, byId.get(spec.from === o.id ? spec.to[0] : spec.from)); if (g) spec.gist = g; }
         spec.ts = new Date(ts).toISOString();
         spec.id = `e${String(items.length).padStart(8, '0')}`;
         if (intent === 'reply') { const th = threads.find((t) => t.id === spec.thread); th.last = spec.id; }

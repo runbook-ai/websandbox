@@ -1,0 +1,23 @@
+<% layout('layout') %>
+<% const c = it.c, v = it.values || {}, e = it.errors || {}; %>
+<section class="contact">
+  <p><a href="/contacts">&larr; Contacts</a></p>
+  <h1><%= c ? c.name : 'New contact' %></h1>
+  <form method="post" action="<%= c ? `/contacts/${c.id}` : '/contacts' %>" class="form">
+    <%~ it.csrfInput() %>
+    <%~ include('kit/field', { name: 'name', label: 'Name', value: v.name, error: e.name, required: true }) %>
+    <%~ include('kit/field', { name: 'email', label: 'Email', value: v.email, error: e.email, required: true, type: 'email' }) %>
+    <%~ include('kit/field', { name: 'phone', label: 'Phone', value: v.phone, error: e.phone }) %>
+    <%~ include('kit/field', { name: 'company', label: 'Company', value: v.company, error: e.company }) %>
+    <%~ include('kit/field', { name: 'notes', label: 'Notes', value: v.notes, error: e.notes, type: 'textarea' }) %>
+    <%~ include('kit/field', { name: 'starred', label: 'Starred', value: v.starred, type: 'checkbox' }) %>
+    <button type="submit" class="primary">Save</button>
+    <% if (c) { %><a class="btn" href="/compose?to=<%= encodeURIComponent(`${c.name} <${c.email}>`) %>">Send email</a><% } %>
+  </form>
+  <% if (c) { %>
+  <form method="post" action="/contacts/<%= c.id %>/delete" class="inline" data-confirm="Delete this contact?"><%~ it.csrfInput() %><button class="danger">Delete contact</button></form>
+  <% if (it.recent && it.recent.length) { %>
+  <h2>Recent conversations</h2>
+  <ul class="recent"><% for (const r of it.recent) { %><li><a href="/thread/<%= r.id %>"><%= r.subject %></a> <span class="muted"><%= it.listDate(r.last) %></span></li><% } %></ul>
+  <% } } %>
+</section>

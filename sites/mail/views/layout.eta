@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.title ? it.title + ' - ' : '' %><%= it.user ? it.user.email + ' - ' : '' %><%= it.site.title %></title>
+<link rel="stylesheet" href="/_kit/kit.css">
+<link rel="stylesheet" href="/static/mail.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<body class="skin-<%= it.skin.name %> theme-<%= it.skin.theme || 'light' %> mail">
+<header class="mail-top">
+  <a class="mail-brand" href="/"><span class="mail-logo" aria-hidden="true">&#9993;</span> <%= it.L('site.title', it.site.title) %></a>
+  <% if (it.user) { %>
+  <form class="mail-search" method="get" action="/search" role="search">
+    <input type="search" name="q" value="<%= it.q || '' %>" placeholder="Search mail" aria-label="Search mail" autocomplete="off">
+    <button type="submit" aria-label="Search">Search</button>
+    <details class="search-help"><summary title="Search options">&#9662;</summary>
+      <div class="search-help-body">
+        <p>Search operators:</p>
+        <ul>
+          <li><code>from:alice</code>, <code>to:bob@example.com</code>, <code>subject:invoice</code></li>
+          <li><code>is:unread</code>, <code>is:starred</code>, <code>is:important</code>, <code>has:attachment</code></li>
+          <li><code>in:sent</code>, <code>in:trash</code>, <code>in:anywhere</code>, <code>label:work</code>, <code>category:promotions</code></li>
+          <li><code>after:2026/10/01</code>, <code>before:2026/10/10</code>, <code>newer_than:7d</code>, <code>older_than:1m</code></li>
+          <li><code>"exact phrase"</code>, <code>-word</code> to exclude</li>
+        </ul>
+      </div>
+    </details>
+  </form>
+  <div class="mail-user">
+    <a href="/settings" title="Settings">Settings</a>
+    <span class="mail-account" title="<%= it.user.email %>"><%= it.user.display_name %></span>
+    <form method="post" action="/logout" class="inline"><%~ it.csrfInput() %><button type="submit" class="link">Sign out</button></form>
+  </div>
+  <% } %>
+</header>
+<div class="mail-body<%= it.user ? '' : ' no-nav' %>">
+<% if (it.user) { %>
+<nav class="mail-nav" aria-label="Folders">
+  <a class="compose-btn" href="/compose">&#9998; Compose</a>
+  <% const f = it.folder, p = it.req.path; const c = it.counts || {}; %>
+  <% const item = (href, label, n, on) => `<a href="${href}"${on ? ' aria-current="page" class="on"' : ''}><span>${it.h(label)}</span>${n ? `<b class="count">${n}</b>` : ''}</a>`; %>
+  <%~ item('/mail/inbox', 'Inbox', c.inbox, f === 'inbox') %>
+  <%~ item('/mail/starred', 'Starred', 0, f === 'starred') %>
+  <%~ item('/mail/important', 'Important', 0, f === 'important') %>
+  <%~ item('/mail/sent', 'Sent', 0, f === 'sent') %>
+  <%~ item('/mail/drafts', 'Drafts', c.drafts, f === 'drafts') %>
+  <%~ item('/mail/all', it.L('folder.all', 'All Mail'), 0, f === 'all') %>
+  <%~ item('/mail/spam', 'Spam', c.spam, f === 'spam') %>
+  <%~ item('/mail/trash', 'Trash', 0, f === 'trash') %>
+  <div class="nav-head">Labels <a href="/settings/labels" title="Manage labels" class="nav-manage">+</a></div>
+  <% for (const l of it.labels) { %>
+    <a href="/label/<%= encodeURIComponent(l.name) %>"<% if (it.label && it.label.id === l.id) { %> aria-current="page" class="on"<% } %>><span><i class="dot" style="background:<%= l.color %>"></i><%= l.name %></span></a>
+  <% } %>
+  <div class="nav-head">More</div>
+  <%~ item('/contacts', 'Contacts', 0, p.startsWith('/contacts')) %>
+  <%~ item('/settings/filters', 'Filters', 0, p === '/settings/filters') %>
+</nav>
+<% } %>
+<main class="mail-main">
+<%~ include('kit/flash', { flashes: it.flashes }) %>
+<%~ it.body %>
+</main>
+</div>
+<script src="/_kit/kit.js" defer></script>
+<script src="/static/mail.js" defer></script>
+</body>
+</html>

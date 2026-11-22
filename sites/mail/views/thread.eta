@@ -1,0 +1,62 @@
+<% layout('layout') %>
+<% const st = it.state; const last = it.msgs[it.msgs.length - 1]; %>
+<form method="post" action="/threads/action" class="toolbar thread-toolbar" role="toolbar" aria-label="Conversation actions">
+  <%~ it.csrfInput() %>
+  <input type="hidden" name="ids" value="<%= it.t.id %>">
+  <input type="hidden" name="return" value="<%= it.returnTo %>">
+  <a href="<%= it.returnTo %>" class="back">&larr; Back</a>
+  <% if (st.trash) { %>
+    <button name="action" value="untrash">Restore</button>
+  <% } else { %>
+    <% if (st.inbox) { %><button name="action" value="archive">Archive</button><% } else { %><button name="action" value="inbox">Move to Inbox</button><% } %>
+    <% if (st.spam) { %><button name="action" value="notspam">Not spam</button><% } else { %><button name="action" value="spam">Report spam</button><% } %>
+    <button name="action" value="trash">Delete</button>
+  <% } %>
+  <button name="action" value="unread">Mark as unread</button>
+  <button name="action" value="<%= st.important ? 'unimportant' : 'important' %>"><%= st.important ? 'Mark not important' : 'Mark important' %></button>
+  <% if (it.labels.length) { %>
+  <select name="action" aria-label="Label as" data-submit-on-change>
+    <option value="">Label as&hellip;</option>
+    <% for (const l of it.labels) { %><option value="<%= it.threadLabels.some((x) => x.id === l.id) ? 'unlabel' : 'label' %>:<%= l.id %>"><%= it.threadLabels.some((x) => x.id === l.id) ? 'Remove ' : '' %><%= l.name %></option><% } %>
+  </select>
+  <% } %>
+</form>
+<article class="conversation">
+  <h1 class="conv-subject"><%= it.t.subject || '(no subject)' %>
+    <% if (st.inbox) { %><span class="chip sys">Inbox</span><% } %>
+    <% for (const l of it.threadLabels) { %><span class="chip" style="border-color:<%= l.color %>"><%= l.name %></span><% } %>
+  </h1>
+  <% it.msgs.forEach((m, i) => { const open = i === it.msgs.length - 1 || it.unreadIds.includes(m.id) || m.is_draft; %>
+  <details class="msg<%= m.is_draft ? ' is-draft' : '' %>" id="m<%= m.id %>"<%= open ? ' open' : '' %>>
+    <summary>
+      <span class="m-from"><strong><%= m.is_draft ? 'Draft' : (m.from_name || m.from_email) %></strong> <span class="m-addr">&lt;<%= m.from_email %>&gt;</span></span>
+      <span class="m-date"><%= it.fullDate(m.sent_at) %></span>
+      <span class="m-snip"><%= m.body.replace(/\s+/g, ' ').slice(0, 100) %></span>
+    </summary>
+    <div class="m-head">
+      <div>to <%= m.to.map((a) => a.name || a.email).join(', ') || '(no recipients)' %><% if (m.cc.length) { %>, cc <%= m.cc.map((a) => a.name || a.email).join(', ') %><% } %><% if (m.bcc.length && m.is_sent) { %>, bcc <%= m.bcc.map((a) => a.name || a.email).join(', ') %><% } %></div>
+      <details class="m-details"><summary>details</summary>
+        <dl>
+          <dt>from:</dt><dd><%= m.from_name %> &lt;<%= m.from_email %>&gt;</dd>
+          <dt>to:</dt><dd><%= it.M.fmtAddrs(m.to) %></dd>
+          <% if (m.cc.length) { %><dt>cc:</dt><dd><%= it.M.fmtAddrs(m.cc) %></dd><% } %>
+          <dt>date:</dt><dd><%= it.fullDate(m.sent_at) %></dd>
+          <dt>subject:</dt><dd><%= m.subject %></dd>
+        </dl>
+      </details>
+      <form method="post" action="/message/<%= m.id %>/star" class="inline star-form"><%~ it.csrfInput() %><input type="hidden" name="return" value="/thread/<%= it.t.id %>"><button class="link star<%= m.is_starred ? ' on' : '' %>" title="<%= m.is_starred ? 'Unstar' : 'Star' %>"><%= m.is_starred ? '★' : '☆' %></button></form>
+    </div>
+    <div class="m-body"><%= m.body %></div>
+    <% if (m.atts.length) { %><ul class="atts"><% for (const a of m.atts) { %><li>&#128206; <%= a.filename %> (<%= Math.max(1, Math.round(a.size / 1024)) %> KB)</li><% } %></ul><% } %>
+    <div class="m-actions">
+      <% if (m.is_draft) { %>
+        <a class="btn" href="/compose?draft=<%= m.id %>">Edit draft</a>
+      <% } else { %>
+        <a class="btn" href="/compose?reply=<%= m.id %>">Reply</a>
+        <% if (m.to.length + m.cc.length > 1) { %><a class="btn" href="/compose?reply=<%= m.id %>&amp;all=1">Reply all</a><% } %>
+        <a class="btn" href="/compose?forward=<%= m.id %>">Forward</a>
+      <% } %>
+    </div>
+  </details>
+  <% }) %>
+</article>

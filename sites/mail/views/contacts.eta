@@ -1,0 +1,19 @@
+<% layout('layout') %>
+<section class="contacts">
+  <div class="toolbar">
+    <h1>Contacts <span class="muted">(<%= it.fmt.number(it.total) %>)</span></h1>
+    <form method="get" action="/contacts" class="inline"><input type="search" name="q" value="<%= it.q %>" placeholder="Search contacts" aria-label="Search contacts"> <button>Search</button></form>
+    <a class="btn" href="/contacts/new">Create contact</a>
+  </div>
+  <% if (!it.rows.length) { %><p class="empty">No contacts<%= it.q ? ' match your search' : '' %>.</p><% } else { %>
+  <table class="grid">
+    <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Phone</th></tr></thead>
+    <tbody>
+    <% for (const c of it.rows) { %>
+      <tr><td><%= c.starred ? '★ ' : '' %><a href="/contacts/<%= c.id %>"><%= c.name %></a></td><td><%= c.email %></td><td><%= c.company || '' %></td><td><%= c.phone || '' %></td></tr>
+    <% } %>
+    </tbody>
+  </table>
+  <%~ include('kit/pagination', { p: it.pager }) %>
+  <% } %>
+</section>
