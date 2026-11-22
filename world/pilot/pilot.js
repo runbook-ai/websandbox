@@ -15,7 +15,7 @@ const { styleText } = require('../render/prompts');
 const readJsonl = (f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const slug = (m) => m.replace(/[^a-z0-9.-]+/gi, '_');
 // Planned corpus size per kind, for the cost projection.
-const PLAN = { 'community.post': 20000, 'community.comment': 200000, 'devblog.article': 60000, 'devblog.comment': 400000, 'makers.post': 15000, 'makers.comment': 100000, 'micro.short': 750000, 'micro.reply': 750000, 'mail.email': 600000 };
+const PLAN = { 'community.post': 20000, 'community.comment': 200000, 'devblog.article': 50000, 'devblog.comment': 240000, 'makers.post': 15000, 'makers.comment': 100000, 'micro.short': 550000, 'micro.reply': 550000, 'mail.email': 450000 };
 
 function selectSample(items, seed) {
   const r = rng(seed, 'pilot-sample');
