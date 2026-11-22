@@ -1,0 +1,11 @@
+{
+  "_doc": "Per-model request extras for the renderer. reasoning_budget is added to max_tokens for models whose reasoning cannot be turned off. licence: of the open weights (outputs we publish must come from MIT/Apache models).",
+  "deepseek/deepseek-v4.1-flash": {"licence": "MIT", "extra": {"reasoning": {"enabled": false}}},
+  "deepseek/deepseek-v4.1-flash:batch": {"licence": "MIT", "extra": {"reasoning": {"enabled": false}}},
+  "deepseek/deepseek-v4-pro": {"licence": "MIT", "extra": {"reasoning": {"enabled": false}}},
+  "z-ai/glm-5.3-flash": {"licence": "MIT", "extra": {"reasoning": {"effort": "low"}}, "reasoning_budget": 1000},
+  "z-ai/glm-5.3-flash:batch": {"licence": "MIT", "extra": {"reasoning": {"effort": "low"}}, "reasoning_budget": 1000},
+  "openai/gpt-oss-120b": {"licence": "Apache-2.0", "extra": {"reasoning": {"effort": "low"}}, "reasoning_budget": 1000},
+  "openai/gpt-oss-120b:batch": {"licence": "Apache-2.0", "extra": {"reasoning": {"effort": "low"}}, "reasoning_budget": 1000},
+  "anthropic/claude-sonnet-5.5": {"licence": "judge only (not for published text)", "extra": {}}
+}
