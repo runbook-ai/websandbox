@@ -1,0 +1,1 @@
+<%/* include('_bubble', {g, m}) one direct message (no surrounding whitespace) */%><% const g = it.g; const m = it.m; const mine = m.sender_id === g.user.id; %><div class="bubble-row<%= mine ? ' mine' : '' %>" id="m<%= m.id %>"><div class="bubble"><%~ g.M.renderText(m.body) %></div><span class="muted small"><%= g.ago(m.created_at) %></span></div>

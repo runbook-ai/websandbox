@@ -11,8 +11,8 @@
   <% for (const u of it.people) { %><%~ include('_person', { g: it, u }) %><% } %>
   </section>
 <% } else { %>
-  <section class="timeline" data-timeline aria-label="Posts">
+  <section class="timeline"<%~ it.tw ? '' : ' data-timeline' %> aria-label="Posts">
   <% if (!it.posts.length) { %><div class="empty"><h2>No results for “<%= it.q %>”</h2><p class="muted">Try searching for something else.</p></div><% } %>
-  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+  <% if (it.tw) { %><%~ it.tw %><%~ include('_pager', { p: it.p }) %><% } else { %><%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %><% } %>
   </section>
 <% } %>

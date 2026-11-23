@@ -6,7 +6,7 @@
     <div class="composer-body">
       <% if (it.replyTo) { %><p class="muted small composer-replying">Replying to <a href="/<%= it.replyTo.handle %>">@<%= it.replyTo.handle %></a></p><% } %>
       <label class="sr-only" for="<%= it.replyTo ? 'reply-text' : 'home-text' %>"><%= it.replyTo ? 'Post your reply' : 'Post text' %></label>
-      <textarea id="<%= it.replyTo ? 'reply-text' : 'home-text' %>" name="text" rows="2" maxlength="2000" placeholder="<%= it.placeholder || 'What’s happening?' %>" data-count-chars><%= it.text || '' %></textarea>
+      <textarea id="<%= it.replyTo ? 'reply-text' : 'home-text' %>" name="text" rows="2" maxlength="2000" placeholder="<%= it.placeholder || 'What’s happening?' %>"<%~ g.edKind ? g.edAttr : ' data-count-chars' %>><%= it.text || '' %></textarea>
     </div></div>
   <div class="composer-foot"><span class="char-ring" data-ring aria-live="polite"></span><button type="submit" class="btn btn-primary" data-submit><%= it.replyTo ? 'Reply' : 'Post' %></button></div>
 </form>

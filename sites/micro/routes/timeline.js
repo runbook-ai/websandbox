@@ -4,10 +4,14 @@
 // timeline script appends them as you scroll).
 const M = require('../lib/micro');
 const { E } = M;
+const MW = require('../lib/widgets');
 
 module.exports = async function (app, kit) {
-  const timeline = (req, reply, view, data) => {
-    if (req.query.fragment === '1') return reply.render('_posts', { posts: data.posts, p: data.p });
+  // windowRows(n): the page's timeline rows for the `timeline` widget slot (lib/widgets.js)
+  const timeline = (req, reply, view, data, windowRows) => {
+    const json = MW.timeline(req, reply, data, windowRows);
+    if (json) return json;
+    if (req.query.fragment === '1') return reply.render('_posts', { posts: data.posts, p: data.p, ...(data.plant ? { plant: data.plant } : {}) });
     return reply.render(view, data);
   };
   const side = (req) => ({ trends: M.trends(6), who: M.whoToFollow(req.user, 3) });
@@ -18,7 +22,8 @@ module.exports = async function (app, kit) {
     const pg = E.pageOf(req);
     const rows = tab === 'following' ? M.followingTimeline(req.user, { offset: pg.offset }) : M.forYou({ offset: pg.offset });
     const p = E.pager(req, rows);
-    return timeline(req, reply, 'home', { title: 'Home', tab, posts: M.cards(req.user, rows), p, ...side(req), draft: String(req.query.text || '') });
+    const windowRows = (n) => (tab === 'following' ? M.followingTimeline(req.user, { offset: pg.offset, limit: n }) : M.forYou({ offset: pg.offset, limit: n }));
+    return timeline(req, reply, 'home', { title: 'Home', tab, posts: M.cards(req.user, rows), p, ...side(req), draft: String(req.query.text || '') }, windowRows);
   }
   app.get('/home', { config: { login: true } }, home);
   app.get('/home/:tab', { config: { login: true } }, (req, reply) => {
@@ -30,7 +35,7 @@ module.exports = async function (app, kit) {
     const pg = E.pageOf(req);
     const rows = M.forYou({ offset: pg.offset });
     const p = E.pager(req, rows);
-    return timeline(req, reply, 'explore', { title: 'Explore', posts: M.cards(req.user, rows), p, ...side(req) });
+    return timeline(req, reply, 'explore', { title: 'Explore', posts: M.cards(req.user, rows), p, ...side(req) }, (n) => M.forYou({ offset: pg.offset, limit: n }));
   });
 
   // GET /search?q=&f=top|live|user
@@ -39,6 +44,7 @@ module.exports = async function (app, kit) {
     const f = ['top', 'live', 'user'].includes(req.query.f) ? req.query.f : 'top';
     const pg = E.pageOf(req);
     const data = { title: q ? `${q} - Search` : 'Search', q, f, posts: [], people: [], p: { page: 1 }, ...side(req) };
+    let windowRows = null;
     if (q && f === 'user') {
       const lq = q.toLowerCase().replace(/^@/, '');
       const s = kit.search.prepare(kit.db(), 'accounts_fts', q, { prefix: 'all' });
@@ -57,6 +63,7 @@ module.exports = async function (app, kit) {
         const r = E.searchPosts(text, { offset: pg.offset, extra: extra.join(' '), params, order: f === 'live' ? 'new' : 'rank' });
         data.p = E.pager(req, r.rows);
         data.posts = M.cards(req.user, r.rows.map((x) => x.id));
+        windowRows = (n) => E.searchPosts(text, { offset: pg.offset, limit: n, extra: extra.join(' '), params, order: f === 'live' ? 'new' : 'rank' }).rows.map((x) => ({ id: x.id }));
       } else if (from) {
         const u = E.byHandle(from[1], { required: false });
         const rows = u ? M.profileTimeline(u.id, 'with_replies', { offset: pg.offset }) : [];
@@ -64,7 +71,8 @@ module.exports = async function (app, kit) {
         data.posts = M.cards(req.user, rows.filter((x) => !x.repostedBy));
       }
     }
-    if (req.query.fragment === '1') return reply.render('_posts', { posts: data.posts, p: data.p });
+    if (q && f !== 'user') { const json = MW.timeline(req, reply, data, windowRows); if (json) return json; }
+    if (req.query.fragment === '1') return reply.render('_posts', { posts: data.posts, p: data.p, ...(data.plant ? { plant: data.plant } : {}) });
     return reply.render('search', data);
   });
 
@@ -72,7 +80,8 @@ module.exports = async function (app, kit) {
     const pg = E.pageOf(req);
     const ids = kit.sql(`SELECT s.id FROM bookmarks b JOIN submissions s ON s.id = b.submission_id WHERE b.user_id = ? AND ${E.LIVE} ORDER BY b.created_at DESC, s.id DESC LIMIT ? OFFSET ?`).pluck().all(req.user.id, kit.nowSql(), E.PER_PAGE + 1, pg.offset);
     const p = E.pager(req, ids);
-    return timeline(req, reply, 'bookmarks', { title: 'Bookmarks', posts: M.cards(req.user, ids), p, ...side(req) });
+    const windowRows = (n) => kit.sql(`SELECT s.id FROM bookmarks b JOIN submissions s ON s.id = b.submission_id WHERE b.user_id = ? AND ${E.LIVE} ORDER BY b.created_at DESC, s.id DESC LIMIT ? OFFSET ?`).pluck().all(req.user.id, kit.nowSql(), n + 1, pg.offset).map((id) => ({ id }));
+    return timeline(req, reply, 'bookmarks', { title: 'Bookmarks', posts: M.cards(req.user, ids), p, ...side(req) }, windowRows);
   });
 
   // ---- notifications: all | mentions (mentions, replies and quotes)

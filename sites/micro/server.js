@@ -8,6 +8,7 @@
 // ($WSB_DATA_ROOT/micro/base.db may be a symlink to the social base.db). Routes: ROUTES.md.
 const kit = require('../../kit');
 const M = require('./lib/micro');
+const MW = require('./lib/widgets');
 
 module.exports = kit.site(M.E.siteConfig({
   title: 'Murmur',
@@ -15,7 +16,8 @@ module.exports = kit.site(M.E.siteConfig({
   dir: __dirname,
   after: '/home',
   skins: { default: {}, dark: { theme: 'dark' } },
-  locals: (req) => ({ M, maxChars: 280 }),
+  widgets: MW.SLOTS, // lib/widgets.js, docs/WIDGETS.md
+  locals: (req) => ({ M, maxChars: 280, ...MW.locals() }),
   routes: require('./routes'),
 }));
 

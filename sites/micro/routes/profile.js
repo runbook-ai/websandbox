@@ -4,6 +4,8 @@
 // A post under the wrong handle redirects to its canonical URL.
 const M = require('../lib/micro');
 const { E } = M;
+const MW = require('../lib/widgets');
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   const side = (req) => ({ trends: M.trends(6), who: M.whoToFollow(req.user, 3) });
@@ -22,8 +24,11 @@ module.exports = async function (app, kit) {
     const rows = M.profileTimeline(u.id, tab, { offset: pg.offset });
     const p = E.pager(req, rows);
     const posts = M.cards(req.user, rows);
-    if (req.query.fragment === '1') return reply.render('_posts', { posts, p });
-    return reply.render('profile', { title: `${u.display_name} (@${u.handle})`, tab, posts, p, ...header(req, u), ...side(req) });
+    const data = { title: `${u.display_name} (@${u.handle})`, tab, posts, p };
+    const json = MW.timeline(req, reply, data, (n) => M.profileTimeline(u.id, tab, { offset: pg.offset, limit: n }));
+    if (json) return json;
+    if (req.query.fragment === '1') return reply.render('_posts', { posts, p, ...(data.plant ? { plant: data.plant } : {}) });
+    return reply.render('profile', { ...data, ...header(req, u), ...side(req) });
   }
   async function people(req, reply) {
     const u = E.byHandle(req.params.handle);
@@ -47,6 +52,15 @@ module.exports = async function (app, kit) {
     const likers = kit.sql(`SELECT coalesce(a.handle, u.username) AS handle, coalesce(a.display_name, u.username) AS display_name FROM reactions x JOIN users u ON u.id = x.user_id
       LEFT JOIN accounts a ON a.user_id = u.id AND a.network_id = 4 WHERE x.target_type = 'submission' AND x.target_id = ? AND x.kind = 'like' AND x.created_at <= ? ORDER BY x.id DESC LIMIT 3`).all(p.id, kit.nowSql());
     const quotes = kit.sql(`SELECT count(*) FROM submissions s WHERE s.quote_of = ? AND ${E.LIVE}`).pluck().get(p.id, kit.nowSql());
-    return reply.render('status', { title: `${p.display_name} on Murmur: "${M.E.excerpt(p.body, 80)}"`, main, up, down, likers, quotes, ...side(req) });
+    const data = { title: `${p.display_name} on Murmur: "${M.E.excerpt(p.body, 80)}"`, main, up, down, likers, quotes, ...side(req) };
+    // ---- widget slots (lib/widgets.js): the plant in one post of the conversation; the parent chain in a load-older box
+    const plant = MW.plantFn([...up, main, ...down].map((x) => x.id), `micro:${main.id}`);
+    if (plant) data.plant = plant;
+    const older = NW.olderList(req, reply, { slot: 'thread', step: MW.THREAD_STEP, data,
+      items: [...up.map((x) => () => ({ p: x, threadDown: true })), () => ({ p: main, focus: true, threadUp: up.length > 0 })],
+      view: '_post', label: 'Conversation', cls: 'thread-box', height: '55vh', begin: 'This is the start of the conversation.' });
+    if (older && older.json) return older.json;
+    if (older) data.older = older.html;
+    return reply.render('status', data);
   });
 };

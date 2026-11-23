@@ -22,6 +22,24 @@ module.exports = async function (app, kit) {
     return p;
   };
 
+  // ---- `counts` widget slot (js): like / repost counts the pages leave out; ids = post ids
+  app.get('/i/counts', async (req) => {
+    kit.widgets.need('counts');
+    const ids = String(req.query.ids || '').split(',').map(Number).filter((x) => Number.isInteger(x) && x > 0).slice(0, 200);
+    const likes = E.reactionCounts('submission', ids);
+    const reposts = E.repostCounts(ids);
+    const quotes = E.quoteCounts(ids);
+    const out = {};
+    for (const id of ids) {
+      const l = (likes.get(id) || {}).like || 0;
+      const r = (reposts.get(id) || 0) + (quotes.get(id) || 0);
+      const shown = kit.sql("SELECT count(*) FROM (SELECT 1 FROM reactions WHERE target_type = 'submission' AND target_id = ? AND kind = 'like' AND created_at <= ? LIMIT 3)").pluck().get(id, kit.nowSql());
+      Object.assign(out, { [`l${id}`]: l ? E.compact(l) : '', [`L${id}`]: String(l), [`r${id}`]: r ? E.compact(r) : '', [`R${id}`]: String(r),
+        [`o${id}`]: l > shown ? ` and ${l - shown} other${l - shown === 1 ? '' : 's'}` : '' });
+    }
+    return out;
+  });
+
   app.post('/compose', async (req, reply) => {
     if (!req.user) return needLogin(req, reply);
     const b = req.body || {};

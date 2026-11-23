@@ -1,0 +1,1 @@
+<%/* include('_pager', {p}) previous / next page links below a widget list (timeline slot) */%><p class="tl-pager"><% if (it.p.prev) { %><a class="tl-more" href="<%= it.p.prev %>" rel="prev">Newer posts</a><% } %><% if (it.p.next) { %><a class="tl-more" href="<%= it.p.next %>" rel="next">Older posts</a><% } %></p>

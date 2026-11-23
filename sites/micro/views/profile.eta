@@ -2,7 +2,7 @@
 <% const u = it.u; const tab = (k, l, href) => `<a class="tab${it.tab === k ? ' on' : ''}" href="${href}"${it.tab === k ? ' aria-current="page"' : ''}><span>${l}</span></a>`; %>
 <%~ include('_profile_head', { g: it }) %>
 <nav class="tabs tabs-line" aria-label="Profile timelines"><%~ tab('posts', 'Posts', `/${u.handle}`) %><%~ tab('with_replies', 'Replies', `/${u.handle}/with_replies`) %><%~ tab('likes', 'Likes', `/${u.handle}/likes`) %></nav>
-<section class="timeline" data-timeline aria-label="Posts by @<%= u.handle %>">
+<section class="timeline"<%~ it.tw ? '' : ' data-timeline' %> aria-label="Posts by @<%= u.handle %>">
   <% if (!it.posts.length) { %><div class="empty"><h2><%= it.tab === 'likes' ? `@${u.handle} hasn’t liked any posts` : `@${u.handle} hasn’t posted` %></h2></div><% } %>
-  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+  <% if (it.tw) { %><%~ it.tw %><%~ include('_pager', { p: it.p }) %><% } else { %><%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %><% } %>
 </section>

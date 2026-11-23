@@ -4,6 +4,8 @@
 // A new message notifies the other participant ('message' notification on network 4).
 const M = require('../lib/micro');
 const { E } = M;
+const MW = require('../lib/widgets');
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   const threads = (user) => kit.sql(`SELECT t.id, max(m.created_at) AS last_at,
@@ -33,9 +35,13 @@ module.exports = async function (app, kit) {
   app.get('/messages/:id', { config: { login: true } }, async (req, reply) => {
     const t = threadFor(req);
     const msgs = kit.sql('SELECT m.* FROM messages m WHERE m.thread_id = ? AND m.created_at <= ? ORDER BY m.id').all(t.id, kit.nowSql());
+    // ---- `dm` widget slot (lib/widgets.js): a load-older box; its chunk requests mark nothing read
+    const older = NW.olderList(req, reply, { slot: 'dm', step: MW.DM_STEP, items: msgs.map((m) => () => ({ m })), data: {}, view: '_bubble',
+      label: 'Messages', cls: 'dm-msgs', begin: 'This is the start of your conversation.' });
+    if (older && older.json) return older.json;
     kit.sql("UPDATE notifications SET read_at = ? WHERE user_id = ? AND network_id = 4 AND notification_type = 'message' AND read_at IS NULL AND message_id IN (SELECT id FROM messages WHERE thread_id = ?)").run(kit.nowSql(), req.user.id, t.id);
     const other = person(kit.sql('SELECT user_id FROM message_thread_participants WHERE thread_id = ? AND user_id <> ? LIMIT 1').pluck().get(t.id, req.user.id));
-    return page(req, reply, { t, msgs, other });
+    return page(req, reply, { t, msgs, other, ...(older ? { older: older.html } : {}) });
   });
   app.post('/messages', { config: { login: true } }, async (req, reply) => {
     const b = req.body || {};

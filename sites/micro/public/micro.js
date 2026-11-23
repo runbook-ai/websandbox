@@ -70,6 +70,7 @@
   // ---------------------------------------------------------------- character counter
   var count = function (ta) { return Array.from(ta.value).length; };
   function ring(ta) {
+    if (ta.hasAttribute('data-wsb-editor')) return; // a controlled editor (composer widget slot) keeps the button enabled
     var f = ta.form, r = $('[data-ring]', f), b = $('[data-submit]', f), n = count(ta), left = MAX - n;
     if (r) { r.textContent = n ? String(left) : ''; r.classList.toggle('warn', left <= 20 && left >= 0); r.classList.toggle('over', left < 0); r.setAttribute('aria-label', left + ' characters left'); }
     var quote = $('input[name=quote_of]', f);

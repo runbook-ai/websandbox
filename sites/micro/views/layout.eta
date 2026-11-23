@@ -68,13 +68,13 @@
     <div class="composer-top"><button type="button" class="icon-btn" data-close-dialog aria-label="Close">&times;</button></div>
     <div class="composer-ctx" data-ctx hidden></div>
     <div class="composer-row"><span class="av av-md" style="background:<%= me ? me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(me ? me.display_name : it.user.username) %></span>
-      <label class="sr-only" for="dlg-text">Post text</label><textarea id="dlg-text" name="text" rows="4" maxlength="2000" placeholder="What’s happening?" data-count-chars></textarea></div>
+      <label class="sr-only" for="dlg-text">Post text</label><textarea id="dlg-text" name="text" rows="4" maxlength="2000" placeholder="What’s happening?"<%~ it.edKind ? it.edAttr : ' data-count-chars' %>></textarea></div>
     <div class="composer-quote" data-quote hidden></div>
     <div class="composer-foot"><span class="char-ring" data-ring aria-live="polite"></span><button type="submit" class="btn btn-primary" data-submit>Post</button></div>
   </form>
 </dialog>
 <% } %>
 <script src="/_kit/kit.js" defer></script>
-<script src="/static/micro.js" defer></script>
+<script src="/static/micro.js" defer></script><%~ it.wScripts %>
 </body>
 </html>
