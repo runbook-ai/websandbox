@@ -1,28 +1,28 @@
 <%/* include('_comment', {g, c, a}) one comment and its replies */%>
 <% const g = it.g; const c = it.c; const a = it.a; const gone = c.visibility !== 'visible'; const likes = c.counts.like || 0; const liked = c.mine.has('like'); const own = g.user && g.user.id === c.user_id; %>
-<div class="cm<%= c.depth ? ' cm-reply' : '' %>" id="comment-<%= c.id %>" data-comment="<%= c.id %>">
+<div class="cm<%= c.depth ? ' cm-reply' : '' %>" id="comment-<%= c.id %>" data-comment="<%= c.id %>"<%~ it.flat ? ` style="margin-left:${Math.min(c.depth, 12) * 24}px"` : '' %>>
   <% if (gone) { %><div class="cm-body cm-gone muted">Comment deleted</div><% } else { %>
   <a href="/<%= c.handle %>" class="cm-av"><span class="av av-sm" style="background:<%= c.avatar_color %>" aria-hidden="true"><%= g.initials(c.display_name) %></span></a>
   <div class="cm-main">
     <div class="cm-box">
       <div class="cm-meta"><a class="cm-name" href="/<%= c.handle %>"><%= c.display_name %></a><% if (c.user_id === a.user_id) { %><span class="chip chip-author" title="Author">Author</span><% } %> <span class="muted">&bull;</span> <a class="muted small" href="#comment-<%= c.id %>"><%~ g.when(c.created_at, 'date') %></a><% if (c.edited_at) { %> <span class="muted small">&bull; Edited</span><% } %></div>
-      <div class="cm-body prose prose-sm"><%~ g.md(c.body) %></div>
+      <div class="cm-body prose prose-sm"><%~ g.md(c.body) %><%~ g.plant ? g.plant.comment(c) : '' %></div>
     </div>
     <div class="cm-actions">
       <form method="post" action="/reactions" class="inline react-form" data-react="like"><%~ g.csrfInput() %><input type="hidden" name="target" value="comment"><input type="hidden" name="id" value="<%= c.id %>"><input type="hidden" name="kind" value="like"><input type="hidden" name="on" value="<%= liked ? 0 : 1 %>">
-        <button type="submit" class="cm-act<%= liked ? ' on' : '' %>" aria-pressed="<%= liked %>" aria-label="Like comment (<%= likes %>)"><span aria-hidden="true">&#9829;</span> <span data-count><%= likes %></span> <span class="hide-sm">like<%= likes === 1 ? '' : 's' %></span></button></form>
+        <% if (g.rxJs) { %><button type="submit" class="cm-act<%= liked ? ' on' : '' %>" aria-pressed="<%= liked %>" aria-label="Like comment"><span aria-hidden="true">&#9829;</span> <span data-count data-wsb-fill="c<%= c.id %>"></span> <span class="hide-sm">likes</span></button><% } else { %><button type="submit" class="cm-act<%= liked ? ' on' : '' %>" aria-pressed="<%= liked %>" aria-label="Like comment (<%= likes %>)"><span aria-hidden="true">&#9829;</span> <span data-count><%= likes %></span> <span class="hide-sm">like<%= likes === 1 ? '' : 's' %></span></button><% } %></form>
       <% if (g.user) { %><details class="cm-reply-box"<%= g.replyTo === c.id ? ' open' : '' %>><summary class="cm-act"><span aria-hidden="true">&#8617;</span> Reply</summary>
         <form method="post" action="<%= a.url %>/comments" class="comment-form comment-form-sm" data-comment-form><%~ g.csrfInput() %><input type="hidden" name="parent_id" value="<%= c.id %>">
-          <label class="sr-only" for="reply-<%= c.id %>">Reply to <%= c.display_name %></label><textarea id="reply-<%= c.id %>" name="body" rows="2" placeholder="Reply..." required></textarea>
+          <label class="sr-only" for="reply-<%= c.id %>">Reply to <%= c.display_name %></label><textarea id="reply-<%= c.id %>" name="body" rows="2" placeholder="Reply..." required<%~ g.edAttr %>></textarea>
           <div class="comment-form-foot"><button type="submit" class="btn btn-primary btn-sm">Submit</button></div></form></details>
       <% } else { %><a class="cm-act" href="/login?next=<%= encodeURIComponent(a.url + '?reply=' + c.id + '#comment-' + c.id) %>">Reply</a><% } %>
       <% if (own) { %><details class="cm-more"><summary class="cm-act" aria-label="Comment options">&hellip;</summary>
         <div class="cm-more-pop">
-          <form method="post" action="/comments/<%= c.id %>/edit" class="stack"><%~ g.csrfInput() %><label class="sr-only" for="edit-<%= c.id %>">Edit comment</label><textarea id="edit-<%= c.id %>" name="body" rows="3"><%= c.body %></textarea><button type="submit" class="btn btn-sm btn-secondary">Save edit</button></form>
+          <form method="post" action="/comments/<%= c.id %>/edit" class="stack"><%~ g.csrfInput() %><label class="sr-only" for="edit-<%= c.id %>">Edit comment</label><textarea id="edit-<%= c.id %>" name="body" rows="3"<%~ g.edAttr %>><%= c.body %></textarea><button type="submit" class="btn btn-sm btn-secondary">Save edit</button></form>
           <form method="post" action="/comments/<%= c.id %>/delete" data-confirm="Delete this comment?"><%~ g.csrfInput() %><button type="submit" class="btn btn-sm btn-ghost btn-danger">Delete</button></form>
         </div></details><% } %>
     </div>
   </div>
   <% } %>
-  <% if (c.children.length) { %><div class="cm-kids"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k, a }) %><% } %></div><% } %>
+  <% if (!it.flat && c.children.length) { %><div class="cm-kids"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k, a }) %><% } %></div><% } %>
 </div>

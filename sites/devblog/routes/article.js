@@ -3,6 +3,8 @@
 // A wrong handle or slug redirects to the article's canonical URL. Drafts are visible to their author only.
 const D = require('../lib/devblog');
 const { E } = D;
+const DW = require('../lib/widgets');
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   function loadArticle(req, { own = false } = {}) {
@@ -24,6 +26,12 @@ module.exports = async function (app, kit) {
     const p = E.pager(req, ids);
     const rows = D.cards(req.user, ids);
     if (req.query.fragment === '1') return reply.render('_cards', { rows, p });
+    // ---- `feed` widget slot (lib/widgets.js): the next FEED_WINDOW of the author's articles as one list
+    const w = NW.listWindow(req, reply, { slot: 'feed', size: DW.FEED_WINDOW, perPage: E.PER_PAGE, p, view: '_card', est: 170, label: 'Articles', cls: 'feed-list',
+      rows: (n) => D.listArticles({ sort: 'latest', userId: u.id, offset: pg.offset, limit: n }),
+      data: (part) => ({ byId: new Map(D.cards(req.user, part).map((r) => [r.id, r])) }),
+      item: (id) => (it) => ({ r: it.byId.get(id) }) });
+    if (w && w.json) return w.json;
     const stats = {
       posts: kit.sql(`SELECT count(*) FROM submissions s WHERE s.user_id = ? AND ${E.LIVE} AND s.kind = 'article'`).pluck().get(u.id, kit.nowSql()),
       comments: kit.sql("SELECT count(*) FROM comments c JOIN submissions s ON s.id = c.submission_id WHERE c.user_id = ? AND s.network_id = 2 AND c.visibility = 'visible' AND c.created_at <= ?").pluck().get(u.id, kit.nowSql()),
@@ -34,7 +42,7 @@ module.exports = async function (app, kit) {
     const recentComments = kit.sql(`SELECT c.id, c.body, c.created_at, s.id AS post_id, s.title, s.slug, coalesce(a.handle, pu.username) AS handle FROM comments c
       JOIN submissions s ON s.id = c.submission_id JOIN users pu ON pu.id = s.user_id LEFT JOIN accounts a ON a.user_id = s.user_id AND a.network_id = 2
       WHERE c.user_id = ? AND s.network_id = 2 AND c.visibility = 'visible' AND c.created_at <= ? AND s.visibility = 'visible' ORDER BY c.id DESC LIMIT 5`).all(u.id, kit.nowSql());
-    return reply.render('profile', { title: u.display_name || u.handle, u, rows, p, stats, series, recentComments, following: E.isFollowing(req.user, u.id), self: !!req.user && req.user.id === u.id });
+    return reply.render('profile', { title: u.display_name || u.handle, u, rows, p: w ? w.p : p, stats, series, recentComments, following: E.isFollowing(req.user, u.id), self: !!req.user && req.user.id === u.id, ...(w && w.html ? { fw: w.html } : {}) });
   });
 
   // ---- article
@@ -48,12 +56,19 @@ module.exports = async function (app, kit) {
     const author = E.byHandle(a.handle);
     const series = a.series_id ? { s: D.seriesById(a.series_id), parts: D.seriesParts(a.series_id) } : null;
     const more = D.cards(req.user, kit.sql(`SELECT s.id FROM submissions s WHERE s.user_id = ? AND s.id <> ? AND ${E.LIVE} AND s.kind = 'article' ORDER BY s.id DESC LIMIT 3`).pluck().all(a.user_id, a.id, kit.nowSql()));
-    return reply.render('article', {
+    const data = {
       title: a.title, a, mine, tree, sort, counts, mineR: minej, total: E.reactionTotal(counts),
       saved: E.mySet('bookmarks', req.user, [a.id]).has(a.id), saves: kit.sql('SELECT count(*) FROM bookmarks WHERE submission_id = ?').pluck().get(a.id),
       tags: D.tagsOf([a.id]).get(a.id) || [], author, authorStats: E.followCounts(a.user_id), following: E.isFollowing(req.user, a.user_id), series, more,
       replyTo: req.query.reply ? +req.query.reply : null,
-    });
+    };
+    // ---- widget slots (lib/widgets.js); nothing below changes the page while they are off
+    const plant = DW.plantFor(tree.all, a.id);
+    if (plant) data.plant = plant;
+    const w = NW.commentList(req, reply, { flat: NW.flatten(tree.roots), data, view: '_comment', item: (c) => () => ({ c, a, flat: true }), est: 140, cls: 'comment-list' });
+    if (w && w.json) return w.json;
+    if (w && w.html) data.cw = w.html;
+    return reply.render('article', data);
   });
 
   // ---- comments: body (markdown), parent_id (reply). 429 when over the network's comment limit.

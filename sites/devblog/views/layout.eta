@@ -45,6 +45,6 @@
 </main>
 <footer class="bl-foot"><p><strong><%= it.site.title %></strong> &mdash; a community of developers writing about what they build and learn.</p></footer>
 <script src="/_kit/kit.js" defer></script>
-<script src="/static/devblog.js" defer></script>
+<script src="/static/devblog.js" defer></script><%~ it.wScripts %>
 </body>
 </html>

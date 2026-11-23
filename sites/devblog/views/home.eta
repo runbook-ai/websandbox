@@ -11,8 +11,8 @@
     </div>
     <div class="feed" data-feed>
       <% if (!it.rows.length) { %><div class="box box-pad empty"><p><strong>No articles here yet.</strong></p><p class="muted">Try another tab, or <a href="/tags">find some tags to follow</a>.</p></div><% } %>
-      <% it.rows.forEach((r, i) => { %><%~ include('_card', { g: it, r, big: i === 0 && it.p.page === 1 }) %><% }) %>
-      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+      <% if (it.fw) { %><%~ it.fw %><% } else { %><% it.rows.forEach((r, i) => { %><%~ include('_card', { g: it, r, big: i === 0 && it.p.page === 1 }) %><% }) %><% } %>
+      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>"<%~ it.fw ? ' rel="next"' : ' data-more' %>><%= it.fw ? 'Next page' : 'Load more articles' %></a><% } %>
     </div>
     <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>" rel="prev">&larr; Newer</a></p><% } %>
   </section>
@@ -20,7 +20,7 @@
     <section class="box">
       <h2 class="box-head">Trending this week</h2>
       <ol class="trend">
-      <% for (const t of it.trending) { %><li><a href="<%= t.url %>"><%= t.title %></a><span class="muted small"><%= t.reactions %> reactions &middot; <%= t.comment_count %> comments</span></li><% } %>
+      <% for (const t of it.trending) { %><li><a href="<%= t.url %>"><%= t.title %></a><span class="muted small"><% if (it.rxJs) { %><span data-wsb-fill="a<%= t.id %>"></span><%~ it.rxSrc({ a: [t.id] }) %><% } else { %><%= t.reactions %><% } %> reactions &middot; <%= t.comment_count %> comments</span></li><% } %>
       </ol>
     </section>
     <section class="box">

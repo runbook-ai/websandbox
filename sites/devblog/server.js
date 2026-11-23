@@ -7,13 +7,15 @@
 // ($WSB_DATA_ROOT/devblog/base.db may be a symlink to the social base.db). Routes: ROUTES.md.
 const kit = require('../../kit');
 const D = require('./lib/devblog');
+const DW = require('./lib/widgets');
 
 module.exports = kit.site(D.E.siteConfig({
   title: 'Byteline',
   siteIndex: 12,
   dir: __dirname,
   skins: { default: {}, dark: { theme: 'dark' } },
-  locals: (req) => ({ D, myTags: D.myTags(req.user) }),
+  widgets: DW.SLOTS, // lib/widgets.js, docs/WIDGETS.md
+  locals: (req) => ({ D, myTags: D.myTags(req.user), ...DW.locals() }),
   routes: require('./routes'),
 }));
 

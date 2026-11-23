@@ -19,8 +19,8 @@
     </div>
     <div class="feed" data-feed>
       <% if (!it.rows.length) { %><div class="box box-pad empty"><p><strong>No posts with #<%= t.name %> in this view.</strong></p><% if (it.user) { %><p><a href="/new?tags=<%= t.name %>">Write the first one</a></p><% } %></div><% } %>
-      <% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %>
-      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+      <% if (it.fw) { %><%~ it.fw %><% } else { %><% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %><% } %>
+      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>"<%~ it.fw ? ' rel="next"' : ' data-more' %>><%= it.fw ? 'Next page' : 'Load more articles' %></a><% } %>
     </div>
   </section>
   <aside class="bl-right">

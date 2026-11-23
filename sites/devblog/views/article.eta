@@ -6,7 +6,7 @@
       <% for (const x of D.REACTIONS) { const on = it.mineR.has(x.kind); %>
       <form method="post" action="/reactions" class="react-form" data-react="<%= x.kind %>"><%~ it.csrfInput() %>
         <input type="hidden" name="target" value="article"><input type="hidden" name="id" value="<%= a.id %>"><input type="hidden" name="kind" value="<%= x.kind %>"><input type="hidden" name="on" value="<%= on ? 0 : 1 %>">
-        <button type="submit" class="rail-btn rail-<%= x.kind %><%= on ? ' on' : '' %>" aria-pressed="<%= on %>" aria-label="<%= x.label %> (<%= it.counts[x.kind] || 0 %>)" title="<%= x.label %>"><span class="rail-ico" aria-hidden="true"><%= x.icon %></span><span class="rail-n" data-count><%= it.counts[x.kind] || 0 %></span></button>
+        <% if (it.rxJs) { %><button type="submit" class="rail-btn rail-<%= x.kind %><%= on ? ' on' : '' %>" aria-pressed="<%= on %>" aria-label="<%= x.label %>" title="<%= x.label %>"><span class="rail-ico" aria-hidden="true"><%= x.icon %></span><span class="rail-n" data-count data-wsb-fill="a<%= a.id %>-<%= x.kind %>"></span></button><% } else { %><button type="submit" class="rail-btn rail-<%= x.kind %><%= on ? ' on' : '' %>" aria-pressed="<%= on %>" aria-label="<%= x.label %> (<%= it.counts[x.kind] || 0 %>)" title="<%= x.label %>"><span class="rail-ico" aria-hidden="true"><%= x.icon %></span><span class="rail-n" data-count><%= it.counts[x.kind] || 0 %></span></button><% } %>
       </form>
       <% } %>
       <a class="rail-btn" href="#comments" aria-label="Jump to comments (<%= it.tree.count %>)" title="Comments"><span class="rail-ico" aria-hidden="true">&#128172;</span><span class="rail-n"><%= it.tree.count %></span></a>
@@ -24,7 +24,7 @@
         <% if (it.mine) { %><div class="art-own"><a class="btn btn-sm btn-ghost" href="<%= a.url %>/edit">Edit</a>
           <form method="post" action="<%= a.url %>/delete" class="inline" data-confirm="Delete this post? This can't be undone."><%~ it.csrfInput() %><button class="btn btn-sm btn-ghost btn-danger" type="submit">Delete</button></form></div><% } %>
       </div>
-      <% if (it.total) { %><p class="art-reacts small muted" aria-label="Reactions"><% for (const x of D.REACTIONS) { if (!it.counts[x.kind]) continue; %><span class="art-react"><span aria-hidden="true"><%= x.icon %></span> <%= it.counts[x.kind] %> <%= x.label.toLowerCase() %></span><% } %></p><% } %>
+      <% if (it.rxJs) { %><p class="art-reacts small muted" aria-label="Reactions" data-wsb-fill="a<%= a.id %>-summary"></p><%~ it.rxSrc({ a: [a.id], c: it.tree.all.map((c) => c.id) }) %><% } else if (it.total) { %><p class="art-reacts small muted" aria-label="Reactions"><% for (const x of D.REACTIONS) { if (!it.counts[x.kind]) continue; %><span class="art-react"><span aria-hidden="true"><%= x.icon %></span> <%= it.counts[x.kind] %> <%= x.label.toLowerCase() %></span><% } %></p><% } %>
       <h1 id="art-title" class="art-title"><%= a.title %></h1>
       <% if (it.tags.length) { %><div class="tags"><% for (const t of it.tags) { %><a class="tag" href="/t/<%= t %>" style="--tag:<%= D.tagColor(t) %>"><span aria-hidden="true">#</span><%= t %></a><% } %></div><% } %>
     </header>
@@ -34,7 +34,7 @@
       <ol class="series-parts"><% it.series.parts.forEach((x, i) => { %><li class="<%= x.id === a.id ? 'on' : '' %>"><a href="<%= D.articleUrl(x) %>"<%~ x.id === a.id ? ' aria-current="page"' : '' %>><span class="series-n"><%= i + 1 %></span><%= x.title %></a></li><% }) %></ol>
     </nav>
     <% } %>
-    <div class="prose"><%~ it.md(a.body) %></div>
+    <div class="prose"><%~ it.md(a.body) %><%~ it.plant ? it.plant.body : '' %></div>
   </article>
   <aside class="art-side" aria-label="About the author">
     <section class="box author-card" style="--brand:<%= a.avatar_color %>">
@@ -62,11 +62,11 @@
   <% if (it.user) { %>
   <form method="post" action="<%= a.url %>/comments" class="comment-form" id="comment-form" data-comment-form><%~ it.csrfInput() %>
     <span class="av av-sm" style="background:<%= it.me ? it.me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(it.me ? it.me.display_name : it.user.username) %></span>
-    <div class="comment-form-main"><label class="sr-only" for="new-comment">Add to the discussion</label><textarea id="new-comment" name="body" rows="3" placeholder="Add to the discussion" required></textarea>
+    <div class="comment-form-main"><label class="sr-only" for="new-comment">Add to the discussion</label><textarea id="new-comment" name="body" rows="3" placeholder="Add to the discussion" required<%~ it.edAttr %>></textarea>
       <div class="comment-form-foot"><span class="muted small">Markdown is supported.</span><button type="submit" class="btn btn-primary btn-sm">Submit</button></div></div>
   </form>
   <% } else { %><p class="box-pad muted"><a href="/login?next=<%= encodeURIComponent(a.url + '#comments') %>">Log in</a> to join the discussion.</p><% } %>
-  <div class="comment-list">
+  <% if (it.cw) { %><%~ it.cw %><% } else { %><div class="comment-list">
     <% for (const c of it.tree.roots) { %><%~ include('_comment', { g: it, c, a }) %><% } %>
-  </div>
+  </div><% } %>
 </section>

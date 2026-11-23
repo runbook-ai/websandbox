@@ -15,14 +15,14 @@
         <datalist id="tag-suggest"><% for (const t of it.popular) { %><option value="<%= t.name %>"><% } %></datalist>
         <% if (e.tags) { %><p class="field-error"><%= e.tags %></p><% } %>
       </div>
-      <div class="editor-toolbar" role="toolbar" aria-label="Formatting">
+      <% if (!it.edKind) { %><div class="editor-toolbar" role="toolbar" aria-label="Formatting">
         <button type="button" data-md="**" title="Bold" aria-label="Bold"><b>B</b></button><button type="button" data-md="_" title="Italic" aria-label="Italic"><i>I</i></button>
         <button type="button" data-md="[](url)" title="Link" aria-label="Link">&#128279;</button><button type="button" data-md="## " data-line title="Heading" aria-label="Heading">H</button>
         <button type="button" data-md="- " data-line title="List" aria-label="Bulleted list">&bull;</button><button type="button" data-md="> " data-line title="Quote" aria-label="Quote">&ldquo;</button>
         <button type="button" data-md="`" title="Code" aria-label="Inline code">&lt;/&gt;</button><button type="button" data-md="```&#10;" data-block title="Code block" aria-label="Code block">{ }</button>
-      </div>
+      </div><% } %>
       <label class="sr-only" for="body">Post content</label>
-      <textarea id="body" name="body" class="editor-body<%= e.body ? ' invalid' : '' %>" rows="18" placeholder="Write your post content here... (Markdown)" aria-invalid="<%= !!e.body %>"><%= v.body %></textarea>
+      <textarea id="body" name="body" class="editor-body<%= e.body ? ' invalid' : '' %>" rows="18" placeholder="Write your post content here... (Markdown)" aria-invalid="<%= !!e.body %>"<%~ it.edAttr %>><%= v.body %></textarea>
       <div class="editor-series">
         <label for="series_id" class="small muted">Series</label>
         <select id="series_id" name="series_id"><option value="">No series</option><% for (const s of it.series) { %><option value="<%= s.id %>"<%= String(s.id) === String(v.series_id) ? ' selected' : '' %>><%= s.title %></option><% } %></select>

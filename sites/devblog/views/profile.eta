@@ -30,7 +30,7 @@
       <ul class="more-list"><% for (const c of it.recentComments) { %><li><a href="/<%= c.handle %>/<%= c.slug %>-<%= c.post_id %>#comment-<%= c.id %>"><strong><%= c.title %></strong><br><span class="muted small"><%= it.excerpt(c.body, 120) %></span></a></li><% } %></ul></section>
     <% } %>
     <% if (!it.rows.length) { %><div class="box box-pad empty">No posts yet.</div><% } %>
-    <% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %>
-    <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+    <% if (it.fw) { %><%~ it.fw %><% } else { %><% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %><% } %>
+    <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>"<%~ it.fw ? ' rel="next"' : ' data-more' %>><%= it.fw ? 'Next page' : 'Load more articles' %></a><% } %>
   </section>
 </div>

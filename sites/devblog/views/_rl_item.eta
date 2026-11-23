@@ -1,0 +1,6 @@
+<%/* include('_rl_item', {g, r}) one reading-list entry (no surrounding whitespace) */%><% const g = it.g; const r = it.r; %><article class="rl-item" id="article-<%= r.id %>">
+      <a href="/<%= r.handle %>"><span class="av av-sm" style="background:<%= r.avatar_color %>" aria-hidden="true"><%= g.initials(r.display_name) %></span></a>
+      <div class="rl-main"><a class="rl-title" href="<%= r.url %>"><%= r.title %></a>
+        <div class="small muted"><a href="/<%= r.handle %>"><%= r.display_name %></a> &bull; <%= g.dateShort(r.published_at || r.created_at) %> &bull; <%= r.reading_time || 1 %> min read <% for (const t of r.tags) { %><a class="muted" href="/readinglist?tag=<%= t %>">#<%= t %></a> <% } %></div></div>
+      <form method="post" action="/readinglist" class="inline save-form" data-save="<%= r.id %>" data-remove><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="on" value="0"><button type="submit" class="btn btn-sm btn-ghost">Archive</button></form>
+    </article>

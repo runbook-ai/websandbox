@@ -3,6 +3,7 @@
 // tags), reading list, notifications, settings.
 const D = require('../lib/devblog');
 const { E } = D;
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   // ---- dashboard
@@ -49,7 +50,10 @@ module.exports = async function (app, kit) {
     const rows = D.cards(req.user, list);
     const tagCounts = kit.sql(`SELECT t.name, count(*) AS n FROM bookmarks b JOIN post_tags pt ON pt.submission_id = b.submission_id JOIN tags t ON t.id = pt.tag_id
       JOIN submissions s ON s.id = b.submission_id WHERE b.user_id = ? AND ${E.LIVE} GROUP BY t.id ORDER BY n DESC, t.normalized_name`).all(req.user.id, kit.nowSql());
-    return reply.render('readinglist', { title: 'Reading list', rows, q, tag, tagCounts });
+    // ---- `readinglist` widget slot (lib/widgets.js): the list as one widget list
+    const w = NW.commentList(req, reply, { slot: 'readinglist', flat: rows, data: {}, view: '_rl_item', item: (r) => () => ({ r }), est: 80, label: 'Reading list', cls: 'rl-vlist' });
+    if (w && w.json) return w.json;
+    return reply.render('readinglist', { title: 'Reading list', rows, q, tag, tagCounts, ...(w && w.html ? { rlw: w.html } : {}) });
   });
 
   // ---- notifications: /notifications, /notifications/comments, /notifications/reactions, /notifications/follows
