@@ -4,7 +4,7 @@
   <p>On <a href="<%= it.F.subUrl(it.s) %>"><%= it.s.title %></a></p>
   <form method="post" action="<%= it.F.commentUrl(it.s, it.c.id) %>/edit" class="form">
     <%~ it.csrfInput() %>
-    <%~ include('_field', { id: 'comment_comment', name: 'comment', label: 'Comment', type: 'textarea', value: it.values.comment, error: it.errors.comment, required: true, rows: 8 }) %>
+    <%~ include('_field', { id: 'comment_comment', name: 'comment', label: 'Comment', type: 'textarea', value: it.values.comment, error: it.errors.comment, required: true, rows: 8, tattrs: it.edAttr }) %>
     <div class="form-actions"><button type="submit">Save comment</button> <a href="<%= it.F.subUrl(it.s) %>#comment-<%= it.c.id %>">Cancel</a></div>
   </form>
 </section>

@@ -1,7 +1,7 @@
 <%/* include('_comment', {g, c, depth}) recursive comment tree node */%>
 <% const g = it.g; const c = it.c; const s = g.s; const F = g.F; const live = c.visibility === 'visible'; const own = g.user && g.user.id === c.user_id;
    const showRemoved = !live && g.mod; const d = it.depth || 0; %>
-<details class="comment comment--depth-<%= Math.min(d, 8) %><%= live ? '' : ' comment--deleted' %><%= g.focus && g.focus.id === c.id ? ' comment--focused' : '' %>" id="comment-<%= c.id %>" open>
+<details class="comment comment--depth-<%= Math.min(d, 8) %><%= live ? '' : ' comment--deleted' %><%= g.focus && g.focus.id === c.id ? ' comment--focused' : '' %>" id="comment-<%= c.id %>"<%~ it.flat ? ` style="margin-left:${Math.min(d, 12) * 14}px"` : '' %> open>
   <summary class="comment__header">
     <% if (live || showRemoved) { %><a class="comment__author" href="/user/<%= c.username %>"><%= c.username %></a><% if (c.user_id === s.user_id) { %> <span class="tag tag--op" title="Submitter">OP</span><% } %><% } else { %><span class="comment__author muted">[deleted]</span><% } %>
     <span class="comment__score"><%= c.net_score %> point<%= Math.abs(c.net_score) === 1 ? '' : 's' %></span>
@@ -12,13 +12,13 @@
     <% if (live) { %><%~ include('_vote', { g, kind: 'comment', id: c.id, score: c.net_score, mine: g.cvotes.get(c.id) || 0 }) %><% } %>
     <div class="comment__main">
       <div class="comment__body">
-      <% if (live) { %><%~ g.md(c.body) %>
+      <% if (live) { %><%~ g.md(c.body) %><%~ g.plant ? g.plant(c) : '' %>
       <% } else if (showRemoved) { %><p class="notice notice--error"><%= c.visibility === 'trashed' ? 'Removed by a moderator' : 'Deleted by its author' %> (visible to moderators):</p><%~ g.md(c.body) %>
       <% } else { %><p class="muted">[<%= c.visibility === 'trashed' ? 'removed' : 'deleted' %>]</p><% } %>
       </div>
       <nav class="comment__nav" aria-label="Comment actions">
-        <a href="<%= F.commentUrl(s, c.id) %>">Permalink</a>
-        <% if (c.parent_id) { %><a href="<%= F.commentUrl(s, c.parent_id) %>">Parent</a><% } %>
+        <% if (g.jsLinks) { %><%~ g.widgets.navButton(F.commentUrl(s, c.id), 'Permalink', 'link') %><% } else { %><a href="<%= F.commentUrl(s, c.id) %>">Permalink</a><% } %>
+        <% if (c.parent_id) { %><% if (g.jsLinks) { %><%~ g.widgets.navButton(F.commentUrl(s, c.parent_id), 'Parent', 'link') %><% } else { %><a href="<%= F.commentUrl(s, c.parent_id) %>">Parent</a><% } %><% } %>
         <% if (live && own) { %><a href="<%= F.commentUrl(s, c.id) %>/edit">Edit</a>
         <form method="post" action="<%= F.commentUrl(s, c.id) %>/delete_own" class="inline" data-confirm="Delete this comment?"><%~ g.csrfInput() %><button type="submit" class="link">Delete</button></form><% } %>
         <% if (g.mod) { if (live) { %>
@@ -31,12 +31,12 @@
         <form method="post" action="<%= F.subUrl(s) %>/comment" class="comment-form">
           <%~ g.csrfInput() %><input type="hidden" name="parent_id" value="<%= c.id %>">
           <label for="reply-<%= c.id %>">Reply to <%= c.username %></label>
-          <textarea id="reply-<%= c.id %>" name="comment" rows="4" required></textarea>
+          <textarea id="reply-<%= c.id %>" name="comment" rows="4" required<%~ g.edAttr %>></textarea>
           <button type="submit">Post reply</button>
         </form>
       </details>
       <% } %>
     </div>
   </div>
-  <% if (c.children.length) { %><div class="comment__children"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k, depth: d + 1 }) %><% } %></div><% } %>
+  <% if (!it.flat && c.children.length) { %><div class="comment__children"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k, depth: d + 1 }) %><% } %></div><% } %>
 </details>

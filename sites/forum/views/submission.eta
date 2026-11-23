@@ -17,7 +17,7 @@
         <% if (s.body) { %><div class="submission__body"><%~ it.md(s.body) %></div><% } %>
       <% } %>
       <nav class="submission__nav" aria-label="Submission actions">
-        <a href="<%= F.subUrl(s) %>"><%= it.commentCount %> comment<%= it.commentCount === 1 ? '' : 's' %></a>
+        <% if (it.jsLinks) { %><%~ it.widgets.navButton(F.subUrl(s), `${it.commentCount} comment${it.commentCount === 1 ? '' : 's'}`, 'link') %><% } else { %><a href="<%= F.subUrl(s) %>"><%= it.commentCount %> comment<%= it.commentCount === 1 ? '' : 's' %></a><% } %>
         <% if (it.own && live) { %><a href="<%= F.subUrl(s) %>/edit">Edit</a>
           <form method="post" action="<%= F.subUrl(s) %>/delete" class="inline" data-confirm="Delete this submission?"><%~ it.csrfInput() %><button type="submit" class="link">Delete</button></form><% } %>
         <% if (it.mod) { %>
@@ -40,7 +40,7 @@
       <form method="post" action="<%= F.subUrl(s) %>/comment" class="comment-form comment-form--top">
         <%~ it.csrfInput() %>
         <label for="comment-new">Write a comment</label>
-        <textarea id="comment-new" name="comment" rows="5" required placeholder="What are your thoughts?"></textarea>
+        <textarea id="comment-new" name="comment" rows="5" required placeholder="What are your thoughts?"<%~ it.edAttr %>></textarea>
         <button type="submit">Post comment</button>
       </form>
       <% } else if (s.locked) { %><p class="notice">This submission is locked. New comments are not allowed.</p>
@@ -53,9 +53,9 @@
       </form>
     <% } %>
     <% if (!it.roots.length) { %><p class="empty">There are no comments yet.</p><% } %>
-    <div class="comment-tree">
+    <% if (it.cw) { %><%~ it.cw %><% } else { %><div class="comment-tree">
     <% for (const c of it.roots) { %><%~ include('_comment', { g: it, c, depth: 0 }) %><% } %>
-    </div>
+    </div><% } %>
   </section>
 </div>
 <%~ include('_sidebar', { g: it, sb: it.sidebar }) %>

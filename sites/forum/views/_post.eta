@@ -4,14 +4,14 @@
   <%~ include('_vote', { g, kind: 'submission', id: r.id, score: r.net_score, mine: it.mine || 0 }) %>
   <% if (g.thumbs) { %><div class="thumb" aria-hidden="true"><% if (r.image_thumb) { %><a href="<%= url %>" tabindex="-1"><img src="<%= F.mediaUrl(r.image_thumb) %>" alt="" width="70" height="70"></a><% } else if (r.url) { %><span class="thumb__icon">link</span><% } else { %><span class="thumb__icon">text</span><% } %></div><% } %>
   <div class="submission__inner">
-    <h2 class="submission__title"><a class="submission__link" href="<%= url %>"><%= r.title %></a>
+    <h2 class="submission__title"><% if (g.jsLinks) { %><%~ g.widgets.navButton(url, g.h(r.title), 'link submission__link') %><% } else { %><a class="submission__link" href="<%= url %>"><%= r.title %></a><% } %>
       <% if (domain) { %><a class="submission__host" href="<%= r.url %>" rel="nofollow ugc"<%~ g.newTab ? ' target="_blank"' : '' %>>(<%= domain %>)</a><% } else if (r.media_type === 'image') { %><span class="submission__host">(image)</span><% } %>
       <% if (r.sticky) { %><span class="tag tag--sticky">Pinned</span><% } %><% if (r.locked) { %><span class="tag tag--locked">Locked</span><% } %>
     </h2>
     <p class="submission__info">Submitted by <a class="submission__submitter" href="/user/<%= r.username %>"><%= r.username %></a> <%~ g.time(r.created_at) %><% if (it.showForum !== false) { %> in <a class="submission__forum" href="/f/<%= r.forum_name %>">/f/<%= r.forum_name %></a><% } %><% if (r.edited_at) { %> <span class="muted" title="Edited <%= g.abs(r.edited_at) %>">(edited)</span><% } %></p>
     <% if (it.snip) { %><p class="search-snippet"><%~ g.mark(it.snip) %></p><% } %>
     <nav class="submission__nav" aria-label="Submission actions">
-      <a href="<%= url %>" class="submission__comments"><%= r.comment_count %> comment<%= r.comment_count === 1 ? '' : 's' %></a>
+      <% if (g.jsLinks) { %><%~ g.widgets.navButton(url, `${r.comment_count} comment${r.comment_count === 1 ? '' : 's'}`, 'link submission__comments') %><% } else { %><a href="<%= url %>" class="submission__comments"><%= r.comment_count %> comment<%= r.comment_count === 1 ? '' : 's' %></a><% } %>
     </nav>
   </div>
 </article>

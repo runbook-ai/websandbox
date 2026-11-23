@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const crypto = require('node:crypto');
 const path = require('node:path');
 const F = require('../lib/forum');
+const FW = require('../lib/widgets');
 
 const COMMENT_SORTS = { top: 'Top', new: 'Newest', old: 'Oldest' };
 
@@ -60,7 +61,7 @@ module.exports = async function (app, kit) {
     const ids = all.map((c) => c.id);
     const visibleCount = all.filter((c) => c.visibility === 'visible').length;
     const mod = F.isModerator(req.user, forum.id);
-    return reply.render('submission', {
+    const data = {
       title: s.visibility === 'visible' || mod ? s.title : '[deleted]', s, forum, roots, focus, parent, sort, COMMENT_SORTS,
       commentCount: visibleCount, mod, canSee: canSee(req, s),
       own: !!req.user && req.user.id === s.user_id,
@@ -69,7 +70,24 @@ module.exports = async function (app, kit) {
       ban: req.user ? F.activeBan(forum.id, req.user.id) : null,
       sidebar: F.forumSidebar(req.user, forum),
       crumbs: [['Forums', '/forums'], [`/f/${forum.name}`, `/f/${forum.name}`], [F.excerpt(s.title, 60)]],
-    });
+    };
+    // ---- widget slots (lib/widgets.js); nothing below changes the page while they are off
+    const plant = FW.plantFn(all, s.id);
+    if (plant) data.plant = plant;
+    const cw = focusId == null && kit.widget('comments');
+    if (cw) {
+      const flat = [];
+      const walk = (c, depth) => { flat.push({ c, depth }); for (const k of c.children) walk(k, depth + 1); };
+      for (const r of roots) walk(r, 0);
+      if (req.query._w === 'comments') {
+        const { offset, limit } = kit.widgets.range(req, { max: 50 });
+        data.canReply = s.visibility === 'visible' && !(s.locked && !mod) && !data.ban;
+        const items = FW.renderItems(req, reply, data, '_comment', flat.slice(offset, offset + limit).map((x) => () => ({ c: x.c, depth: x.depth, flat: true })), FW.pageUrlOf(req));
+        return { total: flat.length, items };
+      }
+      data.cw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'comments' }), total: flat.length, kind: cw, est: 120, chunk: 25, label: 'Comments', cls: 'comment-tree' });
+    }
+    return reply.render('submission', data);
   }
   app.get('/f/:forum/:id/:slug', (req, reply) => show(req, reply, null));
   app.get('/f/:forum/:id/:slug/comment/:cid', (req, reply) => show(req, reply, req.params.cid));

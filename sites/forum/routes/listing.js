@@ -1,6 +1,7 @@
 'use strict';
 // Front page, forum pages (submission listings with sorts and time windows), recent comments.
 const F = require('../lib/forum');
+const FW = require('../lib/widgets');
 
 const PER_PAGE = 25;
 
@@ -12,15 +13,33 @@ module.exports = async function (app, kit) {
   };
   const windowOf = (req) => (F.WINDOWS[req.query.t] ? req.query.t : 'all');
 
-  function render(reply, req, { kind, sort, t, rows, p, forum, heading, title, empty, extra = {} }) {
+  function render(reply, req, { kind, sort, t, rows, p, forum, heading, title, empty, extra = {}, windowRows }) {
     const votes = F.myVotes(req.user, 'submission', rows.map((r) => r.id));
     const base = forum ? `/f/${forum.name}` : kind === 'default' ? '' : `/${kind}`;
     const sortHref = (s) => `${base}/${s}`;
-    return reply.render('listing', {
+    const data = {
       title, heading, kind, sort, t, rows, p, forum, votes, empty, sortHref, base,
       sidebar: forum ? F.forumSidebar(req.user, forum) : frontSidebar(req),
       ...extra,
-    });
+    };
+    // ---- `listing` widget slot (lib/widgets.js): the next LISTING_WINDOW submissions as one list
+    const lw = windowRows && kit.widget('listing');
+    if (lw) {
+      const all = windowRows(FW.LISTING_WINDOW + 1);
+      const more = all.length > FW.LISTING_WINDOW;
+      if (more) all.length = FW.LISTING_WINDOW;
+      if (req.query._w === 'items') {
+        const { offset, limit } = kit.widgets.range(req, { max: 50 });
+        const part = all.slice(offset, offset + limit);
+        const mine = F.myVotes(req.user, 'submission', part.map((r) => r.id));
+        return { total: all.length, items: FW.renderItems(req, reply, data, '_post', part.map((r) => () => ({ r, mine: mine.get(r.id), showForum: !forum })), FW.pageUrlOf(req)) };
+      }
+      const step = FW.LISTING_WINDOW / PER_PAGE;
+      data.p = { ...p, hasNext: more, next: more ? kit.urlWith(req, { page: p.page + step }) : null,
+        prev: p.page > 1 ? kit.urlWith(req, { page: p.page - step > 1 ? p.page - step : null }) : null };
+      if (all.length) data.lw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'items' }), total: all.length, kind: lw, est: 96, chunk: 25, label: 'Submissions', cls: 'submission-list' });
+    }
+    return reply.render('listing', data);
   }
 
   function frontSidebar(req) {
@@ -62,9 +81,10 @@ module.exports = async function (app, kit) {
     const rows = F.listSubmissions({ forumIds, sort, t, offset: pg.offset, limit: PER_PAGE });
     const p = F.pager(req, rows, PER_PAGE);
     const label = { all: 'All forums', subscribed: 'Subscribed forums', featured: 'Featured forums', moderated: 'Moderated forums' }[k];
+    const windowRows = (n) => (forumIds && !forumIds.length ? [] : F.listSubmissions({ forumIds, sort, t, offset: pg.offset, limit: n }));
     return render(reply, req, {
       kind: kind === 'default' ? 'default' : k, sort, t, rows, p, heading: label, title: kind === 'default' ? null : `${label} (${F.SORTS[sort].label.toLowerCase()})`,
-      empty, extra: { frontKind: k, note },
+      empty, extra: { frontKind: k, note }, windowRows,
     });
   }
   app.get('/', (req, reply) => front(req, reply, 'default'));
@@ -84,10 +104,11 @@ module.exports = async function (app, kit) {
     const rows = F.listSubmissions({ forumIds: [forum.id], sort, t, offset: pg.offset, limit: PER_PAGE, excludeSticky: true });
     const p = F.pager(req, rows, PER_PAGE);
     const all = [...top, ...rows];
+    const windowRows = (n) => [...top, ...F.listSubmissions({ forumIds: [forum.id], sort, t, offset: pg.offset, limit: n, excludeSticky: true })].slice(0, n);
     return render(reply, req, {
       kind: 'forum', sort, t, rows: all, p, forum, heading: forum.title, title: forum.name === forum.title ? forum.name : `${forum.name}: ${forum.title}`,
       empty: 'There are no submissions in this forum yet.',
-      extra: { crumbs: [['Forums', '/forums'], [`/f/${forum.name}`]] },
+      extra: { crumbs: [['Forums', '/forums'], [`/f/${forum.name}`]] }, windowRows,
     });
   }
   app.get('/f/:forum', forumPage);

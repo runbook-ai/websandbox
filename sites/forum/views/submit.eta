@@ -22,7 +22,7 @@
     <%~ include('_field', { id: 'submission_title', name: 'title', label: 'Title', value: v.title, error: e.title, required: true, attrs: ' maxlength="300"' }) %>
     <% if (!ed || type === 'link') { %><div class="type-link"><%~ include('_field', { id: 'submission_url', name: 'url', label: 'URL', type: 'url', value: v.url, error: e.url, help: 'For link posts: the address of the page you are sharing.' }) %></div><% } %>
     <% if (!ed) { %><div class="type-image"><%~ include('_field', { id: 'submission_image', name: 'image', label: 'Image', type: 'file', error: e.image, help: 'For image posts: PNG, JPEG, GIF or WebP, up to 20 MB.', attrs: ' accept="image/png,image/jpeg,image/gif,image/webp"' }) %></div><% } %>
-    <%~ include('_field', { id: 'submission_body', name: 'body', label: 'Body', type: 'textarea', value: v.body, error: e.body, rows: 8, help: 'Optional. Markdown is supported: **bold**, *italic*, [links](https://example.com), > quotes, lists.' }) %>
+    <%~ include('_field', { id: 'submission_body', name: 'body', label: 'Body', type: 'textarea', value: v.body, error: e.body, rows: 8, help: 'Optional. Markdown is supported: **bold**, *italic*, [links](https://example.com), > quotes, lists.', tattrs: it.edAttr }) %>
     <div class="form-actions">
       <button type="submit"><%= ed ? 'Save changes' : 'Create submission' %></button>
       <a href="<%= ed ? it.F.subUrl(ed) : (v.forum ? '/f/' + v.forum : '/') %>">Cancel</a>

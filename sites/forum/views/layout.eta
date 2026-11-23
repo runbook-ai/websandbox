@@ -58,6 +58,6 @@
   <p><%= it.L('footer', 'Running Postmill (websandbox lite).') %></p>
 </footer>
 <script src="/_kit/kit.js" defer></script>
-<script src="/static/forum.js" defer></script>
+<script src="/static/forum.js" defer></script><%~ it.edScript %><%~ it.navScript %>
 </body>
 </html>

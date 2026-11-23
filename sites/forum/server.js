@@ -5,6 +5,7 @@
 // Routes: ROUTES.md. Schema: SCHEMA.md.
 const kit = require('../../kit');
 const F = require('./lib/forum');
+const FW = require('./lib/widgets');
 
 module.exports = kit.site({
   name: 'forum',
@@ -14,6 +15,8 @@ module.exports = kit.site({
   db: { file: 'base.db', cacheMB: 48 }, // kit default mode: overlay (all tenants on base.db, no copies)
   // Data ends 2023-03-31 (+ one post on 2023-06-12, users seen up to 2023-07-11): see NOTES-forum.md.
   clock: { start: '2023-07-11T16:00:00Z' },
+  // scenario widget slots (off unless POST /__rl/reset {scenario: {widgets}}; lib/widgets.js, docs/WIDGETS.md)
+  widgets: FW.SLOTS,
   auth: {
     loginPath: '/login',
     findUser: (db, login) => db.prepare('SELECT * FROM users WHERE normalized_username = lower(?)').get(login),
@@ -46,6 +49,7 @@ module.exports = kit.site({
       time: (s) => (s ? `<time datetime="${String(s).replace(' ', 'T')}Z" title="${kit.escapeHtml(F.absTime(s, tz))}">${kit.escapeHtml(F.relTime(s, now))}</time>` : ''),
       newTab: !!(u && u.open_external_links_in_new_tab),
       thumbs: !u || !!u.show_thumbnails,
+      ...FW.locals(),
     };
   },
   routes: require('./routes'),

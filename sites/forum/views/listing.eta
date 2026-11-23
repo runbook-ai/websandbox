@@ -30,9 +30,9 @@
     <% } %>
   </div>
   <% if (!it.rows.length) { %><p class="empty"><%= it.empty %></p><% } %>
-  <div class="submission-list">
+  <% if (it.lw) { %><%~ it.lw %><% } else { %><div class="submission-list">
   <% for (const r of it.rows) { %><%~ include('_post', { g: it, r, mine: it.votes.get(r.id), showForum: !it.forum }) %><% } %>
-  </div>
+  </div><% } %>
   <%~ include('_pager', { p: it.p }) %>
 </div>
 <%~ include('_sidebar', { g: it, sb: it.sidebar }) %>
