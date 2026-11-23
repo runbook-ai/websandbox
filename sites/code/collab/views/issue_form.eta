@@ -15,7 +15,7 @@
   </div>
   <div class="form-group">
     <label for="issue_description">Description</label>
-    <textarea class="form-control" id="issue_description" name="description" rows="10" placeholder="Write a description or drag your files here…"><%= v.description || '' %></textarea>
+    <textarea class="form-control" id="issue_description" name="description" rows="10" placeholder="Write a description or drag your files here…"<%~ it.edAttr %>><%= v.description || '' %></textarea>
     <div class="md-hint">Supports Markdown. Use @username to mention, #123 for issues, !123 for merge requests.</div>
   </div>
   <div class="form-group"><label class="gap8" style="font-weight:400"><input type="checkbox" name="confidential" value="1"<%~ v.confidential ? ' checked' : '' %>> This issue is confidential and should only be visible to team members with at least Reporter access.</label></div>

@@ -19,14 +19,14 @@
 <% if (it.empty) { %>
   <div class="empty-state"><h3>No commits found</h3><% if (it.author || it.search || it.path) { %><p>Try a different author, message or path.</p><% } %></div>
 <% } else { %>
-  <% for (const d of it.days) { %>
+  <% if (it.vw) { %><%~ it.vw %><% } else { %><% for (const d of it.days) { %>
   <section class="commits-day" aria-label="Commits on <%= it.date(d.day + ' 00:00:00') %>">
     <h2><%= it.date(d.day + ' 00:00:00') %> <span class="day-count"><%= it.plural(d.commits.length, 'commit') %></span></h2>
     <ul class="commit-list">
       <% for (const c of d.commits) { %><%~ include('repo/_commit_row', { c, p, ref: it.ref, time: it.time, avatar: it.avatar, enc }) %><% } %>
     </ul>
   </section>
-  <% } %>
+  <% } %><% } %>
   <%~ include('_pager', { pager: it.pager }) %>
   <% if (it.truncatedEnd) { %><div class="history-banner" role="note"><strong>History truncated.</strong> Older commits of this branch were not imported into this sandbox.</div><% } %>
 <% } %>

@@ -119,7 +119,7 @@
   </div>
 </div>
 <script src="/_kit/kit.js" defer></script>
-<script src="/static/code.js" defer></script>
+<script src="/static/code.js" defer></script><%~ it.wScripts %>
 <% if (it.scripts) { for (const s of [].concat(it.scripts)) { %><script src="<%= s %>" defer></script>
 <% } } %>
 </body>

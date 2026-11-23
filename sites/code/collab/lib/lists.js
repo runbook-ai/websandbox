@@ -1,4 +1,5 @@
 'use strict';
+const CW = require('../../lib/widgets');
 // Issue / merge request lists with GitLab's URL parameters (project, group and dashboard scope):
 //   state=opened|closed|all (MRs also merged)       search=<words> [in=title|description]
 //   author_username=  assignee_username= (or assignee_username[]=, assignee_id=None|Any)
@@ -165,7 +166,32 @@ function list(kind, req, scope, { perPage = 20 } = {}) {
     FROM ${c.table} t ${needMs ? 'LEFT JOIN milestones ms ON ms.id = t.milestone_id' : ''}
     WHERE ${f.where} AND ${stateWhere(kind, state)} ORDER BY ${orderBy}, t.id DESC LIMIT ? OFFSET ?`).all(...f.params, pager.limit, pager.offset);
   decorate(kind, rows);
-  return { rows, counts, state, total, pager, sort: sortKey, sortOptions: SORT_LABELS[kind], active: f.active };
+  const out = { rows, counts, state, total, pager, sort: sortKey, sortOptions: SORT_LABELS[kind], active: f.active };
+  // ---- widget slots (../../lib/widgets.js): `vw` = the next ISSUES_WINDOW items as one list, `chunk`
+  // = a chunk of it (?_w=rows), `countsJs` = the state counts come from ?_w=counts (`countsJson`)
+  const iw = kit.widget('issues');
+  if (iw) {
+    const n = Math.max(0, Math.min(CW.ISSUES_WINDOW, total - pager.offset));
+    if (query._w === 'rows') {
+      const { offset, limit } = kit.widgets.range(req, { max: 100, dflt: 50 });
+      const part = kit.sql(`SELECT t.*${needPrio ? `, (SELECT min(lp.priority) FROM label_links ll JOIN label_priorities lp ON lp.label_id = ll.label_id AND lp.project_id = t.project_id WHERE ll.target_type = '${kind}' AND ll.target_id = t.id) AS lprio` : ''}
+        FROM ${c.table} t ${needMs ? 'LEFT JOIN milestones ms ON ms.id = t.milestone_id' : ''}
+        WHERE ${f.where} AND ${stateWhere(kind, state)} ORDER BY ${orderBy}, t.id DESC LIMIT ? OFFSET ?`).all(...f.params, Math.max(0, Math.min(limit, n - offset)), pager.offset + offset);
+      out.chunk = { total: n, rows: decorate(kind, part) };
+    } else if (n) {
+      out.vw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'rows' }), total: n, kind: iw, est: 64, chunk: 50, label: kind === 'merge_request' ? 'Merge requests' : 'Issues',
+        lineTag: 'ul', lineClass: `issuable-list ${kind === 'merge_request' ? 'mr-list' : 'issues-list'}` });
+    }
+  }
+  if (kit.widget('counts') === 'js') {
+    out.countsJs = true;
+    out.countsSrc = kit.urlWith(req, { _w: 'counts', page: null });
+    if (query._w === 'counts') {
+      const num = require('../../lib/code').fmtNum;
+      out.countsJson = { ...Object.fromEntries(c.states.map((st) => [`count-${st}`, num(counts[st])])), 'count-total': num(total) };
+    }
+  }
+  return out;
 }
 
 // bulk-load labels / assignees / reviewers / milestone / author / project for rows

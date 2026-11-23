@@ -28,12 +28,12 @@
   </div>
   <% if (it.related.length) { %><h2 class="h5">Related merge requests</h2><ul class="related-list"><% for (const m of it.related) { %><li><a href="<%= P.url %>/-/merge_requests/<%= m.iid %>"><%= m.title %></a> <span class="muted">!<%= m.iid %></span> <span class="badge badge-<%= m.state === 'merged' ? 'merged' : m.state === 'closed' ? 'closed' : 'success' %>"><%= m.state %></span></li><% } %></ul><% } %>
   <h2 id="notes" class="h5">Activity</h2>
-  <%~ include('collab/_timeline', { X, kind: 'issue', target: I, timeline: it.timeline, noteBase: base + '/notes', canComment: can.comment, project: P }) %>
+  <% if (it.tlOlder) { %><%~ it.tlOlder %><% } else { %><%~ include('collab/_timeline', { X, kind: 'issue', target: I, timeline: it.timeline, noteBase: base + '/notes', canComment: can.comment, project: P }) %><% } %>
   <% if (I.discussion_locked) { %><div class="locked-banner">The discussion in this issue is locked. Only project members can comment.</div><% } %>
   <% if (can.comment) { %>
   <form class="note-form" method="post" action="<%= base %>/notes" id="new-note-form"><%~ X.csrfInput() %>
     <label class="label-bold" for="note-body">Add a comment</label>
-    <textarea id="note-body" name="note" placeholder="Write a comment or drag your files here…" data-testid="comment-field"></textarea>
+    <textarea id="note-body" name="note" placeholder="Write a comment or drag your files here…" data-testid="comment-field"<%~ X.edAttr %>></textarea>
     <div class="md-hint">Supports Markdown. Use @username to mention, #123 for issues, !123 for merge requests.</div>
     <% if (P.access >= 20) { %><label class="gap8 muted"><input type="checkbox" name="internal" value="1"> Make this an internal note</label><% } %>
     <div class="note-form-actions">

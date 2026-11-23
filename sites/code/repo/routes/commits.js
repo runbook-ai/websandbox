@@ -4,6 +4,8 @@ const code = require('../../lib/code');
 const git = require('../lib/git');
 const D = require('../lib/diff');
 const R = require('../lib/repo');
+const CW = require('../../lib/widgets');
+const { buildLocals } = require('../../../../kit/lib/site');
 
 const PER_PAGE = 40;
 
@@ -33,10 +35,37 @@ module.exports = async function (app, kit) {
     const truncatedEnd = !more && lastC && git.parentsOf(lastC).some((s) => !git.commitBySha(s));
     const authors = kit.sql("SELECT author_name, author_email, commits FROM contributors WHERE project_id = ? AND branch = ? AND commits > 0 ORDER BY commits DESC, author_name LIMIT 200").all(p.id, ref.kind === 'branch' ? ref.name : p.default_branch);
     const pager = { prev: page > 1 ? kit.urlWith(req, { page: page === 2 ? null : page - 1 }) : null, next: more ? kit.urlWith(req, { page: page + 1 }) : null };
-    return reply.render('repo/commits', {
+    const data = {
       project: p, nav: 'repo.commits', title: 'Commits · ' + ref.name, crumbs: [['Repository', R.treeUrl(p, ref.name)], ['Commits']],
       ref: ref.name, refInfo: ref, path, days, pager, author, search, authors, page, truncatedEnd, refs: R.refOptions(p), empty: !commits.length,
-    });
+    };
+    // ---- commits widget slot (../../lib/widgets.js): the next COMMITS_WINDOW commits as one list
+    const cw = kit.widget('commits');
+    if (cw && commits.length) {
+      const hopts = { author: author || null, search: search || null, path: path || null };
+      const start = (page - 1) * perPage;
+      const step = Math.ceil(CW.COMMITS_WINDOW / perPage); // whole pages, so the pager below moves right past the window
+      const n0 = git.history(p, ref, { offset: start, limit: step * perPage + 1, ...hopts }).length;
+      const n = Math.min(n0, step * perPage);
+      if (req.query._w === 'rows') {
+        const { offset, limit } = kit.widgets.range(req, { max: 100, dflt: 40 });
+        const lim = Math.max(0, Math.min(limit, n - offset));
+        const got = lim ? git.history(p, ref, { offset: start + Math.max(0, offset - 1), limit: lim + (offset ? 1 : 0), ...hopts }) : [];
+        const prev = offset ? got.shift() : null;
+        const it = buildLocals(req.tenant.site, req, reply, data, { noFlash: true });
+        let lastDay = prev ? (prev.committed_at || '').slice(0, 10) : null;
+        const items = got.map((c) => {
+          const d = (c.committed_at || '').slice(0, 10);
+          const head = d !== lastDay ? `<h2 class="commits-day-head">${kit.escapeHtml(it.date(d + ' 00:00:00'))}</h2>` : '';
+          lastDay = d;
+          return `${head}<ul class="commit-list">${req.tenant.site.views.render('repo/_commit_row', { c, p, ref: ref.name, time: it.time, avatar: it.avatar, enc: it.enc })}</ul>`;
+        });
+        return { total: n, items };
+      }
+      data.pager = { prev: page > 1 ? kit.urlWith(req, { page: page - step > 1 ? page - step : null }) : null, next: n0 > n ? kit.urlWith(req, { page: page + step }) : null };
+      data.vw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'rows' }), total: n, kind: cw, est: 70, chunk: 40, label: 'Commits', cls: 'commits-vlist' });
+    }
+    return reply.render('repo/commits', data);
   };
   app.get('/:ns/:proj/-/commits', commitsPage);
   app.get('/:ns/:proj/-/commits/*', commitsPage);

@@ -67,12 +67,12 @@
     <form class="inline-form" method="post" action="<%= base %>/award"><%~ X.csrfInput() %><input type="hidden" name="name" value="<%= name %>"><button class="btn btn-sm<%= a && a.mine ? ' on' : '' %>" type="submit" <%~ X.user ? '' : 'disabled' %> aria-label="<%= name %> <%= a ? a.n : 0 %>"><%~ em %> <%= a ? a.n : 0 %></button></form><% } %>
   </div>
   <h2 id="notes" class="h5">Activity</h2>
-  <%~ include('collab/_timeline', { X, kind: 'merge_request', target: M, timeline: it.timeline, noteBase: base + '/notes', canComment: can.comment, project: P }) %>
+  <% if (it.tlOlder) { %><%~ it.tlOlder %><% } else { %><%~ include('collab/_timeline', { X, kind: 'merge_request', target: M, timeline: it.timeline, noteBase: base + '/notes', canComment: can.comment, project: P }) %><% } %>
   <% if (M.discussion_locked) { %><div class="locked-banner">The discussion in this merge request is locked. Only project members can comment.</div><% } %>
   <% if (can.comment) { %>
   <form class="note-form" method="post" action="<%= base %>/notes" id="new-note-form"><%~ X.csrfInput() %>
     <label class="label-bold" for="note-body">Add a comment</label>
-    <textarea id="note-body" name="note" placeholder="Write a comment or drag your files here…" data-testid="comment-field"></textarea>
+    <textarea id="note-body" name="note" placeholder="Write a comment or drag your files here…" data-testid="comment-field"<%~ X.edAttr %>></textarea>
     <div class="md-hint">Supports Markdown. Use @username to mention, #123 for issues, !123 for merge requests.</div>
     <div class="note-form-actions">
       <button class="btn btn-confirm" type="submit" data-testid="comment-button">Comment</button>

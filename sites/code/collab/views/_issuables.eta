@@ -7,9 +7,9 @@
    const labelsQ = [].concat(q['label_name[]'] || []).filter(Boolean);
    const states = isMr ? [['opened', 'Open'], ['merged', 'Merged'], ['closed', 'Closed'], ['all', 'All']] : [['opened', 'Open'], ['closed', 'Closed'], ['all', 'All']];
    const noun = isMr ? 'merge requests' : 'issues'; %>
-<div class="issuables-tabs top-area">
+<div class="issuables-tabs top-area"<%~ r.countsJs ? ` data-wsb-fill-src="${it.h(r.countsSrc)}"` : '' %>>
   <ul class="nav-tabs" role="tablist" aria-label="Filter by state">
-  <% for (const [s, l] of states) { %><li role="presentation"><a role="tab" href="<%= href({ state: s, page: null }) %>"<%~ r.state === s ? ' aria-current="page" aria-selected="true"' : ' aria-selected="false"' %> data-state="<%= s %>"><%= l %> <span class="issuable-count"><%= X.num(r.counts[s]) %></span></a></li><% } %>
+  <% for (const [s, l] of states) { %><li role="presentation"><a role="tab" href="<%= href({ state: s, page: null }) %>"<%~ r.state === s ? ' aria-current="page" aria-selected="true"' : ' aria-selected="false"' %> data-state="<%= s %>"><%= l %> <span class="issuable-count"<% if (r.countsJs) { %> data-wsb-fill="count-<%= s %>"><% } else { %>><%= X.num(r.counts[s]) %><% } %></span></a></li><% } %>
   </ul>
   <div class="nav-controls">
     <% if (it.newHref) { %><a class="btn btn-confirm" href="<%= it.newHref %>"><%= isMr ? 'New merge request' : 'New issue' %></a><% } %>
@@ -63,11 +63,11 @@
   <div class="empty-state"><h3><%= r.active.length ? 'Sorry, your filter produced no results' : (r.state === 'opened' ? 'There are no open ' + noun : 'There are no ' + noun + ' to show') %></h3>
   <% if (r.active.length) { %><p>To widen your search, change or remove filters above.</p><% } %></div>
 <% } else { %>
-<ul class="issuable-list <%= isMr ? 'mr-list' : 'issues-list' %>" aria-label="<%= noun %>">
+<% if (r.vw) { %><%~ r.vw %><% } else { %><ul class="issuable-list <%= isMr ? 'mr-list' : 'issues-list' %>" aria-label="<%= noun %>">
   <% for (const t of r.rows) { %><%~ include('collab/_issuable_row', { t, kind, base: it.labelBase || null, showProject: it.showProject, it: X }) %><% } %>
-</ul>
+</ul><% } %>
 <% } %>
 </div>
 <%~ include('_pager', { pager: r.pager }) %>
-<% if (r.pager.total) { %><p class="kit-count">Showing <%= X.num(r.pager.from) %>-<%= X.num(r.pager.to) %> of <%= X.num(r.pager.total) %> <%= noun %></p><% } %>
+<% if (r.pager.total) { %><p class="kit-count">Showing <%= X.num(r.pager.from) %>-<%= X.num(r.pager.to) %> of <% if (r.countsJs) { %><span data-wsb-fill="count-total"></span><% } else { %><%= X.num(r.pager.total) %><% } %> <%= noun %></p><% } %><% if (r.countsJs) { %><%~ it.widgets.script('fill') %><% } %>
 <datalist id="cl-users"><% for (const u of (it.userHints || [])) { %><option value="<%= u.username %>"><%= u.name %></option><% } %></datalist>

@@ -15,6 +15,39 @@ const jobs = require('./jobs');
 const MODULES = ['issues', 'merge_requests', 'labels', 'milestones', 'members', 'groups', 'settings', 'wiki', 'dashboard'];
 const STYLES = ['/static/collab/collab.css'];
 const SCRIPTS = ['/static/collab/collab.js'];
+const CW = require('../lib/widgets');
+const { buildLocals } = require('../../../kit/lib/site');
+
+// Widget slots of collab pages (../lib/widgets.js). Returns the JSON of a list / discussion chunk
+// request, or adds the widget markup to the page data d (nothing while the slots are off).
+function widgetView(reply, name, d) {
+  const kit = require('../../../kit');
+  const req = reply.request;
+  const X = () => buildLocals(req.tenant.site, req, reply, d, { noFlash: true });
+  const rt = req.tenant.site;
+  if (d.r && d.r.chunk) {
+    const it = X();
+    const kind = d.kind || (name === 'merge_requests' ? 'merge_request' : 'issue');
+    return { total: d.r.chunk.total, items: d.r.chunk.rows.map((t) => rt.views.render('collab/_issuable_row', { t, kind, base: d.labelBase || null, showProject: d.showProject, it })) };
+  }
+  if (d.r && d.r.countsJson) return d.r.countsJson;
+  const T = name === 'issue' ? d.issue : name === 'mr' ? d.mr : null;
+  if (T && d.timeline && d.timeline.length > CW.DISCUSSION_STEP && kit.widget('discussion') === 'older') {
+    const it = X();
+    const kind = name === 'issue' ? 'issue' : 'merge_request';
+    const base = d.project.url + (kind === 'issue' ? '/-/issues/' : '/-/merge_requests/') + T.iid;
+    const loc = { X: it, kind, target: T, noteBase: base + '/notes', canComment: d.can && d.can.comment, project: d.project };
+    const items = (from, to) => `<ul class="notes main-notes-list timeline">${d.timeline.slice(from, to).map((item) => rt.views.render('collab/_timeline_item', { ...loc, item })).join('')}</ul>`;
+    if (req.query._w === 'older') {
+      const before = Math.max(0, Math.min(d.timeline.length, parseInt(req.query.before, 10) || 0));
+      const from = Math.max(0, before - CW.DISCUSSION_STEP);
+      return { items: [items(from, before)], cursor: from, more: from > 0 };
+    }
+    const from = d.timeline.length - CW.DISCUSSION_STEP;
+    d.tlOlder = kit.widgets.older({ src: kit.urlWith(req, { _w: 'older' }), cursor: from, more: true, items: items(from), label: 'Activity', id: 'notes-list', cls: 'notes-box', begin: 'This is the start of the activity.' });
+  }
+  return null;
+}
 
 let CTX = null;
 
@@ -28,9 +61,11 @@ async function collab(app, opts = {}) {
   const ctx = {
     kit, code, U, A, I, L, git, site: opts.site || null,
     // render a collab page with its stylesheet/script
-    view: (reply, name, data = {}, status) => reply.render(`collab/${name}`, {
-      U, today: kit.nowSql().slice(0, 10), ...data, styles: STYLES.concat(data.styles || []), scripts: SCRIPTS.concat(data.scripts || []),
-    }, status),
+    view: (reply, name, data = {}, status) => {
+      const d = { U, today: kit.nowSql().slice(0, 10), ...data, styles: STYLES.concat(data.styles || []), scripts: SCRIPTS.concat(data.scripts || []) };
+      const json = widgetView(reply, name, d); // widget slots (../lib/widgets.js): chunk requests answer JSON
+      return json || reply.render(`collab/${name}`, d, status);
+    },
     back: (req, fallback) => { const b = U.str(req.body && (req.body.back || req.body.redirect_to)); return b.startsWith('/') && !b.startsWith('//') ? b : fallback; },
     usersByNames: (names) => {
       const out = [];

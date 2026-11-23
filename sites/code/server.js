@@ -68,6 +68,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const kit = require('../../kit');
 const code = require('./lib/code');
+const CW = require('./lib/widgets');
 const kitRequire = (m) => require(require.resolve(m, { paths: [path.join(__dirname, '..', '..', 'kit')] }));
 
 const COLLAB_DIR = path.join(__dirname, 'collab');
@@ -85,6 +86,8 @@ const site = kit.site({
   dir: __dirname,
   db: { mode: 'overlay', file: 'base.db', cacheMB: 64 },
   clock: { start: '2023-04-27T16:00:00Z' },
+  // scenario widget slots (off unless POST /__rl/reset {scenario: {widgets}}; lib/widgets.js, docs/WIDGETS.md)
+  widgets: CW.SLOTS,
   auth: {
     loginPath: '/users/sign_in',
     findUser: (db, login) => {
@@ -150,6 +153,7 @@ function locals(req) {
     enc: code.encPath,
     loginPath: '/users/sign_in',
     logoutPath: '/users/sign_out',
+    ...CW.locals(),
   };
 }
 

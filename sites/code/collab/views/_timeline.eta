@@ -2,58 +2,5 @@
 <% const X = it.X, U = X.U, kind = it.kind, T = it.target, P = it.project, isMr = kind === 'merge_request';
    const md = (s) => X.md(s, { project: P, breaks: true }); %>
 <ul id="notes-list" class="notes main-notes-list timeline">
-<% for (const item of it.timeline) { %>
-  <% if (item.kind === 'note') { const n = item.n; %>
-  <li class="timeline-entry note<%= n.internal ? ' internal-note' : '' %>" id="note_<%= n.id %>" data-note-id="<%= n.id %>">
-    <a href="/<%= n.username %>" aria-hidden="true" tabindex="-1"><%~ X.avatar({ id: n.author_id, username: n.username, name: n.author_name, avatar: n.author_avatar }, 32) %></a>
-    <div class="timeline-content">
-      <div class="note-header">
-        <a class="note-author" href="/<%= n.username %>"><%= n.author_name || 'Ghost User' %></a> <span class="note-username">@<%= n.username %></span>
-        <a class="note-time" href="#note_<%= n.id %>"><%~ X.time(n.created_at) %></a>
-        <% if (n.internal) { %><span class="internal-badge">Internal note</span><% } %>
-        <span class="note-actions">
-          <% if (n.author_id === T.author_id) { %><span class="note-role">Author</span><% } %>
-          <% if (X.user && it.canComment) { %><button type="button" class="btn-link" data-toggle="#reply-<%= n.id %>">Reply</button><% } %>
-          <% if (X.user && X.user.id === n.author_id) { %><button type="button" class="btn-link" data-toggle="#edit-<%= n.id %>">Edit</button><% } %>
-          <% if (X.user && (X.user.id === n.author_id || P.access >= 40)) { %><form class="inline-form" method="post" action="<%= it.noteBase %>/<%= n.id %>/delete" data-confirm="Delete this comment?"><%~ X.csrfInput() %><button class="btn-link" type="submit">Delete</button></form><% } %>
-        </span>
-      </div>
-      <div class="timeline-discussion-body note-body"><div class="md md-plain note-text"><%~ md(n.body) %></div><% if (n.last_edited_at) { %><div class="edited-text">Edited <%~ X.time(n.last_edited_at) %></div><% } %></div>
-      <% if (X.user && X.user.id === n.author_id) { %>
-      <form id="edit-<%= n.id %>" class="discussion-reply-form" method="post" action="<%= it.noteBase %>/<%= n.id %>/edit" hidden><%~ X.csrfInput() %>
-        <label class="sr-only" for="edit-body-<%= n.id %>">Edit comment</label><textarea id="edit-body-<%= n.id %>" name="note"><%= n.body %></textarea>
-        <div class="note-form-actions"><button class="btn btn-confirm btn-sm" type="submit">Save comment</button></div></form><% } %>
-      <% if (item.replies && item.replies.length) { %>
-      <ul class="discussion-replies">
-        <% for (const r of item.replies) { %><li id="note_<%= r.id %>" data-note-id="<%= r.id %>">
-          <div class="gap8"><%~ X.avatar({ id: r.author_id, username: r.username, name: r.author_name, avatar: r.author_avatar }, 20) %><a class="note-author" href="/<%= r.username %>"><strong><%= r.author_name %></strong></a> <span class="muted">@<%= r.username %> · <%~ X.time(r.created_at) %></span>
-          <% if (X.user && (X.user.id === r.author_id || P.access >= 40)) { %><form class="inline-form" method="post" action="<%= it.noteBase %>/<%= r.id %>/delete" data-confirm="Delete this comment?"><%~ X.csrfInput() %><button class="btn-link" type="submit">Delete</button></form><% } %></div>
-          <div class="timeline-discussion-body"><div class="md md-plain note-text"><%~ md(r.body) %></div></div>
-        </li><% } %>
-      </ul><% } %>
-      <% if (X.user && it.canComment) { %>
-      <form id="reply-<%= n.id %>" class="discussion-reply-form" method="post" action="<%= it.noteBase %>" hidden><%~ X.csrfInput() %>
-        <input type="hidden" name="discussion_id" value="<%= n.discussion_id %>">
-        <label class="sr-only" for="reply-body-<%= n.id %>">Reply</label><textarea id="reply-body-<%= n.id %>" name="note" placeholder="Reply…"></textarea>
-        <div class="note-form-actions"><button class="btn btn-confirm btn-sm" type="submit">Reply</button></div></form><% } %>
-    </div>
-  </li>
-  <% } else if (item.kind === 'system') { const n = item.n; %>
-  <li class="timeline-entry system-note" id="note_<%= n.id %>" data-system-action="<%= n.system_action || '' %>">
-    <span class="sys-dot" aria-hidden="true"></span>
-    <span><a href="/<%= n.username %>"><%= n.author_name || 'Ghost User' %></a> <span class="system-note-message"><%~ X.md(n.body, { project: P }) %></span> <span class="muted">· <%~ X.time(n.created_at) %></span></span>
-  </li>
-  <% } else if (item.kind === 'labels') { const e = item.e; const add = item.labels.filter((x) => x.action === 'add'), rem = item.labels.filter((x) => x.action !== 'add');
-       const pills = (ls) => ls.map((x) => x.label_title ? include('collab/_label', { l: { title: x.label_title, color: x.label_color || '#ccc' }, U, href: P.url + (isMr ? '/-/merge_requests' : '/-/issues') + '?label_name[]=' + encodeURIComponent(x.label_title) }) : '<span class="muted">(deleted label)</span>').join(' '); %>
-  <li class="timeline-entry system-note" data-system-action="label">
-    <span class="sys-dot" aria-hidden="true"></span>
-    <span><a href="/<%= e.username %>"><%= e.author_name || 'Ghost User' %></a> <span class="system-note-message"><% if (add.length) { %>added <%~ pills(add) %><% } %><% if (add.length && rem.length) { %> and <% } %><% if (rem.length) { %>removed <%~ pills(rem) %><% } %> label<%= item.labels.length > 1 ? 's' : '' %></span> <span class="muted">· <%~ X.time(e.created_at) %></span></span>
-  </li>
-  <% } else { const e = item.e; %>
-  <li class="timeline-entry system-note" data-system-action="<%= e.kind %>">
-    <span class="sys-dot" aria-hidden="true"></span>
-    <span><a href="/<%= e.username %>"><%= e.author_name || 'Ghost User' %></a> <span class="system-note-message"><% if (e.kind === 'state') { %><%= e.state === 'reopened' ? 'reopened' : e.state %><% } else if (e.kind === 'milestone') { %><% if (e.action === 'add') { %>changed milestone to <a href="<%= P.url %>/-/milestones/<%= e.milestone_iid %>">%<%= e.milestone_title %></a><% } else { %>removed milestone<% if (e.milestone_title) { %> %<%= e.milestone_title %><% } %><% } %><% } %></span> <span class="muted">· <%~ X.time(e.created_at) %></span></span>
-  </li>
-  <% } %>
-<% } %>
+<% for (const item of it.timeline) { %><%~ include('collab/_timeline_item', { ...it, item }) %><% } %>
 </ul>

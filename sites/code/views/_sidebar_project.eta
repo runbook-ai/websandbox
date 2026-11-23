@@ -28,7 +28,7 @@
   <ul class="sidebar-nav">
   <% for (const s of sections) { const open = on(s.key) || (s.key === 'project' && ['activity', 'labels', 'members'].includes(nav)); %>
     <li class="sidebar-item<%= open ? ' active' : '' %>">
-      <a class="sidebar-top" href="<%= s.href %>"<%~ nav === s.key ? ' aria-current="page"' : '' %>><span class="sb-icon sb-<%= s.icon %>" aria-hidden="true"></span><span><%= s.label %></span><% if (s.count != null) { %><span class="badge badge-pill"><%= Number(s.count).toLocaleString('en-US') %></span><% } %></a>
+      <a class="sidebar-top" href="<%= s.href %>"<%~ nav === s.key ? ' aria-current="page"' : '' %>><span class="sb-icon sb-<%= s.icon %>" aria-hidden="true"></span><span><%= s.label %></span><% if (s.count != null && !(it.it && it.it.wCounts)) { %><span class="badge badge-pill"><%= Number(s.count).toLocaleString('en-US') %></span><% } %></a>
       <% if (open && s.items.length) { %><ul class="sidebar-sub">
         <% for (const [k, l, h] of s.items) { %><li><a href="<%= h %>"<%~ cur(k) %>><%= l %></a></li><% } %>
       </ul><% } %>
