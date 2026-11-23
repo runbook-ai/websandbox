@@ -28,10 +28,12 @@ FILES = [
     ('generated', 'tasks/forum/generated.jsonl'), ('generated', 'tasks/store/generated-shopping.jsonl'),
     ('generated', 'tasks/store/generated-admin.jsonl'), ('generated', 'tasks/code/generated.jsonl'),
     ('generated', 'tasks/wiki/generated.jsonl'), ('generated', 'tasks/map/generated.jsonl'),
+    # newer sites (appended last so the earlier sites' seeded draws are unchanged)
+    ('generated', 'tasks/mail/generated.jsonl'), ('generated', 'tasks/lab/generated.jsonl'),
 ]
 GRADER_DIR = {'shopping': 'store', 'shopping_admin': 'store', 'gitlab': 'code', 'forum': 'forum', 'reddit': 'forum',
-              'wiki': 'wiki', 'map': 'map'}
-SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map']
+              'wiki': 'wiki', 'map': 'map', 'mail': 'mail', 'lab': 'lab'}
+SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map', 'mail', 'lab']
 
 
 def jl(path):
@@ -112,7 +114,8 @@ def normalise(source, path, t):
         'task_id': t['task_id'], 'intent_template_id': t.get('intent_template_id'), 'intent_template': t.get('intent_template'),
         'instantiation_dict': t.get('instantiation_dict'), 'file': path,
     }
-    for k in ('reference_answer', 'reference_url', 'ref', 'evidence', 'reference_sql', 'original_intent', 'phrasing'):
+    for k in ('reference_answer', 'reference_url', 'ref', 'evidence', 'reference_sql', 'original_intent', 'phrasing',
+              'scenario', 'aids', 'aid_variant', 'family', 'split_hint', 'heldout_reason'):
         if k in t: out[k] = t[k]
     out['changes'] = t.get('changes') or []
     if t.get('status') == 'dropped': out['drop_reason'] = t.get('drop_reason')
@@ -167,6 +170,7 @@ def main():
     old_train_ids, old_held_ids, old_lite_ids = set(old['train_task_ids']), set(old['heldout_task_ids']), set(old['lite_task_ids'])
     rows, dropped = [], []
     for source, path in FILES:
+        if not os.path.exists(os.path.join(ROOT, path)): continue
         for t in jl(path):
             r = normalise(source, path, t)
             if source == 'webarena':
@@ -199,6 +203,11 @@ def main():
         if r['source'] == 'generated': gen[r['site']][r['template']].append(r)
     for site in SITE_ORDER:
         if site not in gen: continue
+        hints = {tp: rs[0].get('split_hint') for tp, rs in gen[site].items()}
+        if all(hints.values()):  # the generator assigned its own template-disjoint split (lab)
+            for tp in gen[site]:
+                split[tp], why[tp] = hints[tp], 'gen-hint'
+            continue
         h = pick_holdout(gen[site], GEN_FRAC, rnd, cover=True)
         for tp in gen[site]:
             split[tp], why[tp] = ('heldout' if tp in h else 'train'), 'gen-draw'
