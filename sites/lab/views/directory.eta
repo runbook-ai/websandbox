@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/directory.js']; %>
+<h1>Customer directory</h1>
+<p class="muted">Contacts at customer accounts. Data from the directory API (see Developers).</p>
+<form id="dir-filter" class="inline-form" role="search"><input id="dir-q" type="search" placeholder="Filter by name, company or city" aria-label="Filter contacts"> <button type="submit">Apply</button></form>
+<p id="dir-meta" class="muted" aria-live="polite"></p>
+<table class="grid"><thead><tr><th>Name</th><th>Company</th><th>City</th><th>Role</th><th>Email</th></tr></thead><tbody id="dir-rows"></tbody></table>
+<div class="pager-js"><button type="button" id="dir-prev">Previous</button> <span id="dir-page"></span> <button type="button" id="dir-next">Next page</button></div>

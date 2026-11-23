@@ -1,0 +1,5 @@
+<% layout('frame-layout', { title: 'Payment verification', bodyClass: 'verify' }) %>
+<div class="verify-box">
+  <span class="lock" aria-hidden="true">&#128274;</span>
+  <span>Verified merchant session &middot; reference <b><%= it.i.verify_ref %></b></span>
+</div>

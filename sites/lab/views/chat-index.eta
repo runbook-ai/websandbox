@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<h1>Chat</h1>
+<ul class="list">
+<% for (const c of it.rows) { %>
+  <li><a href="/chat/<%= c.name %>">#<%= c.name %></a> <span class="muted"><%= c.topic %></span><% if (c.has_draft) { %> <span class="badge">draft</span><% } %>
+  <span class="muted right">last message <%= it.lab.shortDate(c.last_at) %> <%= it.lab.hhmm(c.last_at) %> UTC</span></li>
+<% } %>
+</ul>

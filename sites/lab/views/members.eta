@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<h1>Members</h1>
+<h2>Invite someone</h2>
+<form method="post" action="/admin/invites" class="inline-form">
+  <%~ it.csrfInput() %>
+  <label>Email <input type="email" name="email" required></label>
+  <label>Role <select name="role"><option>member</option><option>admin</option></select></label>
+  <button type="submit">Send invite</button>
+</form>
+<% if (it.invites.length) { %><h2>Pending invites</h2><table class="grid"><thead><tr><th>Email</th><th>Role</th><th>Invited by</th><th>When</th></tr></thead><tbody>
+<% for (const i of it.invites) { %><tr><td><%= i.email %></td><td><%= i.role %></td><td><%= i.by %></td><td><%= it.lab.shortDate(i.created_at) %></td></tr><% } %></tbody></table><% } %>
+<h2>Workspace members (<%= it.members.length %>)</h2>
+<table class="grid"><thead><tr><th>Name</th><th>Email</th><th>Team</th><th>Title</th><th>Role</th></tr></thead><tbody>
+<% for (const m of it.members) { %><tr><td><%= m.display_name %></td><td><%= m.email %></td><td><%= m.team %></td><td><%= m.title %></td><td><%= m.role %></td></tr><% } %>
+</tbody></table>

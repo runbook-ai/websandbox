@@ -1,0 +1,13 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/expense.js']; const v = it.values || {}, e = it.errors || {}; %>
+<h1>New expense claim</h1>
+<form id="expense-form" method="post" action="/expenses" class="stack narrow" novalidate>
+  <%~ it.csrfInput() %>
+  <%~ include('kit/field', { name: 'spent_on', label: 'Date', type: 'date', value: v.spent_on, error: e.spent_on, required: true }) %>
+  <%~ include('kit/field', { name: 'category', label: 'Category', type: 'select', options: [['', 'Choose...'], ...it.cats.map((c) => [c, c])], value: v.category, error: e.category, required: true }) %>
+  <%~ include('kit/field', { name: 'amount', label: 'Amount (USD)', value: v.amount, error: e.amount, required: true }) %>
+  <%~ include('kit/field', { name: 'merchant', label: 'Merchant', value: v.merchant, error: e.merchant, required: true }) %>
+  <%~ include('kit/field', { name: 'description', label: 'Description', value: v.description, error: e.description, required: true }) %>
+  <button type="submit">Submit claim</button>
+  <p id="expense-status" class="muted" aria-live="polite"></p>
+</form>

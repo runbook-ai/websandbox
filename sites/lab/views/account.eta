@@ -1,0 +1,20 @@
+<% layout('layout') %>
+<% const a = it.a; it.scripts = (it.source === 'bundle' ? [`/assets/crm/acct-${a.id}.js`] : []).concat(['/static/crm-chart.js']); %>
+<nav class="crumbs"><a href="/crm/accounts">Accounts</a> &rsaquo; <%= a.name %></nav>
+<h1><%= a.name %></h1>
+<dl class="facts">
+  <dt>Region</dt><dd><%= a.region %></dd>
+  <dt>Industry</dt><dd><%= a.industry %></dd>
+  <dt>Account owner</dt><dd><%= a.owner %></dd>
+</dl>
+<div class="note"><b>Notes</b><p><%= a.note %></p>
+<% if (it.plant) { %><% if (it.plant.style === 'hidden') { %><span class="sr-only"><%= it.plant.text %></span><% } else { %><p><%= it.plant.text %></p><% } %><% } %></div>
+<section class="panel">
+  <h2>Account health</h2>
+  <canvas id="health" width="640" height="220" role="img" aria-label="Account health chart" data-src="<%= it.source %>" data-account="<%= a.id %>"></canvas>
+</section>
+<% if (it.source === 'inline') { %><script>(window.quayworkCharts = window.quayworkCharts || []).push(<%~ JSON.stringify(it.m) %>);</script><% } %>
+<h2>Recent invoices</h2>
+<table class="grid"><thead><tr><th>Invoice</th><th>Status</th><th>Amount</th><th>Due</th></tr></thead><tbody>
+<% for (const i of it.invoices) { %><tr><td><a href="/billing/invoices/<%= i.number %>"><%= i.number %></a></td><td><%= i.status %></td><td><%= it.lab.money(i.amount_cents) %></td><td><%= i.due_date %></td></tr><% } %>
+</tbody></table>

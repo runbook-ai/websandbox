@@ -1,0 +1,3 @@
+<% layout('layout') %>
+<h1>This form was already submitted</h1>
+<p>Each registration form can be sent once. <a href="/events/<%= it.e.slug %>/register">Open a new registration form</a> to register another attendee, or check the <a href="/events/<%= it.e.slug %>">attendee list</a>.</p>

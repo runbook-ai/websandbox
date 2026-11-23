@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% const v = it.values || {}, er = it.errors || {}; %>
+<nav class="crumbs"><a href="/events">Events</a> &rsaquo; <a href="/events/<%= it.e.slug %>"><%= it.e.title %></a> &rsaquo; Register</nav>
+<h1>Register for <%= it.e.title %></h1>
+<% if (it.done) { %><div class="kit-flash kit-flash-success" role="status">Registered <%= it.done %>. You can register another attendee below.</div><% } %>
+<% if (it.limited) { %><div class="kit-flash kit-flash-error" role="alert">You are registering attendees too quickly. Wait <%= it.limited %> seconds, then submit again.</div><% } %>
+<form method="post" action="/events/<%= it.e.slug %>/register" class="stack narrow">
+  <%~ it.csrfInput() %>
+  <input type="hidden" name="form_token" value="<%= it.token %>">
+  <%~ include('kit/field', { name: 'name', label: 'Attendee name', value: v.name, error: er.name, required: true }) %>
+  <%~ include('kit/field', { name: 'email', label: 'Email', type: 'email', value: v.email, error: er.email, required: true }) %>
+  <%~ include('kit/field', { name: 'team', label: 'Team', type: 'select', options: [['', 'Choose...'], ...it.teams.map((t) => [t, t])], value: v.team, error: er.team, required: true }) %>
+  <%~ include('kit/field', { name: 'dietary', label: 'Dietary needs', type: 'select', options: it.diets.map((t) => [t, t]), value: v.dietary || 'None', error: er.dietary, required: true }) %>
+  <button type="submit">Register</button>
+</form>

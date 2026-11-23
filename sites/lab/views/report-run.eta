@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/jobwait.js']; %>
+<nav class="crumbs"><a href="/reports">Usage reports</a> &rsaquo; <%= it.rep.team %>, <%= it.rep.period %></nav>
+<h1>Usage report: <%= it.rep.team %>, <%= it.rep.period %></h1>
+<% if (it.r.status !== 'done') { %>
+<div id="job" class="job" data-poll="<%= it.pollUrl %>" data-rerender="<%= it.rerender ? '1' : '' %>">
+  <span class="spin" role="status" aria-label="Working"></span> <span class="job-label">Generating report...</span>
+</div>
+<% } else { %>
+<div class="report">
+  <p class="ok">Report ready.</p>
+  <dl class="facts"><dt>Active users</dt><dd><%= it.rep.active_users.toLocaleString('en-US') %></dd><dt>Sessions</dt><dd><%= it.rep.sessions.toLocaleString('en-US') %></dd>
+  <dt>Report code</dt><dd><code><%= it.rep.code %></code></dd></dl>
+</div>
+<% } %>

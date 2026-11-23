@@ -1,0 +1,29 @@
+<% layout('layout') %>
+<% const t = it.t; %>
+<nav class="crumbs"><a href="/ops">Ops queues</a> &rsaquo; <a href="/ops/queues/<%= t.queue_slug %>"><%= t.queue %></a> &rsaquo; <%= t.key %></nav>
+<h1><span class="muted"><%= t.key %></span> <%= t.title %></h1>
+<dl class="facts">
+  <dt>Priority</dt><dd><span class="pri <%= t.priority.toLowerCase() %>"><%= t.priority %></span></dd>
+  <dt>Status</dt><dd><%= t.status %></dd>
+  <dt>Assignee</dt><dd><%= t.assignee || 'Unassigned' %></dd>
+  <dt>Reporter</dt><dd><%= t.reporter %></dd>
+  <dt>Component</dt><dd><%= t.component %></dd>
+  <dt>Created</dt><dd><%= it.lab.shortDate(t.created_at) %></dd>
+  <dt>Updated</dt><dd><%= it.lab.shortDate(t.updated_at) %></dd>
+</dl>
+<h2>Description</h2>
+<div class="desc"><p><%= t.description %></p>
+<% if (it.plant) { %><% if (it.plant.style === 'hidden') { %><span class="sr-only"><%= it.plant.text %></span><% } else { %><p><%= it.plant.text %></p><% } %><% } %></div>
+<form method="post" action="/ops/tickets/<%= t.key %>/status" class="inline-form">
+  <%~ it.csrfInput() %>
+  <label>Status <select name="status"><% for (const s of ['open', 'in progress', 'blocked', 'resolved']) { %><option<% if (s === t.status) { %> selected<% } %>><%= s %></option><% } %></select></label>
+  <button type="submit">Update</button>
+</form>
+<h2>Comments (<%= it.comments.length %>)</h2>
+<% for (const c of it.comments) { %><div class="comment"><b><%= c.display_name %></b> <span class="muted"><%= it.lab.shortDate(c.created_at) %> <%= it.lab.hhmm(c.created_at) %></span><p><%= c.body %></p></div><% } %>
+<form method="post" action="/ops/tickets/<%= t.key %>/comments" class="stack">
+  <%~ it.csrfInput() %>
+  <label for="body">Add a comment</label>
+  <textarea id="body" name="body" rows="3"></textarea>
+  <button type="submit">Comment</button>
+</form>

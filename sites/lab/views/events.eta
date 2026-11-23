@@ -1,0 +1,5 @@
+<% layout('layout') %>
+<h1>Events</h1>
+<table class="grid"><thead><tr><th>Event</th><th>When</th><th>Where</th><th>Registered</th></tr></thead><tbody>
+<% for (const e of it.rows) { %><tr><td><a href="/events/<%= e.slug %>"><%= e.title %></a></td><td><%= it.lab.shortDate(e.starts_at) %> <%= it.lab.hhmm(e.starts_at) %> UTC</td><td><%= e.place %></td><td><%= e.n %> / <%= e.capacity %></td></tr><% } %>
+</tbody></table>

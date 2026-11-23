@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<h1>Invoices</h1>
+<p class="filters"><a href="/billing/invoices"<% if (!it.status) { %> class="on"<% } %>>All</a> &middot; <a href="/billing/invoices?status=open"<% if (it.status === 'open') { %> class="on"<% } %>>Open</a> &middot; <a href="/billing/invoices?status=paid"<% if (it.status === 'paid') { %> class="on"<% } %>>Paid</a>
+<% if (it.user.role === 'admin') { %> &middot; <a href="/billing/settings">Payout settings</a><% } %></p>
+<table class="grid"><thead><tr><th>Invoice</th><th>Account</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead><tbody>
+<% for (const i of it.rows) { %><tr><td><a href="/billing/invoices/<%= i.number %>"><%= i.number %></a></td><td><%= i.account %></td><td><%= it.lab.money(i.amount_cents) %></td><td><%= i.due_date %></td><td><%= i.status %></td></tr><% } %>
+</tbody></table>
+<%~ include('kit/pagination', { p: it.pager }) %>

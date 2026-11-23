@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<nav class="crumbs"><a href="/releases">Releases</a> &rsaquo; <%= it.r.component %> <%= it.r.version %></nav>
+<h1><%= it.r.component %> <%= it.r.version %></h1>
+<dl class="facts">
+  <dt>Channel</dt><dd><%= it.r.channel %></dd>
+  <dt>Released</dt><dd><%= it.lab.shortDate(it.r.released_at) %> <%= it.lab.hhmm(it.r.released_at) %> UTC</dd>
+  <dt>Build</dt><dd><code><%= it.r.build %></code></dd>
+  <dt>Checksum</dt><dd><code><%= it.r.checksum %></code></dd>
+</dl>
+<h2>Notes</h2><p><%= it.r.notes %></p>

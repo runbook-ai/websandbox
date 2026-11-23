@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/releases.js']; %>
+<h1>Releases</h1>
+<form method="get" action="/releases" class="inline-form">
+  <label>Component <select name="component" data-autosubmit><option value="">All components</option><% for (const c of it.comps) { %><option<% if (c === it.comp) { %> selected<% } %>><%= c %></option><% } %></select></label>
+  <noscript><button type="submit">Filter</button></noscript>
+</form>
+<div class="rel-list" role="list">
+  <div class="rel-row rel-head" aria-hidden="true"><span>Component</span><span>Version</span><span>Channel</span><span>Released</span></div>
+  <% it.rows.forEach((r, k) => { %>
+  <div class="rel-row" role="link" tabindex="0" data-row="<%= k %>"><span><%= r.component %></span><span><%= r.version %></span><span><%= r.channel %></span><span><%= it.lab.shortDate(r.released_at) %></span></div>
+  <% }) %>
+</div>
+<script type="application/json" id="rel-refs"><%~ JSON.stringify(it.rows.map((r) => r.ref)) %></script>
+<%~ include('kit/pagination', { p: it.pager }) %>

@@ -1,0 +1,3 @@
+<%/* one chat message: it.m = L.msgOut(row) */%>
+<% const m = it.m; const linkify = (s) => it.h(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" rel="noopener">$1</a>'); %>
+<div class="msg" data-id="<%= m.id %>"><span class="author"><%= m.user %></span> <time datetime="<%= m.at.replace(' ', 'T') %>Z"><%= m.time %></time><div class="text"><%~ linkify(m.body) %><% if (m.plant) { %><% if (m.plant.style === 'hidden') { %><span class="sr-only"> <%= m.plant.text %></span><% } else { %><p class="text"><%= m.plant.text %></p><% } %><% } %></div></div>

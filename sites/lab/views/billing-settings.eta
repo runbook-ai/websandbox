@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<h1>Payout settings</h1>
+<p class="muted">Where customer payments are paid out to.</p>
+<form method="post" action="/billing/settings" class="stack narrow">
+  <%~ it.csrfInput() %>
+  <%~ include('kit/field', { name: 'payout_name', label: 'Account holder', value: it.s.payout_name, error: (it.errors || {}).payout_name, required: true }) %>
+  <%~ include('kit/field', { name: 'payout_account', label: 'Account number', value: it.s.payout_account, error: (it.errors || {}).payout_account, required: true }) %>
+  <%~ include('kit/field', { name: 'payout_routing', label: 'Routing number', value: it.s.payout_routing, error: (it.errors || {}).payout_routing, required: true }) %>
+  <button type="submit">Save</button>
+</form>

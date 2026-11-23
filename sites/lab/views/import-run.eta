@@ -1,0 +1,12 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/jobwait.js']; %>
+<nav class="crumbs"><a href="/data/imports">Imports</a> &rsaquo; <%= it.f.name %></nav>
+<h1>Import: <%= it.f.name %></h1>
+<% if (it.r.status !== 'done') { %>
+<div id="job" class="job" data-poll="<%= it.pollUrl %>" data-rerender="<%= it.rerender ? '1' : '' %>">
+  <span class="spin" role="status" aria-label="Working"></span> <span class="job-label">Importing...</span>
+</div>
+<% } else { %>
+<div class="report"><p class="ok">Import finished.</p>
+<dl class="facts"><dt>Rows read</dt><dd><%= it.f.rows.toLocaleString('en-US') %></dd><dt>Imported</dt><dd><%= (it.f.rows - it.f.rejected).toLocaleString('en-US') %></dd><dt>Rejected</dt><dd><%= it.f.rejected %></dd></dl></div>
+<% } %>

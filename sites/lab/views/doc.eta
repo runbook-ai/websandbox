@@ -1,0 +1,17 @@
+<% layout('layout', { bodyClass: 'doc-page' }) %>
+<% it.scripts = ['/static/docgrid.js']; %>
+<div class="doc-toolbar">
+  <strong><%= it.d.title %></strong>
+  <span class="muted">Owner: <%= it.d.owner %> &middot; updated <%= it.lab.shortDate(it.d.updated_at) %></span>
+  <span class="sp"></span>
+  <button type="button" id="convtoggle" title="Conversation" aria-pressed="<%= it.pane === 'open' ? 'true' : 'false' %>">Conversation</button>
+</div>
+<div class="doc-main" id="doc-main">
+  <div class="doc-sheets">
+    <div class="doc-tabs" role="tablist">
+      <% it.sheets.forEach((s, i) => { %><button type="button" class="tab" role="tab" data-sheet="<%= i %>" aria-selected="<%= i === 0 ? 'true' : 'false' %>"><%= s.name %></button><% }) %>
+    </div>
+    <div id="grid-host" class="grid-host"></div>
+  </div>
+</div>
+<script type="application/json" id="doc-data"><%~ JSON.stringify({ slug: it.d.slug, pane: it.pane, sheets: it.sheets }).replace(/</g, '\\u003c') %></script>

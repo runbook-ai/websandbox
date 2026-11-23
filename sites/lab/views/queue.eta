@@ -1,0 +1,9 @@
+<% layout('layout', { bodyClass: it.cfg.scroll === 'page' ? 'page-scroll' : 'container-scroll' }) %>
+<% it.scripts = ['/static/vlist.js']; %>
+<nav class="crumbs"><a href="/ops">Ops queues</a> &rsaquo; <%= it.q.name %></nav>
+<h1><%= it.q.name %></h1>
+<p class="muted"><%= it.q.n %> tickets &middot; <%= it.q.team %> team &middot; most recently updated first</p>
+<div class="vlist-head" aria-hidden="true"><span class="key">Key</span><span class="title">Title</span><span class="pri">Priority</span><span class="status">Status</span><span class="asg">Assignee</span><span class="upd">Updated</span></div>
+<div id="vlist" class="vlist vlist-<%= it.cfg.kind %> vlist-<%= it.cfg.scroll %>" role="list" aria-label="Tickets in <%= it.q.name %>" tabindex="0"
+  data-slug="<%= it.q.slug %>" data-total="<%= it.q.n %>" data-kind="<%= it.cfg.kind %>" data-scroll="<%= it.cfg.scroll %>" data-row-h="<%= it.cfg.kind === 'grid' ? 30 : it.cfg.rowH %>"></div>
+<p class="muted vlist-foot">End of queue.</p>

@@ -1,0 +1,12 @@
+<% layout('layout') %>
+<h1>Accounts</h1>
+<form method="get" action="/crm/accounts" class="inline-form" role="search">
+  <input type="search" name="q" value="<%= it.q %>" placeholder="Search accounts" aria-label="Search accounts"> <button type="submit">Search</button>
+</form>
+<table class="grid">
+  <thead><tr><th>Account</th><th>Region</th><th>Industry</th><th>Owner</th></tr></thead>
+  <tbody>
+  <% for (const a of it.rows) { %><tr><td><a href="/crm/accounts/<%= a.id %>"><%= a.name %></a></td><td><%= a.region %></td><td><%= a.industry %></td><td><%= a.owner %></td></tr><% } %>
+  </tbody>
+</table>
+<%~ include('kit/pagination', { p: it.pager }) %>

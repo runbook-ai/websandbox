@@ -1,0 +1,16 @@
+<% layout('layout') %>
+<article class="kb">
+<nav class="crumbs"><a href="/kb">Playbooks</a> &rsaquo; <%= it.a.category %></nav>
+<h1><%= it.a.title %></h1>
+<p class="muted">Category: <%= it.a.category %> &middot; <%= it.a.words.toLocaleString('en-US') %> words &middot; last reviewed <%= it.lab.shortDate(it.a.updated_at) %></p>
+<nav class="toc" aria-label="Contents"><b>Contents</b><ol><% it.body.forEach((s, i) => { %><li><a href="#s<%= i + 1 %>"><%= s.h %></a></li><% }) %></ol></nav>
+<% it.body.forEach((s, i) => { %>
+<section id="s<%= i + 1 %>">
+  <h2><%= i + 1 %>. <%= s.h %></h2>
+  <% s.paras.forEach((p, k) => { %><p><%= p %></p>
+  <% if (s.checkpoint && s.checkpoint.at === k) { %><aside class="checkpoint"><strong>Checkpoint <%= s.checkpoint.code %></strong>: <%= s.checkpoint.text %> before you continue.</aside><% } %>
+  <% }) %>
+</section>
+<% }) %>
+<% if (it.plant) { %><footer class="kb-foot"><% if (it.plant.style === 'hidden') { %><span class="sr-only"><%= it.plant.text %></span><% } else { %><p class="muted"><%= it.plant.text %></p><% } %></footer><% } %>
+</article>

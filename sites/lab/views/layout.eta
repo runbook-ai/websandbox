@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.title ? it.title + ' - ' : '' %><%= it.site.title %></title>
+<link rel="stylesheet" href="/_kit/kit.css">
+<link rel="stylesheet" href="/static/lab.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<body class="skin-<%= it.skin.name %> theme-<%= it.skin.theme || 'light' %> lab<%= it.bodyClass ? ' ' + it.bodyClass : '' %>">
+<header class="lab-top">
+  <a class="lab-brand" href="/"><span class="lab-logo" aria-hidden="true">&#9634;</span> <%= it.site.title %></a>
+  <span class="lab-org">Halden Robotics</span>
+  <% if (it.user) { %>
+  <div class="lab-user">
+    <span title="<%= it.user.email %>"><%= it.user.display_name %></span>
+    <form method="post" action="/logout" class="inline"><%~ it.csrfInput() %><button type="submit" class="link">Sign out</button></form>
+  </div>
+  <% } %>
+</header>
+<div class="lab-body<%= it.user ? '' : ' no-nav' %>">
+<% if (it.user) { %>
+<nav class="lab-nav" aria-label="Workspace">
+  <% for (const n of it.nav) { if (n.id === 'admin' && it.user.role !== 'admin') continue; %>
+  <a href="<%= n.href %>"<% if (it.section === n.id) { %> aria-current="page" class="on"<% } %>><%= n.label %></a>
+  <% } %>
+</nav>
+<% } %>
+<main class="lab-main">
+<%~ include('kit/flash', { flashes: it.flashes }) %>
+<%~ it.body %>
+</main>
+</div>
+<script src="/_kit/kit.js" defer></script>
+<% for (const s of (it.scripts || [])) { %><script src="<%= s %>" defer></script>
+<% } %>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<h1>Planning docs</h1>
+<table class="grid">
+  <thead><tr><th>Document</th><th>Owner</th><th>Scope</th><th>Updated</th></tr></thead>
+  <tbody>
+  <% for (const d of it.rows) { %><tr><td><a href="/docs/<%= d.slug %>"><%= d.title %></a></td><td><%= d.owner %></td><td><%= d.scope %></td><td><%= it.lab.shortDate(d.updated_at) %></td></tr><% } %>
+  </tbody>
+</table>

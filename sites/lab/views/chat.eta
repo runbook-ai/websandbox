@@ -1,0 +1,26 @@
+<% layout('layout') %>
+<% const now = it.now; let prev = null; %>
+<div class="chat-wrap">
+  <aside class="chat-channels" aria-label="Channels">
+    <% for (const n of it.channels) { %><a href="/chat/<%= n %>"<% if (n === it.c.name) { %> aria-current="page" class="on"<% } %>>#<%= n %></a><% } %>
+  </aside>
+  <section class="chat-main">
+    <header class="chat-head"><b>#<%= it.c.name %></b> <span class="muted"><%= it.c.topic %></span></header>
+    <div id="chat-scroll" class="chat-scroll" tabindex="0" aria-label="Messages in #<%= it.c.name %>">
+      <div id="chat-top" class="chat-top"><%= it.hasMore ? '' : `This is the very beginning of #${it.c.name}.` %></div>
+      <div id="msgs">
+      <% for (const m of it.msgs) { if (m.day !== prev) { prev = m.day; %><div class="day" data-day="<%= m.day %>"><span><%= it.lab.dayLabel(m.day, now) %></span></div><% } %><%~ include('_msg', { m, h: it.h }) %><% } %>
+      </div>
+    </div>
+    <div id="composer" class="composer" data-editor="<%= it.editor %>" data-channel="<%= it.c.name %>">
+      <form method="post" action="/chat/<%= it.c.name %>" class="composer-fallback">
+        <%~ it.csrfInput() %>
+        <textarea name="body" rows="2" aria-label="Message #<%= it.c.name %>" placeholder="Message #<%= it.c.name %>"><%= it.draft %></textarea>
+        <button type="submit">Send</button>
+      </form>
+      <div class="composer-status muted" aria-live="polite"></div>
+    </div>
+  </section>
+</div>
+<script type="application/json" id="chat-init"><%~ JSON.stringify({ channel: it.c.name, hasMore: it.hasMore, draft: it.draft, today: it.today, yesterday: it.yesterday }).replace(/</g, '\\u003c') %></script>
+<% it.scripts = ['/static/editor.js', '/static/chat.js']; %>

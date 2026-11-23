@@ -1,0 +1,7 @@
+<% layout(it.layoutless ? 'frame-layout' : 'layout') %>
+<section class="error-page">
+  <h1><%= it.status === 404 ? 'Not found' : it.status === 403 ? 'Access denied' : it.status === 401 ? 'Sign in required' : it.status === 429 ? 'Slow down' : 'Something went wrong' %></h1>
+  <p class="muted">Error <%= it.status %></p>
+  <p><%= it.message %></p>
+  <p><a href="/">Back to Home</a></p>
+</section>

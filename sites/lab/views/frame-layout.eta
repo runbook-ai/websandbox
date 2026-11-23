@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= it.title || 'Quaywork' %></title>
+<link rel="stylesheet" href="/static/lab.css">
+</head>
+<body class="lab-frame<%= it.bodyClass ? ' ' + it.bodyClass : '' %>">
+<%~ it.body %>
+<% for (const s of (it.scripts || [])) { %><script src="<%= s %>" defer></script>
+<% } %>
+</body>
+</html>

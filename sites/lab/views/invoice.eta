@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% const i = it.i; it.scripts = ['/static/invoice.js']; %>
+<nav class="crumbs"><a href="/billing/invoices">Invoices</a> &rsaquo; <%= i.number %></nav>
+<h1>Invoice <%= i.number %></h1>
+<dl class="facts">
+  <dt>Account</dt><dd><a href="/crm/accounts/<%= i.account_id %>"><%= i.account %></a></dd>
+  <dt>Amount</dt><dd><%= it.lab.money(i.amount_cents) %></dd>
+  <dt>Issued</dt><dd><%= it.lab.shortDate(i.issued_at) %></dd>
+  <dt>Due</dt><dd><%= i.due_date %></dd>
+  <dt>Status</dt><dd><span id="inv-status" class="badge <%= i.status %>"><%= i.status === 'paid' ? 'Paid' : 'Open' %></span></dd>
+</dl>
+<div class="frames">
+  <section><h2>Finance note</h2><iframe class="frame-note" src="/embed/invoice-note/<%= i.number %>" title="Finance note"></iframe></section>
+  <section><h2>Payment</h2><iframe class="frame-pay" id="payframe" src="<%= it.payOrigin %>/pay/<%= i.pay_token %>" title="Payment" data-origin="<%= it.payOrigin %>"></iframe></section>
+</div>

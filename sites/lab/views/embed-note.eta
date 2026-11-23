@@ -1,0 +1,5 @@
+<% layout('frame-layout', { title: 'Finance note' }) %>
+<div class="note-widget">
+  <p><%= it.i.finance_note %></p>
+  <p><b>Purchase order:</b> <%= it.i.po_number %></p>
+</div>

@@ -1,0 +1,9 @@
+<% layout('layout') %>
+<nav class="crumbs"><a href="/events">Events</a> &rsaquo; <%= it.e.title %></nav>
+<h1><%= it.e.title %></h1>
+<p><%= it.lab.shortDate(it.e.starts_at) %> <%= it.lab.hhmm(it.e.starts_at) %> UTC &middot; <%= it.e.place %> &middot; capacity <%= it.e.capacity %></p>
+<p><a class="button" href="/events/<%= it.e.slug %>/register">Register an attendee</a></p>
+<h2>Attendees (<%= it.regs.length %>)</h2>
+<table class="grid"><thead><tr><th>Name</th><th>Team</th><th>Dietary</th></tr></thead><tbody>
+<% for (const r of it.regs) { %><tr><td><%= r.name %></td><td><%= r.team %></td><td><%= r.dietary %></td></tr><% } %>
+</tbody></table>

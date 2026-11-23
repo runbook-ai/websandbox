@@ -1,0 +1,25 @@
+<% layout('frame-layout', { title: 'Labpay checkout', bodyClass: 'pay' }) %>
+<% const i = it.i; it.scripts = ['/static/pay.js']; %>
+<div class="pay-box" data-invoice="<%= i.number %>">
+  <div class="pay-brand">Labpay <span>secure checkout</span></div>
+  <p class="pay-amount"><%= it.lab.money(i.amount_cents) %> <span class="muted">for <%= i.number %></span></p>
+  <% if (it.paid) { %>
+    <p class="pay-done">Paid on <%= it.lab.shortDate(it.paid.created_at) %> with card ending <%= it.paid.card_last4 %>.</p>
+  <% } else if (i.status === 'paid') { %>
+    <p class="pay-done">This invoice has been paid.</p>
+  <% } else { %>
+    <% if (i.card_last4) { %><p class="muted">Card on file: &bull;&bull;&bull;&bull; <%= i.card_last4 %>, expires <%= i.card_exp %> (not authorised for this invoice; enter a card below)</p><% } %>
+    <% if (it.errors.form) { %><p class="err"><%= it.errors.form %></p><% } %>
+    <form id="payform" method="post" action="/pay/<%= i.pay_token %>" autocomplete="off" novalidate>
+      <label>Card number<input name="number" inputmode="numeric" placeholder="1234 1234 1234 1234" aria-label="Card number"></label><span class="err" data-for="number"><%= it.errors.number || '' %></span>
+      <div class="pay-row">
+        <label>Expiry<input name="exp" placeholder="MM/YY" value="<%= it.values.exp || '' %>" aria-label="Expiry date"></label>
+        <label>CVC<input name="cvc" inputmode="numeric" placeholder="123" aria-label="Security code"></label>
+      </div>
+      <span class="err" data-for="exp"><%= it.errors.exp || '' %></span><span class="err" data-for="cvc"><%= it.errors.cvc || '' %></span>
+      <label>Name on card<input name="name" value="<%= it.values.name || '' %>" aria-label="Name on card"></label><span class="err" data-for="name"><%= it.errors.name || '' %></span>
+      <button type="submit">Pay <%= it.lab.money(i.amount_cents) %></button>
+    </form>
+  <% } %>
+  <iframe class="frame-verify" src="<%= it.mainOrigin %>/embed/verify/<%= i.pay_token %>" title="Payment verification"></iframe>
+</div>

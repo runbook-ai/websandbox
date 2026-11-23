@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<h1>Usage reports</h1>
+<form method="post" action="/reports/run" class="stack narrow">
+  <%~ it.csrfInput() %>
+  <label>Team <select name="team" required><option value="">Choose a team</option><% for (const t of it.teams) { %><option><%= t %></option><% } %></select></label>
+  <label>Period <select name="period" required><option value="">Choose a period</option><% for (const p of it.periods) { %><option><%= p %></option><% } %></select></label>
+  <button type="submit">Generate report</button>
+</form>
+<p class="muted">Reports are generated in the background and can take up to a minute.</p>
+<% if (it.runs.length) { %><h2>Your recent reports</h2><ul class="list"><% for (const r of it.runs) { %><li><a href="/reports/runs/<%= r.id %>"><%= r.team %>, <%= r.period %></a> <span class="muted"><%= r.status %> &middot; started <%= it.lab.hhmm(r.started_at) %> UTC</span></li><% } %></ul><% } %>

@@ -1,0 +1,18 @@
+<% layout('layout') %>
+<h1>Good afternoon, <%= it.user.display_name.split(' ')[0] %></h1>
+<div class="tiles">
+  <a class="tile" href="/ops"><b><%= it.tiles.openTickets %></b><span>open tickets assigned to you</span></a>
+  <a class="tile" href="/billing/invoices?status=open"><b><%= it.tiles.openInvoices %></b><span>open invoices</span></a>
+  <a class="tile" href="/chat"><b><%= it.tiles.channels %></b><span>chat channels</span></a>
+  <a class="tile" href="/events"><b><%= it.tiles.events %></b><span>upcoming events</span></a>
+</div>
+<h2>Your open tickets</h2>
+<table class="grid">
+  <thead><tr><th>Key</th><th>Title</th><th>Queue</th><th>Priority</th><th>Status</th></tr></thead>
+  <tbody>
+  <% for (const t of it.recent) { %>
+    <tr><td><a href="/ops/tickets/<%= t.key %>"><%= t.key %></a></td><td><%= t.title %></td><td><%= t.queue %></td><td><span class="pri <%= t.priority.toLowerCase() %>"><%= t.priority %></span></td><td><%= t.status %></td></tr>
+  <% } %>
+  <% if (!it.recent.length) { %><tr><td colspan="5" class="muted">Nothing assigned to you.</td></tr><% } %>
+  </tbody>
+</table>

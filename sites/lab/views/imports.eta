@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<h1>Data imports</h1>
+<p class="muted">Uploaded files waiting to be imported. Importing runs in the background.</p>
+<table class="grid"><thead><tr><th>File</th><th>Kind</th><th>Rows</th><th>Uploaded</th><th></th></tr></thead><tbody>
+<% for (const f of it.files) { %><tr><td><%= f.name %></td><td><%= f.kind %></td><td><%= f.rows.toLocaleString('en-US') %></td><td><%= it.lab.shortDate(f.uploaded_at) %></td>
+<td><form method="post" action="/data/imports/<%= f.id %>/run" class="inline"><%~ it.csrfInput() %><button type="submit" aria-label="Import <%= f.name %>">Import</button></form></td></tr><% } %>
+</tbody></table>
+<% if (it.runs.length) { %><h2>Your imports</h2><ul class="list"><% for (const r of it.runs) { %><li><a href="/data/imports/runs/<%= r.id %>"><%= r.name %></a> <span class="muted"><%= r.status %></span></li><% } %></ul><% } %>

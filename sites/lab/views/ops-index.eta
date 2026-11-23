@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<h1>Ops queues</h1>
+<table class="grid">
+  <thead><tr><th>Queue</th><th>Team</th><th>Tickets</th><th>Not resolved</th></tr></thead>
+  <tbody>
+  <% for (const q of it.rows) { %><tr><td><a href="/ops/queues/<%= q.slug %>"><%= q.name %></a></td><td><%= q.team %></td><td><%= q.n %></td><td><%= q.open %></td></tr><% } %>
+  </tbody>
+</table>

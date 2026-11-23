@@ -1,0 +1,22 @@
+<% layout('layout') %>
+<article class="kb">
+<h1>Developers</h1>
+<p>The Quaywork web app is built on a JSON API. Every endpoint below uses your signed-in session (cookies), returns JSON,
+and is the same API the pages use. Write requests need the <code>X-CSRF-Token</code> header (the value of the page's
+<code>csrf-token</code> meta tag).</p>
+<h2>Directory (v2)</h2>
+<p><code>GET /api/v2/directory?cursor=0&amp;limit=25&amp;q=</code> &rarr; <code>{total, cursor, nextCursor, contacts: [{name, company, city, role, email}]}</code>.
+<code>q</code> matches name, company or city (substring, case-insensitive); <code>limit</code> is at most 50; follow <code>nextCursor</code> until it is <code>null</code>.</p>
+<p>API v1 (<code>/api/v1/people</code>) was retired on 2026-02-01 and answers <code>410 Gone</code>.</p>
+<h2>Ops queues</h2>
+<p><code>GET /api/queues/&lt;slug&gt;/rows?offset=0&amp;limit=50</code> &rarr; <code>{queue, total, offset, rows: [{pos, key, title, priority, status, assignee, updated}]}</code> (at most 100 rows per call, in queue order).</p>
+<h2>Chat</h2>
+<p><code>GET /api/chat/&lt;channel&gt;/messages?before=&lt;message id&gt;&amp;limit=30</code> &rarr; <code>{channel, hasMore, messages: [{id, user, body, at, day, time}]}</code>, oldest first; omit <code>before</code> for the newest.
+<code>POST /api/chat/&lt;channel&gt;/messages {body}</code> posts; <code>PUT /api/chat/&lt;channel&gt;/draft {body}</code> saves your draft.</p>
+<h2>Accounts</h2>
+<p><code>GET /api/accounts/&lt;id&gt;/metrics</code> &rarr; <code>{account, metrics: {arr, health, seatsUsed, seatsTotal, renewal, nps}}</code>.</p>
+<h2>Background jobs</h2>
+<p><code>GET /api/reports/runs/&lt;id&gt;</code> and <code>GET /api/imports/runs/&lt;id&gt;</code> &rarr; <code>{id, status: running|done, started_at, done_at}</code>. Results are shown on the run page once a run is done.</p>
+<h2>Planning docs</h2>
+<p><code>GET /api/docs/&lt;slug&gt;/conversation</code> &rarr; <code>{scope, messages, tracker: [{eta, ticket, owner, note}], revisions}</code>.</p>
+</article>

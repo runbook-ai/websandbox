@@ -1,0 +1,5 @@
+<% layout('layout') %>
+<h1>Playbooks</h1>
+<% let cat = null; for (const a of it.rows) { if (a.category !== cat) { if (cat) { %></ul><% } cat = a.category; %><h2><%= cat %></h2><ul class="list"><% } %>
+  <li><a href="/kb/<%= a.slug %>"><%= a.title %></a> <span class="muted"><%= a.words.toLocaleString('en-US') %> words &middot; updated <%= it.lab.shortDate(a.updated_at) %></span></li>
+<% } if (cat) { %></ul><% } %>
