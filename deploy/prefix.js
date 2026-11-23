@@ -48,7 +48,18 @@ document.addEventListener('submit',function(e){fe(e.target)},true);document.addE
 })();</script>`;
 }
 
-function rewriteJs(s, P) { return s.replace(JSLIT, `$1${P}/`); }
+// A quoted absolute path starts an expression: not a quote right after / or \ (a regex literal such
+// as /"/g, an escaped quote), and not a path piece appended with + ('/x/' + id + '/messages' --
+// only the first piece is a URL start; the shim covers anything built at run time).
+function rewriteJs(s, P) {
+  return s.replace(JSLIT, (m, q, off, str) => {
+    const before = str[off - 1];
+    if (before === '/' || before === '\\') return m;
+    let i = off - 1;
+    while (i >= 0 && /\s/.test(str[i])) i--;
+    return str[i] === '+' ? m : `${q}${P}/`;
+  });
+}
 function rewriteCss(s, P) { return s.replace(CSSURL, `$1$2${P}/`); }
 function rewriteAbs(s, P, host, proto) {
   // absolute URLs to our host -> under the prefix (the sites build http://<Host>/... URLs)
