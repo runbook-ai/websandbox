@@ -3,6 +3,8 @@
 // Messages use the forum's message_threads / messages tables; a new message notifies the
 // recipients ('message' notifications).
 const S = require('../lib/social');
+const SW = require('../lib/widgets');
+const NW = require('../lib/net-widgets');
 
 module.exports = async function (app, kit) {
   app.get('/notifications', { config: { login: true } }, async (req, reply) => {
@@ -47,9 +49,13 @@ module.exports = async function (app, kit) {
   app.get('/inbox/:id', { config: { login: true } }, async (req, reply) => {
     const t = threadFor(req);
     const msgs = kit.sql('SELECT m.*, u.username FROM messages m JOIN users u ON u.id = m.sender_id WHERE m.thread_id = ? ORDER BY m.id').all(t.id);
+    // ---- `messages` widget slot (lib/widgets.js): a load-older box; its chunk requests mark nothing read
+    const older = NW.olderList(req, reply, { slot: 'messages', step: SW.MESSAGES_STEP, items: msgs.map((m) => () => ({ m })), data: { t }, view: '_message',
+      wrap: (x) => `<ol class="messages">${x}</ol>`, label: 'Messages', cls: 'conversation-box', begin: 'This is the first message of the conversation.' });
+    if (older && older.json) return older.json;
     kit.sql("UPDATE notifications SET read_at = ? WHERE user_id = ? AND notification_type = 'message' AND read_at IS NULL AND message_id IN (SELECT id FROM messages WHERE thread_id = ?)").run(kit.nowSql(), req.user.id, t.id);
     const others = kit.sql('SELECT u.username FROM message_thread_participants p JOIN users u ON u.id = p.user_id WHERE p.thread_id = ? AND p.user_id <> ?').pluck().all(t.id, req.user.id);
-    return reply.render('message_thread', { title: t.subject || 'Conversation', t, msgs, others });
+    return reply.render('message_thread', { title: t.subject || 'Conversation', t, msgs, others, ...(older ? { older: older.html } : {}) });
   });
   function send(req, threadId, body) {
     const now = kit.nowSql();

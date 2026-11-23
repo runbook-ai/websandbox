@@ -17,12 +17,12 @@
     <% if (x.type === 'post') { %><%~ include('_card', { g: it, r: x, mine: it.votes.get(x.id), saved: it.saved.has(x.id) }) %>
     <% } else { %>
     <comment-preview id="t1_<%= x.id %>">
-      <p class="cp-context"><a href="/u/<%= x.username %>">u/<%= x.username %></a> commented on <a href="<%= S.postUrl({ id: x.submission_id, space: x.space, slug: x.slug }) %>"><%= x.title %></a>
+      <p class="cp-context"><a href="/u/<%= x.username %>">u/<%= x.username %></a> commented on <% if (it.jsLinks) { %><%~ it.widgets.navButton(S.postUrl({ id: x.submission_id, space: x.space, slug: x.slug }), it.h(x.title), 'link') %><% } else { %><a href="<%= S.postUrl({ id: x.submission_id, space: x.space, slug: x.slug }) %>"><%= x.title %></a><% } %>
         <span class="dot" aria-hidden="true">&bull;</span><a href="/c/<%= x.space %>">c/<%= x.space %></a> <span class="dot" aria-hidden="true">&bull;</span> Posted by u/<%= x.op %></p>
       <div class="cp-body">
         <p class="cp-meta"><b><%= x.username %></b> <%= S.compact(x.net_score) %> point<%= x.net_score === 1 ? '' : 's' %> &bull; <%~ it.when(x.created_at) %></p>
         <div class="md"><%~ it.md(x.body) %></div>
-        <a class="act" href="<%= S.commentUrl(x, x.id) %>">Go to comment</a>
+        <% if (it.jsLinks) { %><%~ it.widgets.navButton(S.commentUrl(x, x.id), 'Go to comment', 'act') %><% } else { %><a class="act" href="<%= S.commentUrl(x, x.id) %>">Go to comment</a><% } %>
       </div>
     </comment-preview>
     <% } %>

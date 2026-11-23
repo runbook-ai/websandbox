@@ -2,6 +2,8 @@
 // Post page with the nested comment tree; comment permalinks; comment create / edit / delete;
 // post edit / delete; moderator remove / lock / pin.
 const S = require('../lib/social');
+const SW = require('../lib/widgets');
+const NW = require('../lib/net-widgets');
 
 module.exports = async function (app, kit) {
   const load = (req) => {
@@ -20,7 +22,7 @@ module.exports = async function (app, kit) {
     const mod = S.isMod(req.user, space.id);
     const own = !!req.user && req.user.id === s.user_id;
     if (s.visibility !== 'visible' && !mod && !own) s.removed = true;
-    return reply.render('post', {
+    const data = {
       title: s.removed ? 'Removed post' : s.title, s, space, sort, tree, mod, own,
       vote: S.myVotes(req.user, 'submission', [s.id]).get(s.id) || 0,
       cvotes: S.myVotes(req.user, 'comment', tree.all.map((c) => c.id)),
@@ -28,7 +30,16 @@ module.exports = async function (app, kit) {
       sidebar: S.spaceSidebar(req.user, space),
       editing: req.query.edit === '1' && own,
       nag: true,
-    });
+    };
+    // ---- widget slots (lib/widgets.js); nothing below changes the page while they are off
+    const plant = SW.plantFn(tree.all, s.id);
+    if (plant) data.plant = plant;
+    if (focusId == null) {
+      const w = NW.commentList(req, reply, { flat: NW.flatten(tree.roots, 7), data, view: '_comment', item: (c) => () => ({ c, flat: true }), est: 130, cls: 'comment-tree' });
+      if (w && w.json) return w.json;
+      if (w && w.html) data.cw = w.html;
+    }
+    return reply.render('post', data);
   }
   app.get('/c/:space/comments/:id', async (req, reply) => {
     const { s } = load(req);

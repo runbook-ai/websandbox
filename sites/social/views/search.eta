@@ -28,9 +28,9 @@
     <% if (it.type === 'posts') { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), snip: r.snip }) %>
     <% } else if (it.type === 'comments') { %>
       <comment-preview id="t1_<%= r.id %>">
-        <p class="cp-context"><a href="/c/<%= r.space %>">c/<%= r.space %></a> <span class="dot" aria-hidden="true">&bull;</span> <a href="<%= S.postUrl({ id: r.submission_id, space: r.space, slug: r.slug }) %>"><%= r.title %></a></p>
+        <p class="cp-context"><a href="/c/<%= r.space %>">c/<%= r.space %></a> <span class="dot" aria-hidden="true">&bull;</span> <% if (it.jsLinks) { %><%~ it.widgets.navButton(S.postUrl({ id: r.submission_id, space: r.space, slug: r.slug }), it.h(r.title), 'link') %><% } else { %><a href="<%= S.postUrl({ id: r.submission_id, space: r.space, slug: r.slug }) %>"><%= r.title %></a><% } %></p>
         <div class="cp-body"><p class="cp-meta"><a href="/u/<%= r.username %>">u/<%= r.username %></a> &bull; <%~ it.when(r.created_at) %> &bull; <%= r.net_score %> votes</p>
-          <p><%~ r.snip ? it.mark(r.snip) : it.h(S.excerpt(r.body, 300)) %></p><a class="act" href="<%= S.commentUrl(r, r.id) %>">Go to thread</a></div>
+          <p><%~ r.snip ? it.mark(r.snip) : it.h(S.excerpt(r.body, 300)) %></p><% if (it.jsLinks) { %><%~ it.widgets.navButton(S.commentUrl(r, r.id), 'Go to thread', 'act') %><% } else { %><a class="act" href="<%= S.commentUrl(r, r.id) %>">Go to thread</a><% } %></div>
       </comment-preview>
     <% } else if (it.type === 'communities') { %>
       <div class="space-row"><span class="space-icon" style="background:<%= r.icon_color || '#0079d3' %>" aria-hidden="true"></span>

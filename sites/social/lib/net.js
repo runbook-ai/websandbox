@@ -338,7 +338,7 @@ module.exports = function engine({ net, name }) {
   }
 
   // ---------------------------------------------------------------- kit.site() config
-  // opts: {title, siteIndex, dir, routes (async (r, kit, E) => {}), locals(req, base), skins, views}
+  // opts: {title, siteIndex, dir, routes (async (r, kit, E) => {}), locals(req, base), skins, views, widgets}
   function siteConfig(opts) {
     return {
       name,
@@ -347,6 +347,8 @@ module.exports = function engine({ net, name }) {
       dir: opts.dir,
       db: { file: 'base.db', cacheMB: opts.cacheMB || 48 },
       clock: { start: (db) => process.env.WSB_SOCIAL_CLOCK || dataClock(db) || '2026-10-14T18:00:00Z' },
+      // scenario widget slots of the frontend (off unless POST /__rl/reset {scenario: {widgets}}; docs/WIDGETS.md)
+      widgets: opts.widgets,
       auth: { loginPath: '/login', findUser, getUser: (db, id) => db.prepare('SELECT * FROM users WHERE id = ?').get(id) },
       menu: () => [],
       skins: opts.skins || { default: {}, dark: { theme: 'dark' } },

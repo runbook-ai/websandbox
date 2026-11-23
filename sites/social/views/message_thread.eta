@@ -3,11 +3,11 @@
   <a class="back-link" href="/inbox">&larr; Inbox</a>
   <h1 class="page-title"><%= it.t.subject || 'Conversation' %></h1>
   <p class="muted">With <% for (const [i, o] of it.others.entries()) { %><%= i ? ', ' : '' %><a href="/u/<%= o %>">u/<%= o %></a><% } %></p>
-  <ol class="messages">
+  <% if (it.older) { %><%~ it.older %><% } else { %><ol class="messages">
   <% for (const m of it.msgs) { %>
-    <li id="m<%= m.id %>" class="msg<%= it.user && m.sender_id === it.user.id ? ' mine' : '' %>"><p class="msg-meta"><b>u/<%= m.username %></b> &bull; <%~ it.when(m.created_at) %></p><div class="md"><%~ it.md(m.body) %></div></li>
+    <%~ include('_message', { g: it, m }) %>
   <% } %>
-  </ol>
+  </ol><% } %>
   <form method="post" action="/inbox/<%= it.t.id %>/reply" class="comment-form"><%~ it.csrfInput() %>
     <label for="reply-msg" class="sr-only">Reply</label>
     <textarea id="reply-msg" name="body" rows="4" placeholder="Write a reply"></textarea>

@@ -73,11 +73,11 @@
       <div class="banner banner-info">You are viewing a single comment's thread. <a href="<%= url %>#comments">View all comments</a><% if (it.tree.parent) { %> &middot; <a href="<%= S.commentUrl(s, it.tree.parent.id) %>">Show parent comment</a><% } %></div>
     <% } %>
     <% if (!it.tree.roots.length) { %><div class="empty-state"><p><strong>No comments yet.</strong></p><p>Be the first to share what you think!</p></div><% } %>
-    <div class="comment-tree">
+    <% if (it.cw) { %><%~ it.cw %><% } else { %><div class="comment-tree">
     <% for (const c of it.tree.roots) { %><%~ include('_comment', { g: it, c }) %><% } %>
-    </div>
+    </div><% } %>
   </section>
-  <% if (it.user && live && !s.locked) { %>
+  <% if (it.user && live && !s.locked && !it.edKind) { %>
   <template id="reply-template">
     <form method="post" action="<%= url %>/comment" class="comment-form reply-form">
       <%~ it.csrfInput() %><input type="hidden" name="parent_id" value="">

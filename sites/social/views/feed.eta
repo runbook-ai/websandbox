@@ -36,8 +36,8 @@
   </div>
   <cr-feed class="feed" aria-label="Posts">
   <% if (!it.rows.length) { %><div class="empty-state"><p><strong>Nothing here yet.</strong></p><p><%= sp ? 'Be the first to post in this community.' : 'Try another sort or time range.' %></p></div><% } %>
-  <% for (const r of it.rows) { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), showSpace: !sp }) %><% } %>
-  <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>More posts</a><% } %>
+  <% if (it.fw) { %><%~ it.fw %><% } else { %><% for (const r of it.rows) { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), showSpace: !sp }) %><% } %><% } %>
+  <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>"<%~ it.fw ? ' rel="next"' : ' data-more' %>><%= it.fw ? 'Next page' : 'More posts' %></a><% } %>
   </cr-feed>
   <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>" rel="prev">&larr; Previous page</a></p><% } %>
 </div>

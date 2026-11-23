@@ -1,26 +1,26 @@
 <%/* include('_comment', {g, c}) one node of the comment tree (recursive); deeper than 7 levels: "Continue this thread" */%>
 <% const g = it.g; const c = it.c; const S = g.S; const s = g.s; const live = c.visibility === 'visible'; const own = g.user && g.user.id === c.user_id;
    const link = S.commentUrl(s, c.id); const replyTo = +g.req.query.reply === c.id; %>
-<comment-node id="t1_<%= c.id %>" depth="<%= c.depth %>" author="<%= live ? c.username : '' %>" score="<%= c.net_score %>">
+<comment-node id="t1_<%= c.id %>" depth="<%= c.depth %>" author="<%= live ? c.username : '' %>" score="<%= c.net_score %>"<%~ it.flat ? ` style="margin-left:${Math.min(c.depth, 12) * 16}px"` : '' %>>
   <div class="cm-rail"><button type="button" class="cm-collapse" aria-expanded="true" aria-label="Collapse thread"><span aria-hidden="true">&minus;</span></button><span class="threadline" aria-hidden="true"></span></div>
   <div class="cm-main">
     <div class="cm-meta">
       <% if (live) { %><span class="avatar xs" aria-hidden="true"><%= c.username.slice(0, 1).toUpperCase() %></span><a href="/u/<%= c.username %>" class="cm-author user-link" data-hovercard="<%= c.username %>"><%= c.username %></a><% if (c.user_id === s.user_id) { %><span class="op-badge" title="Original poster">OP</span><% } %><% } else { %><span class="cm-author muted">[deleted]</span><% } %>
-      <span class="dot" aria-hidden="true">&bull;</span><a class="cm-time" href="<%= link %>"><%~ g.when(c.created_at) %></a>
+      <span class="dot" aria-hidden="true">&bull;</span><% if (g.jsLinks) { %><%~ g.widgets.navButton(link, g.when(c.created_at), 'cm-time') %><% } else { %><a class="cm-time" href="<%= link %>"><%~ g.when(c.created_at) %></a><% } %>
       <% if (c.edited_at && live) { %><span class="muted small">&bull; Edited</span><% } %>
       <span class="cm-collapsed-note" hidden>(<%= c.descendants + 1 %> comment<%= c.descendants ? 's' : '' %> hidden)</span>
     </div>
-    <div class="cm-body md"><% if (live) { %><%~ g.md(c.body) %><% } else { %><p class="muted"><%= c.moderated ? '[ Removed by moderator ]' : '[deleted]' %></p><% } %></div>
+    <div class="cm-body md"><% if (live) { %><%~ g.md(c.body) %><%~ g.plant ? g.plant(c) : '' %><% } else { %><p class="muted"><%= c.moderated ? '[ Removed by moderator ]' : '[deleted]' %></p><% } %></div>
     <% if (live) { %>
     <div class="cm-actions">
       <%~ include('_vote', { g, thing: `t1_${c.id}`, score: c.net_score, mine: g.cvotes.get(c.id) || 0, size: 'row' }) %>
-      <% if (!s.locked && !s.removed) { %><a class="act reply-btn" href="<%= S.postUrl(s) %>?reply=<%= c.id %>#t1_<%= c.id %>" data-reply="<%= c.id %>"><span class="ico ico-comment" aria-hidden="true"></span>Reply</a><% } %>
+      <% if (!s.locked && !s.removed) { %><a class="act reply-btn" href="<%= S.postUrl(s) %>?reply=<%= c.id %>#t1_<%= c.id %>"<% if (!g.edKind) { %> data-reply="<%= c.id %>"<% } %>><span class="ico ico-comment" aria-hidden="true"></span>Reply</a><% } %>
       <button type="button" class="act" data-share="<%= link %>">Share</button>
       <% if (own || g.mod) { %>
       <details class="more-menu"><summary class="act" aria-label="More options for this comment">&middot;&middot;&middot;</summary>
         <div class="cr-menu" role="menu">
           <% if (own) { %><details class="edit-comment"><summary role="menuitem">Edit</summary>
-            <form method="post" action="<%= link %>/edit"><%~ g.csrfInput() %><textarea name="body" rows="4" aria-label="Edit comment"><%= c.body %></textarea><button type="submit" class="btn btn-primary">Save edits</button></form></details><% } %>
+            <form method="post" action="<%= link %>/edit"><%~ g.csrfInput() %><textarea name="body" rows="4" aria-label="Edit comment"<%~ g.edAttr %>><%= c.body %></textarea><button type="submit" class="btn btn-primary">Save edits</button></form></details><% } %>
           <form method="post" action="<%= link %>/delete" data-confirm="<%= own ? 'Delete your comment?' : 'Remove this comment as a moderator?' %>"><%~ g.csrfInput() %><button type="submit" role="menuitem"><%= own ? 'Delete' : 'Remove' %></button></form>
         </div>
       </details>
@@ -35,7 +35,7 @@
     <% } %>
     <% if (c.children.length) { %>
       <% if (c.depth >= 7) { %><a class="continue-thread" href="<%= link %>">Continue this thread &rarr;</a>
-      <% } else { %><div class="cm-children"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k }) %><% } %></div><% } %>
+      <% } else if (!it.flat) { %><div class="cm-children"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k }) %><% } %></div><% } %>
     <% } %>
   </div>
 </comment-node>

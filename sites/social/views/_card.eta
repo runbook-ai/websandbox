@@ -9,13 +9,13 @@
       <%~ g.when(r.created_at) %>
       <% if (r.sticky) { %><span class="chip chip-pinned">Pinned</span><% } %><% if (r.locked) { %><span class="chip chip-locked" title="Comments are locked">Locked</span><% } %>
     </div>
-    <h3 class="card-title"><a href="<%= url %>" class="card-title-link"><%= r.title %></a>
+    <h3 class="card-title"><% if (g.jsLinks) { %><%~ g.widgets.navButton(url, g.h(r.title), 'card-title-link') %><% } else { %><a href="<%= url %>" class="card-title-link"><%= r.title %></a><% } %>
       <% if (r.flair) { %><a class="flair" style="--flair:<%= r.flair_color %>" href="/c/<%= r.space %>?flair=<%= r.flair_id %>"><%= r.flair %></a><% } %></h3>
     <% if (domain) { %><a class="card-link" href="<%= r.url %>" rel="nofollow ugc noopener" target="_blank"><%= domain %> <span aria-hidden="true">&#8599;</span></a><% } %>
-    <% if (r.image_thumb) { %><a class="card-thumb" href="<%= url %>" tabindex="-1"><img src="<%= S.mediaUrl(r.image_thumb) %>" alt="" loading="lazy"></a><% } %>
+    <% if (r.image_thumb) { %><% if (g.jsLinks) { %><%~ g.widgets.navButton(url, `<img src="${g.h(S.mediaUrl(r.image_thumb))}" alt="" loading="lazy">`, 'card-thumb') %><% } else { %><a class="card-thumb" href="<%= url %>" tabindex="-1"><img src="<%= S.mediaUrl(r.image_thumb) %>" alt="" loading="lazy"></a><% } %><% } %>
     <% if (it.snip) { %><p class="card-body snippet"><%~ g.mark(it.snip) %></p><% } else if (r.body) { %><div class="card-body"><%= S.excerpt(r.body, 280) %></div><% } %>
     <div class="card-actions">
-      <a class="act" href="<%= url %>#comments"><span class="ico ico-comment" aria-hidden="true"></span><%= S.compact(r.comment_count) %> Comment<%= r.comment_count === 1 ? '' : 's' %></a>
+      <% if (g.jsLinks) { %><%~ g.widgets.navButton(`${url}#comments`, `<span class="ico ico-comment" aria-hidden="true"></span>${g.h(S.compact(r.comment_count))} Comment${r.comment_count === 1 ? '' : 's'}`, 'act') %><% } else { %><a class="act" href="<%= url %>#comments"><span class="ico ico-comment" aria-hidden="true"></span><%= S.compact(r.comment_count) %> Comment<%= r.comment_count === 1 ? '' : 's' %></a><% } %>
       <button type="button" class="act" data-share="<%= url %>"><span class="ico ico-share" aria-hidden="true"></span>Share</button>
       <form method="post" action="/save" class="inline save-form"><%~ g.csrfInput() %><input type="hidden" name="thing" value="t3_<%= r.id %>"><input type="hidden" name="saved" value="<%= it.saved ? 0 : 1 %>"><input type="hidden" name="next" value="<%= g.req.url %>">
         <button type="submit" class="act" aria-pressed="<%= !!it.saved %>"><span class="ico ico-save" aria-hidden="true"></span><%= it.saved ? 'Unsave' : 'Save' %></button></form>

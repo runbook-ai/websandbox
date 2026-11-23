@@ -7,6 +7,7 @@
 // Routes: ROUTES.md. Schema: SCHEMA.md.
 const kit = require('../../kit');
 const S = require('./lib/social');
+const SW = require('./lib/widgets');
 
 // "today" comes with the data (site_settings.social_now, written by build/migrate.js)
 function dataClock(db) {
@@ -22,6 +23,8 @@ module.exports = kit.site({
   // base "now" = site_settings.social_now of the build (the world's last day); scheduled world
   // replies land as the tenant clock moves past it.
   clock: { start: (db) => process.env.WSB_SOCIAL_CLOCK || dataClock(db) || '2026-10-14T18:00:00Z' },
+  // scenario widget slots (off unless POST /__rl/reset {scenario: {widgets}}; lib/widgets.js, docs/WIDGETS.md)
+  widgets: SW.SLOTS,
   auth: {
     loginPath: '/login',
     findUser: (db, login) => db.prepare('SELECT * FROM users WHERE normalized_username = lower(?)').get(String(login).replace(/^\/?u\//i, '')),
@@ -45,6 +48,7 @@ module.exports = kit.site({
       ago: (s) => S.ago(s, now),
       when: (s) => (s ? `<time datetime="${String(s).replace(' ', 'T')}Z" title="${kit.escapeHtml(S.fullDate(s, tz))}">${kit.escapeHtml(S.ago(s, now))}</time>` : ''),
       md: S.md,
+      ...SW.locals(),
     };
   },
   jobs: S.jobs,
