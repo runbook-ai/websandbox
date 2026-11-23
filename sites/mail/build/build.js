@@ -9,11 +9,13 @@ const { parseArgs } = require('util');
 const kit = require('../../../kit');
 const { rng } = require('../../../world/lib/rng');
 const { mailAddr, localPart, PERSONAL_DOMAIN } = require('../../../world/lib/mail-addr');
+const { typo } = require('../../../world/sim/activity');
 
 const readJsonl = (f) => fs.readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const DAY = 86400000;
 const CATEGORY = { newsletter: 'promotions', 'vendor-quote': 'primary' };
 const SYSTEM = { name: 'Inboxmail Team', email: 'no-reply@inboxmail.example' };
+const DAEMON = { name: 'Mail Delivery Subsystem', email: 'mailer-daemon@inboxmail.example' };
 
 function main() {
   const { values: a } = parseArgs({ options: { world: { type: 'string' }, out: { type: 'string' }, rendered: { type: 'string' } } });
@@ -65,6 +67,7 @@ function main() {
   const threadOf = new Map();   // `${owner}|${spec.thread || spec.id}` -> {id, subject}
   const subjectOf = new Map();  // spec thread root id -> subject
   const msgId = new Map();      // spec id -> Message-ID (same for every copy)
+  const campaigns = new Map();  // campaign id -> {owner, kind, subject, recipients: [...]}
   const ordered = specs.slice().sort((x, y) => (x.ts < y.ts ? -1 : x.ts > y.ts ? 1 : x.id < y.id ? -1 : 1));
   let n = 0, skipped = 0;
   const deliver = (ownerId, spec, from, to, subject, body, outgoing) => {
@@ -88,15 +91,37 @@ function main() {
       const t = text.get(spec.id);
       if (!t || !t.body) { skipped++; continue; }
       const from = addr(spec.from, spec.to[0]);
-      const to = addr(spec.to[0], spec.from);
+      const correct = addr(spec.to[0], spec.from);
+      // A bounced campaign invite went to a mistyped address; the contact keeps the right one.
+      const to = spec.bad_address ? { ...correct, email: typo(correct.email, rng(seed, 'typo', spec.id)), kind: 'bounce' } : correct;
       seeAddr(from); seeAddr(to);
       const root = spec.thread || spec.id;
-      if (!subjectOf.has(root)) subjectOf.set(root, (t.title || '(no subject)').slice(0, 200));
-      const subject = spec.intent === 'reply' ? `Re: ${subjectOf.get(root).replace(/^(re:\s*)+/i, '')}` : subjectOf.get(root);
+      if (!subjectOf.has(root)) subjectOf.set(root, (spec.subject || t.title || '(no subject)').slice(0, 200));
+      const base = subjectOf.get(root).replace(/^(re:\s*)+/i, '');
+      const subject = spec.intent === 'reply' || spec.intent === 'campaign-reply' ? `Re: ${base}` : spec.intent === 'campaign-ooo' ? `Automatic reply: ${base}` : subjectOf.get(root);
       // The owner's copy, plus the other side's copy when they also have a mailbox here.
       const fromUser = userByEmail.get(from.email), toUser = userByEmail.get(to.email);
       if (fromUser) deliver(fromUser, spec, from, to, subject, t.body, true);
       if (toUser && toUser !== fromUser) deliver(toUser, spec, from, to, subject, t.body, false);
+      if (spec.campaign) {
+        const ownerId = userOf.get(spec.owner).id;
+        if (spec.intent === 'campaign-invite') {
+          if (!campaigns.has(spec.campaign)) campaigns.set(spec.campaign, { id: spec.campaign, owner: ownerId, kind: spec.campaign_kind, subject, sent_at: spec.ts, recipients: [] });
+          campaigns.get(spec.campaign).recipients.push({ name: correct.name, email: correct.email, sent_to: to.email, stance: spec.stance, persona: spec.to[0], invite: spec.id });
+          if (spec.bad_address) {
+            const at = kit.sqlTime(Date.parse(spec.ts) + 40000);
+            const tid = threadOf.get(`${ownerId}|${root}`).id;
+            insM.run(ownerId, tid, `<bounce-${spec.id}@inboxmail.example>`, msgId.get(spec.id), DAEMON.name, DAEMON.email, JSON.stringify([{ name: from.name, email: from.email }]),
+              'Delivery Status Notification (Failure)', `Address not found\n\nYour message wasn't delivered to ${to.email} because the address couldn't be found, or is unable to receive mail.\n\nThe response from the remote server was:\n550 5.1.1 The email account that you tried to reach does not exist.\n\nOriginal subject: ${subject}`,
+              at, 1, 0, 1, 0, 0, 'updates', 'system', at);
+            updT.run(at, tid);
+            n++;
+          }
+        } else {
+          const c = campaigns.get(spec.campaign).recipients.find((x) => x.invite === spec.parent);
+          if (c) c.replied_at = spec.ts.replace('T', ' ').slice(0, 19);
+        }
+      }
     }
     // A welcome message per mailbox.
     for (const { id, email, p } of userOf.values()) {
@@ -115,13 +140,32 @@ function main() {
   for (const x of [...addrRows.values()].sort((p, q) => (p.email < q.email ? -1 : 1))) {
     const r = rng(seed, 'addr', x.email);
     const ooo = x.kind === 'person' && r.chance(0.05);
-    insA.run(x.email, x.name, x.kind, x.persona || null, x.org || null, ooo ? 'autoreply' : 'ok',
+    insA.run(x.email, x.name, x.kind === 'bounce' ? 'person' : x.kind, x.persona || null, x.org || null, x.kind === 'bounce' ? 'bounce' : ooo ? 'autoreply' : 'ok',
       ooo ? `Hi,\n\nI'm out of the office until ${new Date(end + r.int(2, 12) * DAY).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' })} with limited access to email. I'll reply when I'm back.\n\n${x.name.split(' ')[0]}` : null);
   }
   db.exec(`INSERT INTO contacts (owner_id, name, email, company, created_at)
     SELECT m.owner_id, a.name, a.email, a.org, min(m.sent_at) FROM messages m
     JOIN addresses a ON a.email = (CASE WHEN m.is_sent THEN json_extract(m.to_addrs, '$[0].email') ELSE m.from_email END)
-    WHERE a.kind IN ('person', 'user') GROUP BY m.owner_id, a.email ORDER BY m.owner_id, a.email`);
+    WHERE a.kind IN ('person', 'user') AND a.delivery != 'bounce' GROUP BY m.owner_id, a.email ORDER BY m.owner_id, a.email`);
+
+  // Hidden tables (task generators and graders only): item specs, campaigns.
+  // Campaigns (hidden: task generators and graders only) and invitees as contacts (with the right address).
+  db.exec(`CREATE TABLE world_campaigns (id TEXT PRIMARY KEY, owner_id INTEGER NOT NULL, kind TEXT NOT NULL, subject TEXT NOT NULL, sent_at TEXT NOT NULL);
+    CREATE TABLE world_campaign_recipients (campaign_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, sent_to TEXT NOT NULL, stance TEXT NOT NULL, replied_at TEXT,
+      PRIMARY KEY (campaign_id, email)) WITHOUT ROWID;`);
+  db.exec('CREATE TABLE world_items (spec_id TEXT PRIMARY KEY, intent TEXT NOT NULL, gist TEXT, facts TEXT NOT NULL, from_id TEXT, to_id TEXT) WITHOUT ROWID');
+  const insW = db.prepare('INSERT INTO world_items VALUES (?, ?, ?, ?, ?, ?)');
+  for (const sp of specs) if (text.get(sp.id)?.body) insW.run(sp.id, sp.intent, sp.gist || null, JSON.stringify(sp.facts || []), sp.from, sp.to[0]);
+  const insC = db.prepare('INSERT INTO world_campaigns VALUES (?, ?, ?, ?, ?)');
+  const insCR = db.prepare('INSERT OR IGNORE INTO world_campaign_recipients VALUES (?, ?, ?, ?, ?, ?)');
+  const insContact = db.prepare('INSERT OR IGNORE INTO contacts (owner_id, name, email, company, created_at) VALUES (?, ?, ?, ?, ?)');
+  for (const c of campaigns.values()) {
+    insC.run(c.id, c.owner, c.kind, c.subject, c.sent_at.replace('T', ' ').slice(0, 19));
+    for (const x of c.recipients) {
+      insCR.run(c.id, x.name, x.email, x.sent_to, x.stance, x.replied_at || null);
+      insContact.run(c.owner, x.name, x.email, null, sql(Date.parse(c.sent_at) - 30 * DAY));
+    }
+  }
 
   // Labels and filters: some mailboxes organise mail (as if their filters had always run).
   const insL = db.prepare('INSERT INTO labels (owner_id, name, color) VALUES (?, ?, ?)');

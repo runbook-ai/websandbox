@@ -24,6 +24,8 @@ const INTENT_HINT = {
   announce: 'announces an upcoming event they organise, with the practical details',
   'colleague-request': 'asks a colleague for something work-related', 'colleague-update': 'updates a colleague on work', 'friend-plan': 'makes plans with a friend',
   'family-news': 'shares family news', newsletter: 'a newsletter issue about the topic', 'vendor-quote': 'a vendor sending a quote for work or products', 'intro-request': 'asks for an introduction to someone', reply: 'replies to the previous email in the thread',
+  'campaign-invite': 'a personal invitation sent to one person (one of several sent individually); greet them by first name',
+  'campaign-reply': 'replies to the invitation above', 'campaign-ooo': 'an automatic out-of-office reply to the email above (generic, not personal)',
 };
 
 function styleText(st) {
@@ -63,7 +65,8 @@ function buildMessages(spec, ctx) {
     for (const pa of ctx.parents) lines.push(`--- ${pa.who}${pa.title ? ` -- "${pa.title}"` : ''}\n${clip(pa.text, 1500)}`);
     lines.push('--- (your reply goes here)');
   }
-  if (spec.gist) lines.push(`What it's about: ${spec.gist}. Write a subject line a real person would use for this (specific, not "Quick favor"/"Quick question").`);
+  if (spec.gist) lines.push(spec.subject ? `What it's about: ${spec.gist}. The subject line is fixed: "${spec.subject}" (repeat it exactly on the SUBJECT line).`
+    : `What it's about: ${spec.gist}. Write a subject line a real person would use for this (specific, not "Quick favor"/"Quick question").`);
   if (spec.facts?.length) lines.push(`\nMust include, verbatim: ${spec.facts.map((f) => `"${f}"`).join('; ')}.`);
   lines.push(spec.net === 'micro' ? 'Length: at most 280 characters.' : `Length: about ${spec.words} words.`);
   const format = spec.net === 'mail' ? 'SUBJECT: <subject>\n\n<body>' : titled ? 'TITLE: <title>\n\n<body>' : '<text only>';

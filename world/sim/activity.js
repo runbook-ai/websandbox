@@ -171,8 +171,23 @@ function gistFor(r, intent, owner, other) {
   return Array.isArray(g) ? r.pick(g) : r.pick(g[familyOf(owner.occupation)] || g.other);
 }
 
+// Scripted outreach campaigns: the owner invites several people (one email each, same subject) and
+// each invitee responds in a known way. Task templates read the stances from the spec, never the text.
+const CAMPAIGNS = [
+  { kind: 'speakers', subject: (g) => `Speaking at ${g}?`, gist: (g, d) => `inviting them to give a short talk at ${g} on ${d}`, needsGroup: true },
+  { kind: 'volunteers', subject: (g, d, c) => `Volunteers needed: ${c} ${['Food Drive', 'Park Cleanup', 'Book Swap', 'Charity 5K'][g.length % 4]}`, gist: (g, d, c) => `asking them to volunteer at a community event in ${c} on ${d}` },
+  { kind: 'potluck', subject: (g, d) => `Potluck at my place on ${d.split(',')[0]}?`, gist: (g, d) => `inviting them to a potluck dinner at the owner's home on ${d}` },
+  { kind: 'feedback', subject: (g, d, c, co) => `Quick survey from ${co}`, gist: (g, d, c, co) => `asking them, as a customer or partner of ${co}, to fill in a 5-minute feedback survey by ${d}`, work: true },
+  { kind: 'workshop', subject: (g, d, c, co, h) => `${h} workshop - want in?`, gist: (g, d, c, co, h) => `inviting them to a small hands-on ${h.toLowerCase()} workshop on ${d}` },
+];
+const STANCES = { yes: 3, no: 2, question: 1, unsubscribe: 0.6, ooo: 0.6, bounce: 0.6, silent: 3 };
+const STANCE_GIST = { yes: 'accepts the invitation', no: 'politely declines with a short reason', question: 'is interested but asks a practical question before committing',
+  unsubscribe: 'asks to be taken off the list and not contacted about this again', ooo: 'an automatic out-of-office reply' };
+const typo = (email, r) => { const [l, d] = email.split('@'); const i = r.int(1, l.length - 2); return `${l.slice(0, i)}${l.slice(i + 1)}@${d}`; };
+
 // Mail: per mailbox owner, emails from colleagues, friends, newsletters and vendors, and replies.
-function simulateMail(personas, world, { seed, networks, owners }) {
+// rate: mean emails/day per mailbox (lognormal across mailboxes); campaigns: share of mailboxes with one.
+function simulateMail(personas, world, { seed, networks, owners, rate = 3, campaigns = 0.35 }) {
   const t0 = Date.parse(world.start);
   const k = networks.mail.kinds.email;
   const byId = world.byId;
@@ -185,9 +200,10 @@ function simulateMail(personas, world, { seed, networks, owners }) {
     const colleagues = (emp[o.employer]?.members || []).filter((x) => x !== o.id);
     const friends = (byCity[`${o.city}|${o.state}`] || []).filter((x) => x.id !== o.id).map((x) => x.id);
     const threads = [];
+    const ownRate = rate * rng(seed, 'mail-rate', o.id).lognormal(-0.18, 0.6);
     for (let day = 0; day < world.days; day++) {
       const r = rng(seed, 'mail', o.id, day);
-      const n = r.poisson(3);
+      const n = r.poisson(ownRate);
       for (let i = 0; i < n; i++) {
         let intent = r.weighted(k.intents);
         if (intent === 'reply' && !threads.length) intent = 'colleague-update';
@@ -226,8 +242,46 @@ function simulateMail(personas, world, { seed, networks, owners }) {
         if (byId.has(spec.from) || spec.from.startsWith('nl-') || spec.from.startsWith('vendor:')) items.push(spec);
       }
     }
+    // One outreach campaign for some mailboxes.
+    const cr = rng(seed, 'campaign', o.id);
+    if (world.days >= 8 && cr.chance(campaigns)) {
+      const groups = world.groups.filter((g) => g.members.includes(o.id));
+      const kinds = CAMPAIGNS.filter((c) => (!c.needsGroup || groups.length) && (!c.work || o.employer));
+      const C = cr.pick(kinds);
+      const g = groups.length ? cr.pick(groups).name : '';
+      const company = o.employer ? emp[o.employer].name : '';
+      const hobby = (o.bio.hobbies || ['Cooking'])[0] || 'Cooking';
+      const day = cr.int(1, world.days - 7);
+      const sentAt = t0 + day * DAY + cr.int(14, 22) * HOUR;
+      const date = new Date(sentAt + cr.int(10, 21) * DAY).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+      const pool = [...new Set([...(C.work ? colleagues : []), ...friends, ...colleagues])].filter((x) => byId.has(x));
+      const extra = cr.sample(personas.filter((p) => p.id !== o.id && !pool.includes(p.id)), 14).map((p) => p.id);
+      const invitees = cr.sample([...cr.sample(pool, 8), ...extra], cr.int(6, 14));
+      const cid = `cmp-${o.id}`;
+      const subject = C.subject(g, date, o.city, company, hobby);
+      invitees.forEach((pid, j) => {
+        const ir = rng(seed, 'campaign', o.id, pid);
+        let stance = ir.weighted(STANCES);
+        if (j === 0) stance = 'silent';           // every campaign has at least one silent and one yes
+        if (j === 1) stance = 'yes';
+        const inv = { net: 'mail', kind: 'email', owner: o.id, intent: 'campaign-invite', campaign: cid, campaign_kind: C.kind, subject, stance,
+          from: o.id, to: [pid], topic: 'local', gist: C.gist(g, date, o.city, company, hobby), facts: [date], words: wordsFor(ir, [50, 160], 'medium'),
+          ts: new Date(sentAt + j * ir.int(20, 90) * 1000).toISOString() };
+        if (stance === 'bounce') inv.bad_address = true;
+        const replyAt = Date.parse(inv.ts) + (stance === 'ooo' ? ir.int(1, 5) * 60000 : Math.round(ir.lognormal(2.5, 1) * HOUR));
+        if (!['silent', 'bounce'].includes(stance) && replyAt >= t0 + world.days * DAY) inv.stance = stance = 'silent'; // would answer after "today"
+        inv.id = `e${String(items.length).padStart(8, '0')}`;
+        inv.thread = inv.id;
+        items.push(inv);
+        if (stance === 'silent' || stance === 'bounce') return;
+        const rep = { net: 'mail', kind: 'email', owner: o.id, intent: stance === 'ooo' ? 'campaign-ooo' : 'campaign-reply', campaign: cid, stance, from: pid, to: [o.id], topic: 'local',
+          thread: inv.id, parent: inv.id, gist: STANCE_GIST[stance], words: wordsFor(ir, stance === 'ooo' ? [20, 50] : [15, 90], 'medium'), ts: new Date(replyAt).toISOString() };
+        rep.id = `e${String(items.length).padStart(8, '0')}`;
+        items.push(rep);
+      });
+    }
   }
   return items;
 }
 
-module.exports = { simulate, simulateMail };
+module.exports = { simulate, simulateMail, typo };

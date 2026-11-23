@@ -2,7 +2,7 @@
 'use strict';
 // Build a world (personas, orgs, events, follows, item specs) from imported seed personas. No LLM calls.
 //   node world/build-world.js --src $WSB_WORK/world/personas-src.jsonl --out $WSB_WORK/world/w1 \
-//     [--seed w1] [--personas 3000] [--start 2026-10-01] [--days 14] [--mail-owners 60]
+//     [--seed w1] [--personas 3000] [--start 2026-10-01] [--days 14] [--mail-owners 60] [--mail-rate 3] [--campaigns 0.35] [--skip-social]
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('util');
@@ -23,6 +23,9 @@ function main() {
     start: { type: 'string', default: '2026-10-01T00:00:00Z' },
     days: { type: 'string', default: '14' },
     'mail-owners': { type: 'string', default: '60' },
+    'mail-rate': { type: 'string', default: '3' },
+    campaigns: { type: 'string', default: '0.35' },
+    'skip-social': { type: 'boolean' },
   } });
   const { topics } = require('./spec/topics.json');
   const { networks } = require('./spec/networks.json');
@@ -30,8 +33,8 @@ function main() {
   const t = Date.now();
   const personas = buildPersonas(readJsonl(a.src), { seed, count: +a.personas, topics, networks });
   const world = buildWorld(personas, { seed, start: a.start, days: +a.days, topics });
-  const items = simulate(personas, world, { seed, topics, networks });
-  const mail = simulateMail(personas, world, { seed, networks, owners: +a['mail-owners'] });
+  const items = a['skip-social'] ? [] : simulate(personas, world, { seed, topics, networks });
+  const mail = simulateMail(personas, world, { seed, networks, owners: +a['mail-owners'], rate: +a['mail-rate'], campaigns: +a.campaigns });
   fs.mkdirSync(a.out, { recursive: true });
   writeJsonl(path.join(a.out, 'personas.jsonl'), personas);
   const { at, byId, ...w } = world;
