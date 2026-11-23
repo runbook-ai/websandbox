@@ -18,7 +18,8 @@ node examples/notes/server.js --tenants 4 --port 7110 --data $WSB_TMP/notes
 Contents: [site layout](#site-layout) · [server.js](#serverjs-site-config) · [running](#running-a-site-cli) ·
 [the transaction model (rules!)](#the-transaction-model--rules-for-site-code) · [routes](#routes-and-the-request-api) ·
 [views](#views-layout-skins) · [helpers](#url-pagination-sort-filter-validation) · [search](#search-fts5) ·
-[jobs](#background-jobs) · [auth](#auth-and-passwords) · [control API](#control-api-__rl) · [grading](#grading) ·
+[jobs](#background-jobs) · [scenarios and events](#scenarios-and-events) · [second hosts](#second-hosts-cross-site-frames) ·
+[auth](#auth-and-passwords) · [control API](#control-api-__rl) · [grading](#grading) ·
 [building base.db](#building-basedb) · [testing](#testing-a-site)
 
 ## Site layout
@@ -47,7 +48,7 @@ const kit = require('../../kit');
 module.exports = kit.site({
   name: 'forum',                 // required; also picks siteIndex from kit.SITE_INDEX
   title: 'Postmill',             // <title> / header brand (skins can relabel: labels['site.title'])
-  siteIndex: 4,                  // k in 127.10.<i>.<k> (shopping 2, shopping_admin 3, forum 4, gitlab 5, wiki 6, map 7)
+  siteIndex: 4,                  // k in 127.10.<i>.<k> (shopping 2, shopping_admin 3, forum 4, gitlab 5, wiki 6, map 7, lab 8, mail 10)
   dir: __dirname,                // views/ and public/ are found here
   db: { mode: 'overlay', file: 'base.db', cacheMB: 32 },  // overlay (default) | copy | shared (read-only sites: wiki, map)
   clock: { start: '2023-03-15T10:00:00Z', frozen: false }, // the site's fixed "today"
@@ -69,6 +70,8 @@ module.exports = kit.site({
   onOpen: (db, tenant) => {},            // per tenant, before the first BEGIN: db.function(...), temp tables. NO writes to main.
   views: { notFound: 'error', 403: 'error' }, // optional custom error templates (default kit 'error')
   csrf: true,                            // false disables CSRF checks site-wide (don't)
+  altHosts: { pay: { label: 'labpay', siteIndex: 18 } }, // optional second host(s) for cross-site frames (below)
+  hostLabel: 'lab',                      // optional: the main host's first DNS label (default cfg.name)
 });
 if (require.main === module) module.exports.main();
 ```
@@ -155,7 +158,7 @@ Rules (break them and resets stop being exact):
    holds every other request of that tenant). Uploads are parsed *before* the lock.
 5. Handlers must `return` a value or `return reply.render(...)` / `reply.redirect(...)`.
 6. Table names `kit_*` are reserved (kit tables live in the `temp` schema: `kit_sessions`,
-   `kit_jobs`; graders may query them).
+   `kit_jobs`, `kit_events`, `kit_scenario`; graders may query them).
 7. Determinism: ids come from SQLite (rolled back with the data, so a re-run gets the same
    ids); avoid `Math.random()` in anything a grader or task could depend on.
 
@@ -318,6 +321,56 @@ due jobs every 250 ms (`jobTickMs`); `POST /__rl/jobs/run` runs them now;
 The clock is *running* by default (site "today" + real time since reset); `{"frozen": true}`
 stops it (tests, deterministic multi-step tasks).
 
+## Scenarios and events
+
+**Scenario** = per-rollout variant parameters a task needs (which widget a list uses, whether a pane
+starts open, how long a job runs), passed by the RL stack at reset instead of in the URL, where the
+agent could edit them:
+
+```
+POST /__rl/reset {"scenario": {"widgets": {"queue": "recycle"}, "pane": "closed"}}
+```
+
+The object (JSON, at most 64 KB; anything but an object is a 400) is written to `temp.kit_scenario`
+*after* the rollback, inside the new rollout transaction: the next reset clears it, so a reset without
+`scenario` means "no scenario" (unlike `skin`, which is kept). Site code reads it with
+`kit.scenario()` (a frozen object, `{}` if none; also `req.tenant.scenario()`); `/__rl/health` reports
+it; graders can `SELECT data FROM kit_scenario`. `?all=1` applies the same scenario to every tenant.
+Pages must never echo variant parameters in a way an agent could change them.
+
+**Events** = an outcome log for graders, `temp.kit_events(id, kind, payload, user_id, at)`:
+
+```js
+kit.events.log('expense.submit', { claim: id });   // payload JSON; user = req.user (or pass a 3rd arg); at = site clock
+kit.events.count('expense.submit');
+```
+
+Rows are written on the tenant connection inside the request's savepoint, so a failed request rolls
+its events back with its other writes and a reset empties the table. Use them for **outcome guards**
+only (a form was submitted twice, a planted action was attempted and refused, a trap filter was
+applied), never to score the path an agent took. State checks query them like any table:
+`SELECT count(*) FROM kit_events WHERE kind = 'expense.submit'`.
+
+## Second hosts (cross-site frames)
+
+`cfg.altHosts = { pay: { label: 'labpay', siteIndex: 18 } }` serves the same tenant under a second
+host that the browser treats as a **different site**, so a page can embed it as a cross-site
+(out-of-process) iframe, the way checkouts embed a payment host:
+
+| Main host | Alt host `pay` | When |
+|---|---|---|
+| `lab.wa[:P]`, `lab.example.org` | `labpay.wa[:P]`, `labpay.example.org` (first DNS label swapped) | host names (RL `hostMap`, a proxy) |
+| `127.10.<i>.<k>[:P]` | `127.10.<i>.<alt.siteIndex>[:P]` | `--bind rl` also listens there for every tenant |
+| `127.0.0.1:P` | `localhost:P` | dev / `--bind ports`; only the first alt host. Use `127.0.0.1` for the main host. |
+
+A site is scheme + registrable domain; for names without a public suffix (`.wa`) Chrome uses the
+whole host name, so `lab.wa` and `labpay.wa` are different sites, as are two IP addresses and
+`127.0.0.1` vs `localhost`. In a handler, `req.altHost` is the alt name the request came in on
+(`null` = main host) and `req.originFor(name)` gives the other host's origin for the current request
+(`req.originFor()` = main). With `altHosts` the default CSP gains `frame-src 'self' <the other hosts>`.
+Cookies are per host and the alt host is third-party inside the frame: pages served there should
+not rely on the session cookie (carry an unguessable token in the URL instead).
+
 ## Auth and passwords
 
 `kit.auth.hashPassword(pw)` → `scrypt$1024$salt$hash` (cheap on purpose). `kit.auth.verifyPassword(pw, stored)`
@@ -336,8 +389,8 @@ Address the tenant by its address (`http://127.10.<i>.<k>/__rl/...`) or `X-WSB-T
 
 | Method / path | Body | Returns |
 |---|---|---|
-| `POST /__rl/reset` (`?all=1` = every tenant of the process) | `{skin?, now?, frozen?}` | `{ok, tenant, ms}` |
-| `GET /__rl/health` | | `{ok, site, tenant, inTransaction, now, frozen, skin, requests, resets, lastResetMs, maxResetMs, jobsRun, lostTransactions}` |
+| `POST /__rl/reset` (`?all=1` = every tenant of the process) | `{skin?, now?, frozen?, scenario?}` | `{ok, tenant, ms}` |
+| `GET /__rl/health` | | `{ok, site, tenant, inTransaction, now, frozen, skin, scenario, requests, resets, lastResetMs, maxResetMs, jobsRun, lostTransactions}` |
 | `GET /__rl/clock` | | `{now, frozen}` |
 | `POST /__rl/clock` | `{now?, frozen?, advance? (s)}` | `{now, frozen, jobsRun}` (runs due jobs) |
 | `POST /__rl/query` | `{sql, params?, raw?, maxRows?}` | `{columns, rows, truncated}`; 400 on anything but a read-only `SELECT`/`WITH`/`VALUES` |
@@ -393,6 +446,9 @@ curl -s -XPOST -H 'content-type: application/json' -d '{"sql":"SELECT count(*) n
   `3 comments (IDs 1171393, 1171554, ...)` still fail, as do digits in product names next to a
   count (`2 orders of Sprite Stasis Ball 75 cm`), which the grader cannot tell from hedging.
   Text references (`must_include: ['Circe', '55']`) are unchanged.
+  `must_exclude: [..]` (on any spec, or a spec of its own) -- the check also fails if any of these
+  items appears in the answer (same matching as `must_include`, `|OR|` alternatives included; the
+  check reports `excluded`). For list answers a brute-force answer would pad ("every ticket id").
   `{fuzzy: ..}` -- calls `fuzzy({intent, answer, reference})` (the RL stack's judge) or returns pending.
   `{numeric: {value, unit, tol_pct?, tol_abs?}}` (or a list of such specs, all must be found) --
   quantities of the unit's kind are parsed from the answer and compared with a tolerance:

@@ -16,7 +16,7 @@ const { httpError, isLoopback } = require('./context');
 
 const KIT_PUBLIC = path.join(__dirname, '..', 'public');
 const CSP = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; form-action 'self'";
-const SITE_INDEX = { shopping: 2, shopping_admin: 3, forum: 4, gitlab: 5, wiki: 6, map: 7, mail: 10 };
+const SITE_INDEX = { shopping: 2, shopping_admin: 3, forum: 4, gitlab: 5, wiki: 6, map: 7, lab: 8, mail: 10 };
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 // Browser-originated (agent page JS): Chrome sends Origin on every POST, Sec-Fetch-Site on
 // trustworthy origins, and a Mozilla/ user agent it does not let page JS change.
@@ -66,6 +66,67 @@ function resolveOptions(rt, o = {}) {
     jobTickMs: o.jobTickMs ?? cfg.jobTickMs ?? 250,
     viewCache: o.viewCache ?? true,
   };
+}
+
+// ---------------------------------------------------------------- second hosts (cross-site frames)
+// cfg.altHosts = { pay: { label: 'labpay', siteIndex: 18 } }: the same tenant is also served under
+// a second host, a different *site* for the browser, so a page can embed it as a cross-site frame.
+//   host names: the first DNS label is swapped (lab.wa <-> labpay.wa, lab.example.org <-> labpay.example.org);
+//   --bind rl: tenant i also listens on 127.10.<i>.<alt.siteIndex> (127.10.<i>.<k> <-> 127.10.<i>.<alt>);
+//   127.0.0.1 <-> localhost (dev / --bind ports; Chrome treats them as different sites); only the
+//   first alt host can use this pair.
+// req.altHost = the alt name the request came in on (null = main host); req.originFor(name|null).
+const hostParts = (req) => {
+  const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/.exec(String(req.headers.host || ''));
+  return m ? { name: m[1].toLowerCase(), port: m[2] || '' } : { name: '', port: '' };
+};
+const localIp = (req) => String(req.raw.socket.localAddress || '').replace(/^::ffff:/, '');
+function altHostOf(rt, req) {
+  const alts = rt.cfg.altHosts;
+  if (!alts) return null;
+  const { name } = hostParts(req);
+  const names = Object.keys(alts);
+  const ip = /^127\.10\.\d+\.(\d+)$/.exec(name);
+  const lip = /^127\.10\.\d+\.(\d+)$/.exec(localIp(req));
+  for (const k of names) {
+    const a = alts[k];
+    if (ip) { if (a.siteIndex != null && +ip[1] === a.siteIndex) return k; continue; }
+    if (name === 'localhost') { if (k === names[0]) return k; continue; }
+    if (name === '127.0.0.1') { if (lip && a.siteIndex != null && +lip[1] === a.siteIndex) return k; continue; }
+    if (a.label && name.split('.')[0] === a.label) return k;
+  }
+  return null;
+}
+function originFor(rt, req, target) {
+  const { cfg } = rt;
+  const alts = cfg.altHosts || {};
+  if (target != null && !alts[target]) throw new Error(`kit: unknown alt host '${target}'`);
+  const proto = req.protocol || 'http';
+  if ((req.altHost ?? null) === (target ?? null)) return `${proto}://${req.headers.host}`;
+  const { name, port } = hostParts(req);
+  const p = port ? `:${port}` : '';
+  const ip = /^127\.10\.(\d+)\.\d+$/.exec(name);
+  let host;
+  if (ip) host = `127.10.${ip[1]}.${target ? alts[target].siteIndex : rt.o.siteIndex}`;
+  else if (name === '127.0.0.1' || name === 'localhost') {
+    if (target && target !== Object.keys(alts)[0]) throw new Error(`kit: only the first alt host has a 127.0.0.1/localhost pair; use host names or --bind rl for '${target}'`);
+    host = target ? 'localhost' : '127.0.0.1';
+  } else {
+    const rest = name.split('.').slice(1);
+    host = [target ? alts[target].label : cfg.hostLabel || cfg.name, ...rest].join('.');
+  }
+  return `${proto}://${host}${p}`;
+}
+function cspFor(rt, req) {
+  const { cfg } = rt;
+  if (typeof cfg.csp === 'function') return cfg.csp(req);
+  if (cfg.csp) return cfg.csp;
+  if (!cfg.altHosts) return CSP;
+  // frames (and only frames) may come from the site's other hosts
+  const others = [null, ...Object.keys(cfg.altHosts)].filter((k) => k !== (req.altHost ?? null));
+  let srcs;
+  try { srcs = others.map((k) => originFor(rt, req, k)); } catch { srcs = []; }
+  return `${CSP}; frame-src 'self' ${srcs.join(' ')}`.trim();
 }
 
 // ---------------------------------------------------------------- locals / render
@@ -146,6 +207,8 @@ function buildApp(rt, o) {
   if (fs.existsSync(o.media)) app.get(`${cfg.mediaPrefix || '/media/'}*`, (req, reply) => reply.sendFile(req.params['*'], o.media, { maxAge: 24 * 3600 * 1000 }));
 
   app.decorateRequest('tenant', null);
+  app.decorateRequest('altHost', null);
+  app.decorateRequest('originFor', function (name = null) { return originFor(rt, this, name); });
   app.decorateRequest('user', null);
   app.decorateRequest('session', null);
   app.decorateReply('locals', null);
@@ -172,10 +235,12 @@ function buildApp(rt, o) {
       return reply;
     }
     req.tenant = t;
+    req.altHost = altHostOf(rt, req);
     reply.locals = {};
     // Sites are self-contained: the browser may load nothing from other hosts, even when
     // imported content (READMEs, product descriptions) embeds absolute image URLs.
-    reply.header('content-security-policy', cfg.csp || CSP);
+    // (With cfg.altHosts, frames may also come from the site's own other hosts.)
+    reply.header('content-security-policy', cspFor(rt, req));
     await t.ready;
   });
 
@@ -189,8 +254,9 @@ function buildApp(rt, o) {
     });
     const T = (req) => req.tenant;
     const all = (req) => req.query.all === '1' || (req.body && req.body.all);
-    c.post('/reset', async (req) => {
+    c.post('/reset', async (req, reply) => {
       const b = req.body || {};
+      try { Tenant.checkScenario(b.scenario); } catch (e) { reply.code(400); return { error: e.message }; }
       const ts = all(req) ? [...rt.tenants.values()] : [T(req)];
       const out = [];
       for (const t of ts) { await t.ready; out.push({ tenant: t.index, ms: +(await t.reset(b)).toFixed(3) }); }
@@ -198,7 +264,7 @@ function buildApp(rt, o) {
     });
     c.get('/health', async (req) => {
       const t = T(req);
-      return { ok: t.db.inTransaction && !t.stats.lostTransactions && !t.stats.baseChanged, site: cfg.name, tenant: t.index, mode: o.mode, inTransaction: t.db.inTransaction, now: t.now().toISOString(), frozen: t.clock.frozen, skin: t.skin, ...t.stats };
+      return { ok: t.db.inTransaction && !t.stats.lostTransactions && !t.stats.baseChanged, site: cfg.name, tenant: t.index, mode: o.mode, inTransaction: t.db.inTransaction, now: t.now().toISOString(), frozen: t.clock.frozen, skin: t.skin, scenario: t.scenario(), ...t.stats };
     });
     c.get('/clock', async (req) => ({ now: T(req).now().toISOString(), frozen: T(req).clock.frozen }));
     c.post('/clock', async (req) => {
@@ -311,6 +377,10 @@ async function start(rt, opts = {}) {
   if (o.bind === 'rl') {
     if (o.siteIndex == null) throw new Error(`${cfg.name}: --bind rl needs cfg.siteIndex (127.10.<i>.<k>)`);
     for (const i of o.owned) plan.push({ host: `127.10.${i}.${o.siteIndex}`, port: o.port, tenant: i });
+    for (const [k, a] of Object.entries(cfg.altHosts || {})) {
+      if (a.siteIndex == null) throw new Error(`${cfg.name}: --bind rl needs altHosts.${k}.siteIndex`);
+      for (const i of o.owned) plan.push({ host: `127.10.${i}.${a.siteIndex}`, port: o.port, tenant: i, alt: k });
+    }
     // several sites can share port 80 on their 127.10.<i>.<k> addresses; their 127.0.0.1 listeners
     // then need distinct ports (--loopback-port Q) or none (--loopback-port 0)
     if (o.wid === 0 && o.loopbackPort !== 0) plan.push({ host: '127.0.0.1', port: o.loopbackPort ?? o.port, tenant: null });
@@ -417,4 +487,4 @@ async function main(rt, argv = process.argv.slice(2)) {
   return s;
 }
 
-module.exports = { site, start, main, buildLocals, SITE_INDEX, fmt };
+module.exports = { site, start, main, buildLocals, SITE_INDEX, fmt, originFor, altHostOf };

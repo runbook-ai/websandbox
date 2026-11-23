@@ -16,6 +16,13 @@ const sql = (text) => ctx().tenant.sql(text);
 const now = () => (als.getStore() ? tenant().now() : new Date());
 const nowSql = () => sqlTime(now());
 const jobs = { enqueue: (type, payload, o) => tenant().enqueue(type, payload, o) };
+// The rollout's scenario (POST /__rl/reset {scenario}), {} if none; read-only.
+const scenario = () => tenant().scenario();
+// Outcome events for graders (temp.kit_events, reset with the rollout): kit.events.log('order.submit', {id}).
+const events = {
+  log: (kind, payload, userId) => tenant().event(kind, payload, userId),
+  count: (kind) => tenant().sql('SELECT count(*) FROM kit_events WHERE kind = ?').pluck().get(kind),
+};
 
 // Optional login/logout routes: GET/POST loginPath, POST/GET logoutPath.
 function authRoutes(app, { loginPath = '/login', logoutPath = '/logout', view = 'login', after = '/', title = 'Sign in' } = {}) {
@@ -38,7 +45,7 @@ function authRoutes(app, { loginPath = '/login', logoutPath = '/logout', view = 
 
 module.exports = {
   site, SITE_INDEX, fmt,
-  tenant, db, sql, now, nowSql, jobs, ctx,
+  tenant, db, sql, now, nowSql, jobs, scenario, events, ctx,
   HttpError, httpError, sqlTime, parseTime,
   ...web, // urlWith, paginate, sorter, filters, validate, escapeHtml
   search, auth, grader, build, authRoutes,

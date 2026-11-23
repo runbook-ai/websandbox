@@ -17,7 +17,13 @@ CREATE TEMP TABLE IF NOT EXISTS kit_jobs (
   status TEXT NOT NULL DEFAULT 'queued', attempts INTEGER NOT NULL DEFAULT 0,
   result TEXT, error TEXT, created_at TEXT NOT NULL, done_at TEXT);
 CREATE INDEX IF NOT EXISTS temp.kit_jobs_due ON kit_jobs(status, run_at, id);
+CREATE TEMP TABLE IF NOT EXISTS kit_events (
+  id INTEGER PRIMARY KEY, kind TEXT NOT NULL, payload TEXT, user_id, at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS temp.kit_events_kind ON kit_events(kind, id);
+CREATE TEMP TABLE IF NOT EXISTS kit_scenario (
+  id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL, at TEXT NOT NULL);
 `;
+const SCENARIO_MAX = 64 * 1024; // bytes of JSON
 
 // At most COPY_SLOTS concurrent base.db copies (disk bandwidth).
 const COPY_SLOTS = 4;
@@ -123,6 +129,9 @@ class Tenant {
       enqueue: db.prepare('INSERT INTO kit_jobs (type, payload, run_at, created_at) VALUES (?, ?, ?, ?)'),
       jobDone: db.prepare("UPDATE kit_jobs SET status = 'done', attempts = attempts + 1, result = ?, done_at = ? WHERE id = ?"),
       jobFail: db.prepare("UPDATE kit_jobs SET status = 'failed', attempts = attempts + 1, error = ?, done_at = ? WHERE id = ?"),
+      event: db.prepare('INSERT INTO kit_events (kind, payload, user_id, at) VALUES (?, ?, ?, ?)'),
+      scenarioGet: db.prepare('SELECT data FROM kit_scenario WHERE id = 1').pluck(),
+      scenarioSet: db.prepare('INSERT OR REPLACE INTO kit_scenario (id, data, at) VALUES (1, ?, ?)'),
     };
     this.resetClock();
     this.clearUploads();
@@ -178,6 +187,7 @@ class Tenant {
       // error, SQLITE_FULL). Writes may have been lost or committed: flag it.
       this.stats.lostTransactions++;
       this.x('BEGIN');
+      this.scenarioCache = undefined;
     }
   }
 
@@ -201,8 +211,11 @@ class Tenant {
     }));
   }
 
-  // ---- reset: ROLLBACK + BEGIN, uploads emptied, clock/skin/jobs/sessions reset
+  // ---- reset: ROLLBACK + BEGIN, uploads emptied, clock/skin/jobs/sessions/events reset;
+  // o.scenario (a JSON object) is written to kit_scenario inside the new transaction, so the
+  // next reset clears it again (a reset without scenario leaves none)
   reset(o = {}) {
+    const scen = Tenant.checkScenario(o.scenario);
     return this.lock(() => {
       const t0 = performance.now();
       if (this.db.inTransaction) this.x('ROLLBACK'); else this.stats.lostTransactions++;
@@ -210,11 +223,38 @@ class Tenant {
       if (o.skin) this.skin = o.skin;
       this.resetClock(o);
       this.x('BEGIN');
+      this.scenarioCache = undefined;
+      if (scen) this.st.scenarioSet.run(scen, this.nowSql());
       const ms = performance.now() - t0;
       this.checkBase();
       Object.assign(this.stats, { resets: this.stats.resets + 1, lastResetMs: +ms.toFixed(3), maxResetMs: Math.max(this.stats.maxResetMs, +ms.toFixed(3)) });
       return ms;
     });
+  }
+
+  // Scenario of the current rollout: the object given to /__rl/reset {scenario}, or {}.
+  static checkScenario(sc) {
+    if (sc == null) return null;
+    if (typeof sc !== 'object' || Array.isArray(sc)) throw Object.assign(new Error('scenario must be a JSON object'), { statusCode: 400 });
+    const s = JSON.stringify(sc);
+    if (s.length > SCENARIO_MAX) throw Object.assign(new Error(`scenario larger than ${SCENARIO_MAX} bytes`), { statusCode: 400 });
+    return s;
+  }
+  scenario() {
+    if (this.scenarioCache === undefined) {
+      const s = this.db.inTransaction ? this.st.scenarioGet.get() : null;
+      this.scenarioCache = Object.freeze(s ? JSON.parse(s) : {});
+    }
+    return this.scenarioCache;
+  }
+
+  // Outcome log for graders (kit_events, inside the rollout transaction: a reset empties it,
+  // and a request that fails rolls its events back with its other writes).
+  event(kind, payload = null, userId) {
+    if (!kind || typeof kind !== 'string') throw new Error('kit.events.log: kind must be a string');
+    const c = als.getStore();
+    const uid = userId !== undefined ? userId : c && c.req && c.req.user ? (this.site.cfg.auth && this.site.cfg.auth.idOf ? this.site.cfg.auth.idOf(c.req.user) : c.req.user.id) : null;
+    return Number(this.st.event.run(kind, payload == null ? null : JSON.stringify(payload), uid ?? null, this.nowSql()).lastInsertRowid);
   }
 
   clearUploads() {

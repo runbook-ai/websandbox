@@ -1,6 +1,6 @@
 'use strict';
 // Task grader for the eval format in docs/CONVENTIONS.md ("WebArena tasks"):
-//   eval: { type: 'answer'|'url'|'state' | [...], answer: {exact|must_include|fuzzy|numeric: ...} | [specs],
+//   eval: { type: 'answer'|'url'|'state' | [...], answer: {exact|must_include|fuzzy|numeric: ..., must_exclude?} | [specs],
 //           answer_sql, url, state_sql, state_expect }
 // grade(task, {answer, url, query, queries, fuzzy}) -> {pass: true|false|null, score, checks: [...]}
 // `query(sql)` -> rows (array of objects or arrays); see remoteQuery()/tenant.query().
@@ -313,6 +313,14 @@ function stateMatch(rows, expect) {
   throw new Error('grader: unknown state_expect form ' + JSON.stringify(expect));
 }
 
+// must_exclude: none of the items (same matching as must_include, ' |OR| ' alternatives included)
+// may appear in the answer -- decoys a brute-force answer would list ("every ticket", "all ids").
+function excludeCheck(type, answer, items, base) {
+  const refs = [].concat(items).map(String).filter((x) => x.length);
+  const excluded = refs.filter((r) => mustInclude(answer, [r]));
+  return { ...base, type, mode: base.mode || 'must_exclude', reference: refs, excluded, pass: excluded.length === 0 };
+}
+
 async function grade(task, { answer = '', url = '', query, queries, fuzzy } = {}) {
   const ev = task.eval || task;
   let types = ev.type ? [].concat(ev.type) : [];
@@ -338,8 +346,9 @@ async function grade(task, { answer = '', url = '', query, queries, fuzzy } = {}
         let sqlRef = null;
         if (ev.answer_sql) sqlRef = firstCol(await needQuery(ev.answer_site)(ev.answer_sql)).map((v) => (v == null ? '' : String(v)));
         for (const spec of Array.isArray(ev.answer) ? ev.answer : [ev.answer || {}]) {
-          const mode = ['exact', 'must_include', 'fuzzy', 'numeric'].find((m) => m in spec) || (sqlRef ? 'must_include' : null);
-          if (!mode) throw new Error('answer check without answer.exact/must_include/fuzzy/numeric or answer_sql');
+          const mode = ['exact', 'must_include', 'fuzzy', 'numeric'].find((m) => m in spec) || (sqlRef ? 'must_include' : 'must_exclude' in spec ? 'must_exclude' : null);
+          if (!mode) throw new Error('answer check without answer.exact/must_include/fuzzy/numeric/must_exclude or answer_sql');
+          if (mode === 'must_exclude') { checks.push(excludeCheck(type, answer, spec.must_exclude, { type, mode })); continue; }
           let ref = spec[mode];
           if (mode !== 'numeric' && SQL_REF(ref)) {
             if (!sqlRef) throw new Error(`answer.${mode} refers to answer_sql but there is none`);
@@ -365,6 +374,11 @@ async function grade(task, { answer = '', url = '', query, queries, fuzzy } = {}
             const r = await fuzzy({ intent: task.intent, answer, reference: ref });
             c.score = typeof r === 'number' ? r : r ? 1 : 0; c.pass = c.score >= 1;
           } else { c.pass = null; c.pending = 'fuzzy'; }
+          if (spec.must_exclude != null) {
+            const x = excludeCheck(type, answer, spec.must_exclude, {});
+            c.must_exclude = x.reference;
+            if (x.excluded.length) { c.excluded = x.excluded; c.pass = false; }
+          }
           checks.push(c);
         }
       } else if (type === 'url') {
@@ -414,4 +428,4 @@ function remoteQuery(base, { tenant, token } = {}) {
   };
 }
 
-module.exports = { grade, remoteQuery, clean, exactMatch, mustInclude, extraNumbers, strictNumbersOn, askedPart, COUNT_INTENT, numericMatch, quantities, urlMatch, normUrl, stateMatch };
+module.exports = { grade, remoteQuery, clean, exactMatch, mustInclude, excludeCheck, extraNumbers, strictNumbersOn, askedPart, COUNT_INTENT, numericMatch, quantities, urlMatch, normUrl, stateMatch };
