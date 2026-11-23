@@ -12,6 +12,7 @@ const { createViews } = require('./views');
 const sessions = require('./session');
 const web = require('./web');
 const search = require('./search');
+const widgets = require('./widgets');
 const { httpError, isLoopback } = require('./context');
 
 const KIT_PUBLIC = path.join(__dirname, '..', 'public');
@@ -157,6 +158,7 @@ function buildLocals(rt, req, reply, data, { noFlash } = {}) {
     csrf, csrfInput: () => `<input type="hidden" name="_csrf" value="${web.escapeHtml(csrf())}">`,
     url: (changes, p) => web.urlWith(req, changes, p),
     h: web.escapeHtml, mark: search.markup,
+    widget: widgets.value, widgets, // scenario widget slots (lib/widgets.js): it.widget('comments') -> value or null
     now: req.tenant ? req.tenant.now() : new Date(),
     crumbs: null, title: null, errors: {}, values: {},
     ...(cfg.locals ? cfg.locals(req) : {}),
@@ -256,7 +258,7 @@ function buildApp(rt, o) {
     const all = (req) => req.query.all === '1' || (req.body && req.body.all);
     c.post('/reset', async (req, reply) => {
       const b = req.body || {};
-      try { Tenant.checkScenario(b.scenario); } catch (e) { reply.code(400); return { error: e.message }; }
+      try { Tenant.checkScenario(b.scenario, cfg); } catch (e) { reply.code(400); return { error: e.message }; }
       const ts = all(req) ? [...rt.tenants.values()] : [T(req)];
       const out = [];
       for (const t of ts) { await t.ready; out.push({ tenant: t.index, ms: +(await t.reset(b)).toFixed(3) }); }

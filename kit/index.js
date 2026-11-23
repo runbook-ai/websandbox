@@ -7,6 +7,7 @@ const search = require('./lib/search');
 const auth = require('./lib/auth');
 const grader = require('./lib/grader');
 const build = require('./lib/build');
+const widgets = require('./lib/widgets');
 
 // Context accessors: valid inside route handlers, jobs and tenant.run().
 const tenant = () => ctx().tenant;
@@ -18,6 +19,8 @@ const nowSql = () => sqlTime(now());
 const jobs = { enqueue: (type, payload, o) => tenant().enqueue(type, payload, o) };
 // The rollout's scenario (POST /__rl/reset {scenario}), {} if none; read-only.
 const scenario = () => tenant().scenario();
+// A scenario widget slot's value (cfg.widgets, lib/widgets.js), or `fallback` (null = off).
+const widget = (name, fallback) => widgets.value(name, fallback);
 // Outcome events for graders (temp.kit_events, reset with the rollout): kit.events.log('order.submit', {id}).
 const events = {
   log: (kind, payload, userId) => tenant().event(kind, payload, userId),
@@ -45,7 +48,7 @@ function authRoutes(app, { loginPath = '/login', logoutPath = '/logout', view = 
 
 module.exports = {
   site, SITE_INDEX, fmt,
-  tenant, db, sql, now, nowSql, jobs, scenario, events, ctx,
+  tenant, db, sql, now, nowSql, jobs, scenario, widget, widgets, events, ctx,
   HttpError, httpError, sqlTime, parseTime,
   ...web, // urlWith, paginate, sorter, filters, validate, escapeHtml
   search, auth, grader, build, authRoutes,

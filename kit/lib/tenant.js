@@ -7,6 +7,7 @@ const path = require('node:path');
 const Database = require('better-sqlite3');
 const { als, sqlTime, parseTime } = require('./context');
 const guard = require('./guard');
+const widgets = require('./widgets');
 
 const KIT_SCHEMA = `
 CREATE TEMP TABLE IF NOT EXISTS kit_sessions (
@@ -217,7 +218,7 @@ class Tenant {
   // o.scenario (a JSON object) is written to kit_scenario inside the new transaction, so the
   // next reset clears it again (a reset without scenario leaves none)
   reset(o = {}) {
-    const scen = Tenant.checkScenario(o.scenario);
+    const scen = Tenant.checkScenario(o.scenario, this.site.cfg);
     return this.lock(() => {
       const t0 = performance.now();
       if (this.db.inTransaction) this.x('ROLLBACK'); else this.stats.lostTransactions++;
@@ -235,11 +236,14 @@ class Tenant {
   }
 
   // Scenario of the current rollout: the object given to /__rl/reset {scenario}, or {}.
-  static checkScenario(sc) {
+  // With the site config, its widget slots are validated too (cfg.widgets, lib/widgets.js).
+  static checkScenario(sc, cfg) {
     if (sc == null) return null;
     if (typeof sc !== 'object' || Array.isArray(sc)) throw Object.assign(new Error('scenario must be a JSON object'), { statusCode: 400 });
     const s = JSON.stringify(sc);
     if (s.length > SCENARIO_MAX) throw Object.assign(new Error(`scenario larger than ${SCENARIO_MAX} bytes`), { statusCode: 400 });
+    widgets.check(cfg, sc);
+    if (cfg && typeof cfg.checkScenario === 'function') cfg.checkScenario(sc);
     return s;
   }
   scenario() {
