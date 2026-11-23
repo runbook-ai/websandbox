@@ -18,6 +18,8 @@ import argparse, hashlib, json, os, shutil, subprocess, sys, time
 SITES = ['store', 'forum', 'code', 'wiki', 'map', 'mail', 'social', 'lab']
 OPTIONAL = {'mail', 'social', 'lab'}  # newer sites: skipped (not an error) while the dataset revision has no data for them
 SHARED = {'social': ('media', '../forum/media')}  # social shows the forum's images: a symlink, not a copy
+# sites that serve another site's data (the social DB's other networks): a dir of symlinks to it
+ALIASES = {'devblog': 'social', 'micro': 'social', 'makers': 'social'}
 ARCHIVES = {'store': ('media.tar', 'media'), 'forum': ('media.tar', 'media'), 'code': ('media.tar', 'media'),
             'wiki': ('media.tar', 'media'), 'map': ('static.tar.zst', 'static')}
 
@@ -172,6 +174,16 @@ def main():
         if os.path.isdir(os.path.join(args.data, site)) and not os.path.lexists(link):
             os.symlink(target, link)
             log('linked', site + '/' + name, '->', target)
+    for site, target in ALIASES.items():
+        d = os.path.join(args.data, site)
+        if not os.path.isfile(os.path.join(args.data, target, 'base.db')):
+            continue
+        os.makedirs(d, exist_ok=True)
+        for name in ('base.db', 'media'):
+            link = os.path.join(d, name)
+            if not os.path.lexists(link):
+                os.symlink(os.path.join('..', target, name), link)
+                log('linked', site + '/' + name, '->', '../' + target + '/' + name)
     log('data ok (%.0fs)' % (time.time() - t0))
 
 

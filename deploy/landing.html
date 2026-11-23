@@ -36,7 +36,7 @@
   <p class="lede">Lightweight, self-hostable websites for training and evaluating web agents: a store with its
   back office, a forum, a code-hosting site, a Wikipedia and a map, rebuilt from the
   <a href="https://webarena.dev">WebArena</a> environments with the same kinds of features and the same
-  underlying data, plus new sites (webmail, a community site) whose content is generated from a simulated world of people. Each site is one SQLite database plus one small Node server that resets in milliseconds.
+  underlying data, plus new sites (webmail, a community site, a developer blog, a micro-post timeline, a makers forum) whose content is generated from a simulated world of people. Each site is one SQLite database plus one small Node server that resets in milliseconds.
   This is a public demo instance (one copy of each site).</p>
 
   <div class="note">Everything you change here is shared with other visitors and is <strong>undone every
@@ -86,12 +86,27 @@
       <div class="login"><div><span>User</span><code>cedar_lilian</code><code>Password.123</code></div></div>
     </div>
     <div class="card">
+      <h3><span class="dot {{ST_DEVBLOG}}" title="{{ST_DEVBLOG}}"></span><a href="{{URL_DEVBLOG}}/">Devblog</a></h3>
+      <p>Developer articles over the same synthetic members: tags, series, reactions, reading list, threaded comments, a markdown editor; 4.6k articles.</p>
+      <div class="login"><div><span>User</span><code>michael53</code><code>Password.123</code></div></div>
+    </div>
+    <div class="card">
+      <h3><span class="dot {{ST_MICRO}}" title="{{ST_MICRO}}"></span><a href="{{URL_MICRO}}/">Micro</a></h3>
+      <p>Short-post timeline: following and for-you feeds, 280-character posts, replies, reposts, quotes, likes, bookmarks, messages; 500k posts.</p>
+      <div class="login"><div><span>User</span><code>iron_dana</code><code>Password.123</code></div></div>
+    </div>
+    <div class="card">
+      <h3><span class="dot {{ST_MAKERS}}" title="{{ST_MAKERS}}"></span><a href="{{URL_MAKERS}}/">Makers</a></h3>
+      <p>Indie-founder community: groups, product pages with revenue and milestones, posts with upvotes and comments; 858 products.</p>
+      <div class="login"><div><span>User</span><code>jonathoncodes</code><code>Password.123</code></div></div>
+    </div>
+    <div class="card">
       <h3><span class="dot {{ST_LAB}}" title="{{ST_LAB}}"></span><a href="{{URL_LAB}}/">Lab</a></h3>
       <p>Workspace app built from hard UI patterns: virtualized lists, shadow DOM, frames, controlled editors, slow jobs, planted instructions.</p>
       <div class="login"><div><span>User</span><code>aldo.lowrie</code><code>Password.123</code></div></div>
     </div>
   </div>
-  <p style="margin-top:14px;color:var(--muted);font-size:.9rem">The logins are WebArena's public test accounts (mail and community: synthetic users, same password).</p>
+  <p style="margin-top:14px;color:var(--muted);font-size:.9rem">The logins are WebArena's public test accounts (mail, community, devblog, micro, makers: synthetic users, same password).</p>
 
   <h2>Code and data</h2>
   <p>Code (Apache-2.0): <a href="https://github.com/runbook-ai/websandbox">github.com/runbook-ai/websandbox</a> &mdash;
