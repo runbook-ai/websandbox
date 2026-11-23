@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 'use strict';
 // Build the social site's base.db: a COPY of the forum base.db, extended additively (schema.sql) and
-// loaded with the world model's community network (personas -> users + accounts, world spaces ->
-// forums, posts / comments -> submissions / comments appended after the existing max ids).
+// loaded with the world model's networks: community (personas -> users + accounts, world spaces ->
+// forums, posts / comments -> submissions / comments appended after the existing max ids), then
+// devblog, makers and micro (build/networks.js; a network without its rendered-<net>.jsonl is skipped
+// with a warning), and the hidden world_affiliations table.
 //
 //   node sites/social/build/migrate.js [--forum $WSB_DATA_ROOT/forum/base.db] [--world $WSB_WORK/world/w1]
 //        [--rendered <world>/rendered-community.jsonl] [--out $WSB_DATA_ROOT/social] [--now '2026-10-14 18:00:00']
+//        [--nets community,devblog,makers,micro]
 //
 // Never touches the forum base.db (read-only source; copied to <out>/base.db.tmp, renamed at the end).
 // Additive only: existing ids, columns and rows stay as they are -- checked at the end against the
@@ -21,6 +24,7 @@ const { rng } = require('../../../world/lib/rng');
 const { localPart, PERSONAL_DOMAIN } = require('../../../world/lib/mail-addr');
 const { slugify } = require('../../forum/lib/forum');
 const SPACES = require('./spaces');
+const NETS = require('./networks');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..');
 const DATA_ROOT = process.env.WSB_DATA_ROOT || path.join(ROOT, 'data');
@@ -79,7 +83,10 @@ function main() {
     rendered: { type: 'string' },
     out: { type: 'string', default: path.join(DATA_ROOT, 'social') },
     now: { type: 'string', default: '2026-10-14 18:00:00' },
+    nets: { type: 'string', default: 'community,devblog,makers,micro' },
   } });
+  const nets = a.nets.split(',').map((x) => x.trim()).filter(Boolean);
+  if (!nets.includes('community')) throw new Error('--nets must include community (it creates the users and accounts)');
   const src = path.resolve(a.forum);
   const outDir = path.resolve(a.out);
   const file = path.join(outDir, 'base.db');
@@ -104,7 +111,8 @@ function main() {
   const W = path.resolve(a.world);
   const world = JSON.parse(fs.readFileSync(path.join(W, 'world.json'), 'utf8'));
   const personas = readJsonl(path.join(W, 'personas.jsonl'));
-  const items = readJsonl(path.join(W, 'items.jsonl')).filter((i) => i.net === 'community');
+  const allItems = readJsonl(path.join(W, 'items.jsonl'));
+  const items = allItems.filter((i) => i.net === 'community');
   const text = new Map(readJsonl(a.rendered || path.join(W, 'rendered-community.jsonl')).map((r) => [r.id, r]));
   const seed = world.seed;
   const worldStart = Date.parse(world.start);
@@ -312,6 +320,10 @@ function main() {
     stats.moderators = one('SELECT count(*) FROM moderators');
     stats.notifications = one('SELECT count(*) FROM notifications');
     stats.log_entries = one('SELECT count(*) FROM forum_log_entries');
+
+    // ---------------------------------------------------------------- devblog, makers, micro; affiliations
+    stats.affiliations = NETS.loadAffiliations(db, world);
+    Object.assign(stats, NETS.loadNetworks(db, { world, personas, userOf, seed, NOW, nowMs, worldStart, topicById, worldDir: W, insW, notifyRead, nets, items: allItems }));
   })();
 
   // ---- FTS on the new tables (external content, kept current by triggers)

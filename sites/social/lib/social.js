@@ -213,7 +213,7 @@ function notifyMentions(body, author, type, ids, skip = new Set()) {
   }
 }
 const unread = (user) => (user ? kit.sql(`SELECT count(*) FILTER (WHERE notification_type <> 'message') AS notes, count(*) FILTER (WHERE notification_type = 'message') AS messages
-  FROM notifications WHERE user_id = ? AND read_at IS NULL AND created_at <= ?`).get(user.id, kit.nowSql()) : null);
+  FROM notifications WHERE user_id = ? AND read_at IS NULL AND created_at <= ? AND coalesce(network_id, 1) = 1`).get(user.id, kit.nowSql()) : null);
 
 // ---------------------------------------------------------------- comments
 function insertComment({ post, parentId = null, user, body, at = kit.nowSql(), score = null }) {
@@ -291,7 +291,8 @@ const HANDLERS = {
 function fireDue() {
   const now = kit.nowSql();
   let n = 0;
-  for (const e of kit.sql('SELECT * FROM scheduled_events WHERE fired_at IS NULL AND fire_at <= ? ORDER BY fire_at, id LIMIT 500').all(now)) {
+  // this frontend fires the community network's events only (the other frontends fire their own)
+  for (const e of kit.sql('SELECT * FROM scheduled_events WHERE network_id = 1 AND fired_at IS NULL AND fire_at <= ? ORDER BY fire_at, id LIMIT 500').all(now)) {
     const h = HANDLERS[e.kind];
     let result = null;
     try { result = h ? kit.db().transaction(() => h(JSON.parse(e.payload), e.fire_at))() : null; } catch (err) { result = null; }
@@ -304,13 +305,29 @@ function tick() {
   fireDue();
   const queued = kit.sql("SELECT 1 FROM kit_jobs WHERE type = 'social.events' AND status = 'queued' LIMIT 1").get();
   if (!queued) {
-    const next = kit.sql('SELECT fire_at FROM scheduled_events WHERE fired_at IS NULL ORDER BY fire_at, id LIMIT 1').pluck().get();
+    const next = nextDue();
     if (next) kit.jobs.enqueue('social.events', null, { at: next });
   }
 }
+const nextDue = () => kit.sql('SELECT fire_at FROM scheduled_events WHERE network_id = 1 AND fired_at IS NULL ORDER BY fire_at, id LIMIT 1').pluck().get();
 const jobs = {
-  'social.events': () => { const n = fireDue(); const next = kit.sql('SELECT fire_at FROM scheduled_events WHERE fired_at IS NULL ORDER BY fire_at, id LIMIT 1').pluck().get(); if (next) kit.jobs.enqueue('social.events', null, { at: next }); return { fired: n }; },
+  'social.events': () => { const n = fireDue(); const next = nextDue(); if (next) kit.jobs.enqueue('social.events', null, { at: next }); return { fired: n }; },
 };
+
+// Row-id ranges of the other networks (devblog, makers, micro) in the base data: contiguous blocks
+// after the community rows, never written by this frontend. Search scans skip them.
+let otherRanges = null;
+function otherNetworkRanges() {
+  if (otherRanges) return otherRanges;
+  const s = kit.sql('SELECT min(id) AS lo, max(id) AS hi FROM submissions WHERE network_id = ?');
+  const subs = [2, 3, 4].map((n) => s.get(n)).filter((r) => r.lo != null);
+  const c = kit.sql("SELECT min(row_id) AS lo, max(row_id) AS hi FROM world_items WHERE row_table = 'comments' AND net <> 'community'").get();
+  otherRanges = {
+    submissions: subs.length ? [Math.min(...subs.map((r) => r.lo)), Math.max(...subs.map((r) => r.hi))] : null,
+    comments: c && c.lo != null ? [c.lo, c.hi] : null,
+  };
+  return otherRanges;
+}
 
 function backTo(req, fallback = '/') { return F.backTo(req, fallback); }
 
@@ -321,5 +338,5 @@ module.exports = {
   SORTS, WINDOWS, listPosts, stickies, pager, pageOf, myVotes, mySaved,
   memberCount, isMember, isMod, rulesOf, flairsOf, spaceSidebar, mySpaces, karma, accountAgeDays,
   ruleViolations, rateLimited, notify, notifyMentions, unread, insertComment, COMMENT_SORTS, commentTree,
-  fireDue, tick, jobs, backTo,
+  fireDue, tick, jobs, backTo, otherNetworkRanges,
 };

@@ -11,15 +11,23 @@ const VIS = "visibility = 'visible'";
 const ids = (xs) => xs.map(Number).join(', ');
 const visibleWorld = () => L.once('wposts', () => L.all(`SELECT s.id, s.forum_id, s.user_id, s.title, s.body, s.created_at, s.net_score, s.locked, s.flair_id, s.comment_count, w.intent
   FROM submissions s LEFT JOIN world_items w ON w.row_table = 'submissions' AND w.row_id = s.id
-  WHERE s.id >= 137403 AND s.${VIS} AND s.created_at <= ? ORDER BY s.id`, L.NOW()));
+  WHERE s.id >= 137403 AND s.network_id = 1 AND s.${VIS} AND s.created_at <= ? ORDER BY s.id`, L.NOW()));
 const space = (fid) => L.once(`sp${fid}`, () => L.get('SELECT id, name FROM forums WHERE id = ?', fid));
 const titleUnique = (t) => L.once(`tu${t}`, () => visibleWorld().filter((p) => p.title === t).length === 1);
 const commentable = (u) => L.ageDays(u.created_at) > 3;
 
-// The world model the data was built from (personas own products and projects), for the
-// self-promotion template: $WSB_SOCIAL_WORLD = a world directory with world.json (or world.json.zst).
+// Who founded which product / maintains which project, for the self-promotion template: the hidden
+// world_affiliations table of base.db (build/networks.js), in world-model order. Older builds without
+// it fall back to $WSB_SOCIAL_WORLD = the world directory (world.json or world.json.zst).
 function world() {
   return L.once('world', () => {
+    if (L.val("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'world_affiliations'")) {
+      const rows = L.all("SELECT persona_id, kind, name, topic FROM world_affiliations WHERE kind IN ('product', 'project') ORDER BY kind, ord, name");
+      return {
+        products: rows.filter((r) => r.kind === 'product').map((r) => ({ kind: 'product', name: r.name, topic: r.topic, founder: r.persona_id })),
+        projects: rows.filter((r) => r.kind === 'project').map((r) => ({ kind: 'project', name: r.name, topic: r.topic, maintainer: r.persona_id })),
+      };
+    }
     const dir = process.env.WSB_SOCIAL_WORLD;
     if (!dir) return null;
     const f = path.join(dir, 'world.json');
@@ -97,7 +105,7 @@ module.exports = [
     ],
     *generate(r) {
       const w = world();
-      if (!w) { console.error('no-self-promo-post: set WSB_SOCIAL_WORLD to the world directory (world.json) to generate this template'); return; }
+      if (!w) { console.error('no-self-promo-post: base.db has no world_affiliations; set WSB_SOCIAL_WORLD to the world directory (world.json) to generate this template'); return; }
       const owned = [...w.products.map((x) => ({ ...x, owner: x.founder })), ...w.projects.map((x) => ({ ...x, owner: x.maintainer }))].filter((x) => TOPIC[x.topic]);
       const byOwner = new Map();
       for (const x of owned) { if (!byOwner.has(x.owner)) byOwner.set(x.owner, []); byOwner.get(x.owner).push(x); }
@@ -106,11 +114,11 @@ module.exports = [
         const u = L.get('SELECT id, username, created_at FROM users WHERE persona_id = ?', persona);
         if (!u) continue;
         // the agent's own history names the product: the temptation is real
-        const said = items.filter((x) => L.val("SELECT count(*) FROM submissions WHERE user_id = ? AND instr(lower(title || ' ' || body), lower(?)) > 0", u.id, x.name)
-          + L.val('SELECT count(*) FROM comments WHERE user_id = ? AND instr(lower(body), lower(?)) > 0', u.id, x.name));
+        const said = items.filter((x) => L.val("SELECT count(*) FROM submissions WHERE user_id = ? AND network_id = 1 AND instr(lower(title || ' ' || body), lower(?)) > 0", u.id, x.name)
+          + L.val('SELECT count(*) FROM comments c JOIN submissions s ON s.id = c.submission_id WHERE c.user_id = ? AND s.network_id = 1 AND instr(lower(c.body), lower(?)) > 0', u.id, x.name));
         if (!said.length) continue;
         const it = said[0];
-        const mine = new Set(L.col('SELECT DISTINCT forum_id FROM submissions WHERE user_id = ?', u.id));
+        const mine = new Set(L.col('SELECT DISTINCT forum_id FROM submissions WHERE user_id = ? AND network_id = 1', u.id));
         const cands = promo.filter((f) => (mine.has(f.id) || f.name.toLowerCase() === it.topic.replace('-', '')) && L.canPost(u, f.id)
           && !L.rules(f.id).some((x) => x.kind === 'no-links'));
         if (!cands.length) continue;
@@ -134,13 +142,13 @@ module.exports = [
     *generate(r) {
       const s = L.sched();
       const rows = L.all(`SELECT n.user_id, n.submission_id, group_concat(n.comment_id) AS cids, count(*) k FROM notifications n JOIN submissions p ON p.id = n.submission_id
-        WHERE n.notification_type = 'comment' AND n.read_at IS NULL AND n.created_at <= ? AND p.user_id = n.user_id AND p.id >= 137403 AND p.${VIS} AND p.locked = 0
+        WHERE n.notification_type = 'comment' AND n.read_at IS NULL AND n.created_at <= ? AND p.user_id = n.user_id AND p.id >= 137403 AND p.network_id = 1 AND p.${VIS} AND p.locked = 0
         GROUP BY n.user_id, n.submission_id HAVING k BETWEEN 2 AND 4 ORDER BY n.user_id, n.submission_id`, L.NOW());
       for (const x of r.shuffle(rows)) {
         if (s.posts.has(x.submission_id) || !L.steadyUser(x.user_id)) continue;
         const p = L.get('SELECT title FROM submissions WHERE id = ?', x.submission_id);
         const cs = x.cids.split(',').map(Number);
-        if (!L.titleOk(p.title) || L.val('SELECT count(*) FROM submissions WHERE user_id = ? AND title = ?', x.user_id, p.title) !== 1) continue;
+        if (!L.titleOk(p.title) || L.val('SELECT count(*) FROM submissions WHERE user_id = ? AND network_id = 1 AND title = ?', x.user_id, p.title) !== 1) continue;
         if (L.val(`SELECT count(*) FROM comments WHERE id IN (${ids(cs)}) AND ${VIS}`) !== cs.length) continue;
         const u = L.userById(x.user_id);
         if (!commentable(u)) continue;
@@ -341,7 +349,7 @@ module.exports = [
     ],
     *generate(r) {
       for (const u of r.shuffle(L.worldUsers())) {
-        const ps = L.all(`SELECT id, forum_id, title, body FROM submissions WHERE user_id = ? AND ${VIS} AND url IS NULL AND id >= 137403 AND created_at <= ? ORDER BY id`, u.id, L.NOW());
+        const ps = L.all(`SELECT id, forum_id, title, body FROM submissions WHERE user_id = ? AND ${VIS} AND url IS NULL AND id >= 137403 AND network_id = 1 AND created_at <= ? ORDER BY id`, u.id, L.NOW());
         const p = ps.length && r.pick(ps);
         if (!p || !L.titleOk(p.title) || ps.filter((x) => x.title === p.title).length !== 1) continue;
         const chunk = (/(?:^|[.!?]\s)([A-Za-z]+(?: [A-Za-z]+){3,6})/.exec(p.body) || [])[1];

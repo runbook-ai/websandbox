@@ -20,7 +20,8 @@ module.exports = async function (app, kit) {
       // each part limited (ids grow with time), so users with 300k comments stay cheap
       const n = pg.offset + S.PER_PAGE + 1;
       if (tab !== 'comments') parts.push(`SELECT * FROM (SELECT 'post' AS type, s.id, s.created_at FROM submissions s WHERE s.user_id = ${u.id} AND s.network_id = 1 AND s.visibility = 'visible' AND s.created_at <= ? ORDER BY s.id DESC LIMIT ${n})`);
-      if (tab !== 'posts') parts.push(`SELECT * FROM (SELECT 'comment' AS type, c.id, c.created_at FROM comments c WHERE c.user_id = ${u.id} AND c.visibility = 'visible' AND c.created_at <= ? ORDER BY c.id DESC LIMIT ${n})`);
+      if (tab !== 'posts') parts.push(`SELECT * FROM (SELECT 'comment' AS type, c.id, c.created_at FROM comments c WHERE c.user_id = ${u.id} AND c.visibility = 'visible' AND c.created_at <= ?
+        AND EXISTS (SELECT 1 FROM submissions s2 WHERE s2.id = c.submission_id AND s2.network_id = 1) ORDER BY c.id DESC LIMIT ${n})`);
       const order = parts.length > 1 ? 'created_at DESC, id DESC' : 'id DESC';
       const rows = kit.sql(`SELECT * FROM (${parts.join(' UNION ALL ')}) ORDER BY ${order} LIMIT ? OFFSET ?`).all(...parts.map(() => now), S.PER_PAGE + 1, pg.offset);
       const posts = new Map(S.hydrate(rows.filter((r) => r.type === 'post').map((r) => r.id)).map((x) => [x.id, x]));

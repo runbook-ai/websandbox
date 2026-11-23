@@ -69,10 +69,10 @@ module.exports = [
       'Search the posts about {{project}}\'s latest release. What is the new version number?',
     ],
     *generate(r) {
-      const evs = L.all(`SELECT event_id, min(facts) AS fact, count(*) n FROM world_items WHERE kind = 'post' AND event_id IS NOT NULL AND row_id IS NOT NULL
+      const evs = L.all(`SELECT event_id, min(facts) AS fact, count(*) n FROM world_items WHERE net = 'community' AND kind = 'post' AND event_id IS NOT NULL AND row_id IS NOT NULL
         GROUP BY event_id HAVING count(DISTINCT facts) = 1 AND n >= 2 ORDER BY event_id`);
       const sched = L.col("SELECT lower(payload) FROM scheduled_events WHERE fired_at IS NULL AND kind = 'world.post'");
-      const all = L.once('allposts', () => L.all(`SELECT id, lower(title || ' ' || body) AS t FROM submissions WHERE id >= 137403 AND ${VIS} AND created_at <= ?`, L.NOW()));
+      const all = L.once('allposts', () => L.all(`SELECT id, lower(title || ' ' || body) AS t FROM submissions WHERE id >= 137403 AND network_id = 1 AND ${VIS} AND created_at <= ?`, L.NOW()));
       for (const e of r.shuffle(evs)) {
         const m = /^(\S+) (\d+(?:\.\d+)+)$/.exec(JSON.parse(e.fact)[0] || '');
         if (!m) continue;
@@ -96,14 +96,14 @@ module.exports = [
       'List everyone who replied to something I wrote in the last {{n}} days.',
     ],
     *generate(r) {
-      const users = L.col(`SELECT user_id FROM notifications WHERE notification_type = 'comment' AND user_id IN (SELECT id FROM users WHERE persona_id IS NOT NULL)
+      const users = L.col(`SELECT user_id FROM notifications WHERE notification_type = 'comment' AND coalesce(network_id, 1) = 1 AND user_id IN (SELECT id FROM users WHERE persona_id IS NOT NULL)
         AND created_at > ? AND created_at <= ? GROUP BY user_id HAVING count(*) BETWEEN 2 AND 8`, L.ago(5), L.NOW());
       for (const id of r.shuffle(users)) {
         if (!L.steadyUser(id)) continue;
         const n = r.pick([2, 3, 5]);
         const cut = L.ago(n), lo = L.ago(n + 0.25), hi = L.ago(n - 0.25);
         const ns = L.all(`SELECT n.created_at, a.username FROM notifications n JOIN comments c ON c.id = n.comment_id JOIN users a ON a.id = c.user_id
-          WHERE n.user_id = ? AND n.notification_type = 'comment' AND n.created_at > ? AND n.created_at <= ? AND a.id <> ? ORDER BY n.created_at DESC`, id, L.ago(n + 10), L.NOW(), id);
+          WHERE n.user_id = ? AND n.notification_type = 'comment' AND coalesce(n.network_id, 1) = 1 AND n.created_at > ? AND n.created_at <= ? AND a.id <> ? ORDER BY n.created_at DESC`, id, L.ago(n + 10), L.NOW(), id);
         if (ns.some((x) => x.created_at > lo && x.created_at <= hi)) continue; // nothing near the window's edge
         const inWin = [...new Set(ns.filter((x) => x.created_at > cut).map((x) => x.username))];
         const before = [...new Set(ns.filter((x) => x.created_at <= cut).map((x) => x.username))].filter((x) => !inWin.includes(x)).slice(0, 4);
@@ -126,7 +126,8 @@ module.exports = [
     ],
     *generate(r) {
       const sched = L.col("SELECT lower(payload) FROM scheduled_events WHERE fired_at IS NULL AND kind = 'world.comment'");
-      const maxC = L.val('SELECT max(id) FROM comments');
+      // the community's last comment (the other networks' comments come after it)
+      const maxC = L.val("SELECT max(row_id) FROM world_items WHERE net = 'community' AND row_table = 'comments'") || L.val('SELECT max(id) FROM comments');
       const STOP = new Set(['that', 'this', 'with', 'have', 'from', 'they', 'what', 'when', 'your', 'just', 'like', 'been', 'were', 'will', 'would', 'there', 'their', 'about', 'which', 'really', 'think']);
       const find = L.open().prepare(`SELECT c.id, c.created_at, u.username, f.name AS space FROM comments_fts m CROSS JOIN comments c ON c.id = m.rowid CROSS JOIN submissions s ON s.id = c.submission_id
         JOIN users u ON u.id = c.user_id JOIN forums f ON f.id = s.forum_id

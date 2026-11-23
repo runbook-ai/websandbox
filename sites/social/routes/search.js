@@ -63,8 +63,11 @@ module.exports = async function (app, kit) {
     const alias = isC ? 'c' : 's';
     const join = isC ? 'CROSS JOIN comments c ON c.id = m.rid CROSS JOIN submissions s ON s.id = c.submission_id' : 'CROSS JOIN submissions s ON s.id = m.rid';
     const cap = RANK_CAP[type];
-    const big = kit.countCapped(db, `FROM ${table} WHERE ${table} MATCH ?`, [s.match], cap) > cap;
-    const inner = big ? `SELECT rowid AS rid FROM ${table} WHERE ${table} MATCH ? ORDER BY rowid DESC LIMIT ${SCAN}` : `SELECT rowid AS rid, ${s.rank} AS score FROM ${table} WHERE ${table} MATCH ?`;
+    // the other networks' rows (one block of ids) never count: community results as before
+    const other = S.otherNetworkRanges()[isC ? 'comments' : 'submissions'];
+    const skip = other ? ` AND NOT (rowid BETWEEN ${+other[0]} AND ${+other[1]})` : '';
+    const big = kit.countCapped(db, `FROM ${table} WHERE ${table} MATCH ?${skip}`, [s.match], cap) > cap;
+    const inner = big ? `SELECT rowid AS rid FROM ${table} WHERE ${table} MATCH ?${skip} ORDER BY rowid DESC LIMIT ${SCAN}` : `SELECT rowid AS rid, ${s.rank} AS score FROM ${table} WHERE ${table} MATCH ?${skip}`;
     const fromWhere = `FROM (${inner}) m ${join} WHERE ${cond.join(' AND ')}`;
     const n = kit.countCapped(db, fromWhere, [s.match, ...params], cap);
     data.countLabel = n > cap ? `More than ${cap.toLocaleString('en-US')} results` : `${n.toLocaleString('en-US')} result${n === 1 ? '' : 's'}`;

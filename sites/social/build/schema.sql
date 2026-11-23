@@ -216,3 +216,58 @@ CREATE INDEX world_items_row ON world_items(row_table, row_id);
 CREATE INDEX submissions_network_new ON submissions(network_id, id);
 CREATE INDEX users_persona ON users(persona_id) WHERE persona_id IS NOT NULL;
 CREATE INDEX notifications_unread ON notifications(user_id, read_at);
+
+-- ---------------------------------------------------------------- devblog / makers / micro (build/networks.js)
+-- Columns for the other frontends; NULL on every community row.
+ALTER TABLE submissions ADD COLUMN reply_to INTEGER;             -- micro: the post this one replies to (submissions.id)
+ALTER TABLE submissions ADD COLUMN root_id INTEGER;              -- micro: the conversation's first post
+ALTER TABLE submissions ADD COLUMN product_id INTEGER;           -- makers: the product a founder's post is about (products.id)
+ALTER TABLE message_threads ADD COLUMN network_id INTEGER DEFAULT 1; -- private messages per network (micro DMs = 4)
+
+CREATE INDEX submissions_reply_to ON submissions(reply_to, id) WHERE reply_to IS NOT NULL;
+CREATE INDEX submissions_series ON submissions(series_id, id) WHERE series_id IS NOT NULL;
+CREATE INDEX submissions_product ON submissions(product_id, id) WHERE product_id IS NOT NULL;
+CREATE INDEX submissions_quote_of ON submissions(quote_of) WHERE quote_of IS NOT NULL;
+CREATE INDEX reposts_user ON reposts(user_id, created_at);
+CREATE INDEX reactions_user ON reactions(user_id, kind, id);
+CREATE INDEX bookmarks_user ON bookmarks(user_id, created_at);
+CREATE INDEX tag_follows_tag ON tag_follows(tag_id);
+CREATE INDEX notifications_net ON notifications(user_id, network_id, created_at);
+CREATE INDEX scheduled_events_net ON scheduled_events(network_id, fired_at, fire_at, id);
+CREATE INDEX accounts_user ON accounts(user_id, network_id);
+
+-- makers: products (world model products) and their milestones
+CREATE TABLE products (
+  id          INTEGER PRIMARY KEY,
+  network_id  INTEGER NOT NULL DEFAULT 3 REFERENCES networks(id),
+  slug        TEXT NOT NULL UNIQUE,
+  name        TEXT NOT NULL,
+  tagline     TEXT,
+  description TEXT,
+  topic       TEXT,
+  founder_id  INTEGER NOT NULL REFERENCES users(id),
+  mrr         INTEGER,                                -- monthly revenue in USD (NULL = not shared, 0 = pre-revenue)
+  launched_at TEXT,
+  created_at  TEXT NOT NULL
+);
+CREATE INDEX products_founder ON products(founder_id);
+CREATE TABLE product_milestones (
+  id            INTEGER PRIMARY KEY,
+  product_id    INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL,                        -- 'launch' | 'milestone' | 'revenue-update' | 'update'
+  title         TEXT NOT NULL,
+  value         TEXT,                                 -- '$958 MRR', '120 users', ...
+  submission_id INTEGER REFERENCES submissions(id) ON DELETE SET NULL,
+  at            TEXT NOT NULL
+);
+CREATE INDEX product_milestones_product ON product_milestones(product_id, at);
+
+-- hidden: who founded / maintains / works at what in the world model (generators and graders only)
+CREATE TABLE world_affiliations (
+  persona_id TEXT NOT NULL,
+  kind       TEXT NOT NULL,                           -- 'product' | 'project' | 'employer'
+  name       TEXT NOT NULL,
+  topic      TEXT,
+  ord        INTEGER NOT NULL,                        -- position in the world model's list (stable order)
+  PRIMARY KEY (persona_id, kind, name)
+) WITHOUT ROWID;

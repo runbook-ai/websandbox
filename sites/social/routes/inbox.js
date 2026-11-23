@@ -11,7 +11,7 @@ module.exports = async function (app, kit) {
     const rows = kit.sql(`SELECT n.*, a.username AS actor, s.title, s.slug, f.name AS space, c.body AS comment_body, m.body AS message_body, m.thread_id
       FROM notifications n LEFT JOIN users a ON a.id = n.actor_id LEFT JOIN submissions s ON s.id = n.submission_id LEFT JOIN forums f ON f.id = s.forum_id
       LEFT JOIN comments c ON c.id = n.comment_id LEFT JOIN messages m ON m.id = n.message_id
-      WHERE n.user_id = ? AND n.notification_type <> 'message' AND n.created_at <= ? ${filter} ORDER BY n.created_at DESC, n.id DESC LIMIT ? OFFSET ?`)
+      WHERE n.user_id = ? AND n.notification_type <> 'message' AND coalesce(n.network_id, 1) = 1 AND n.created_at <= ? ${filter} ORDER BY n.created_at DESC, n.id DESC LIMIT ? OFFSET ?`)
       .all(req.user.id, kit.nowSql(), S.PER_PAGE + 1, pg.offset);
     for (const n of rows) if (!n.actor && n.comment_id) n.actor = kit.sql('SELECT u.username FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?').pluck().get(n.comment_id);
     const p = S.pager(req, rows);
@@ -20,8 +20,8 @@ module.exports = async function (app, kit) {
   // POST /notifications/read  id=<n> (one, then go to its target) | all=1
   app.post('/notifications/read', { config: { login: true } }, async (req, reply) => {
     const b = req.body || {};
-    if (b.all) kit.sql("UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL AND notification_type <> 'message'").run(kit.nowSql(), req.user.id);
-    else if (b.id) kit.sql('UPDATE notifications SET read_at = coalesce(read_at, ?) WHERE id = ? AND user_id = ?').run(kit.nowSql(), +b.id, req.user.id);
+    if (b.all) kit.sql("UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL AND notification_type <> 'message' AND coalesce(network_id, 1) = 1").run(kit.nowSql(), req.user.id);
+    else if (b.id) kit.sql('UPDATE notifications SET read_at = coalesce(read_at, ?) WHERE id = ? AND user_id = ? AND coalesce(network_id, 1) = 1').run(kit.nowSql(), +b.id, req.user.id);
     if (/application\/json/.test(req.headers.accept || '')) return { ok: true };
     const go = typeof b.go === 'string' && b.go.startsWith('/') && !b.go.startsWith('//') ? b.go : '/notifications';
     return reply.redirect(go);
@@ -35,11 +35,12 @@ module.exports = async function (app, kit) {
         (SELECT group_concat(u.username, ', ') FROM message_thread_participants x JOIN users u ON u.id = x.user_id WHERE x.thread_id = t.id AND x.user_id <> ?) AS other,
         (SELECT count(*) FROM notifications nn WHERE nn.user_id = ? AND nn.notification_type = 'message' AND nn.read_at IS NULL AND nn.message_id IN (SELECT id FROM messages WHERE thread_id = t.id)) AS unread
       FROM message_threads t JOIN message_thread_participants p ON p.thread_id = t.id AND p.user_id = ? JOIN messages m ON m.thread_id = t.id
+      WHERE coalesce(t.network_id, 1) = 1
       GROUP BY t.id ORDER BY last_at DESC, t.id DESC LIMIT ? OFFSET ?`).all(req.user.id, req.user.id, req.user.id, S.PER_PAGE + 1, pg.offset);
     return reply.render('inbox', { title: 'Inbox', rows, p: S.pager(req, rows) });
   });
   const threadFor = (req) => {
-    const t = kit.sql('SELECT t.* FROM message_threads t JOIN message_thread_participants p ON p.thread_id = t.id AND p.user_id = ? WHERE t.id = ?').get(req.user.id, +req.params.id || 0);
+    const t = kit.sql('SELECT t.* FROM message_threads t JOIN message_thread_participants p ON p.thread_id = t.id AND p.user_id = ? WHERE t.id = ? AND coalesce(t.network_id, 1) = 1').get(req.user.id, +req.params.id || 0);
     if (!t) throw kit.httpError(404, 'That conversation does not exist.');
     return t;
   };

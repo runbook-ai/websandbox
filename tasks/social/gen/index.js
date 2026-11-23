@@ -4,8 +4,8 @@
 //   node tasks/social/gen/index.js --seed 1 [--out FILE] [--max N] [--only name,name] [--list]
 // Templates: read.js and write.js. A template = phrasings with {{slots}} + generate(rng) yielding
 // {slots, login_user, start_url?, eval, changes?}; references come from SQL on base.db
-// (WSB_SOCIAL_DATA / SOCIAL_DATA override the data dir). The self-promotion template also needs the
-// world model the data was built from (WSB_SOCIAL_WORLD, see write.js); without it it is skipped.
+// (WSB_SOCIAL_DATA / SOCIAL_DATA override the data dir). The self-promotion template reads who owns
+// which product / project from base.db's world_affiliations (older builds: WSB_SOCIAL_WORLD, write.js).
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('util');

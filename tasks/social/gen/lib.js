@@ -106,7 +106,7 @@ function canPost(u, fid) {
   }
   // new accounts (under 7 days) get one post a day: keep posting tasks to older accounts with no post today
   if (ageDays(u.created_at) < 8) return false;
-  if (val('SELECT count(*) FROM submissions WHERE user_id = ? AND created_at > ?', u.id, ago(1))) return false;
+  if (val('SELECT count(*) FROM submissions WHERE user_id = ? AND network_id = 1 AND created_at > ?', u.id, ago(1))) return false;
   return true;
 }
 // visible posts of a space that are out at the site clock

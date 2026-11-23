@@ -178,17 +178,17 @@ test('social site', { skip: !have && `no ${DATA}/base.db` }, async (t) => {
     const now = await one("SELECT value FROM site_settings WHERE key = 'social_now'");
     const until = new Date(Date.parse(now.replace(' ', 'T') + 'Z') + 2 * 3600e3).toISOString();
     const untilSql = until.slice(0, 19).replace('T', ' ');
-    const due = await one(`SELECT count(*) FROM scheduled_events WHERE fired_at IS NULL AND fire_at <= '${untilSql}'`);
+    const due = await one(`SELECT count(*) FROM scheduled_events WHERE network_id = 1 AND fired_at IS NULL AND fire_at <= '${untilSql}'`);
     assert.ok(due > 0);
     const before = await one('SELECT count(*) FROM comments');
     await new Client(A).get('/'); // a request queues the timer job
     await rl(A, '/clock', { now: until });
     await rl(A, '/jobs/run', {});
-    assert.equal(await one("SELECT count(*) FROM scheduled_events WHERE fired_at IS NOT NULL"), due);
+    assert.equal(await one("SELECT count(*) FROM scheduled_events WHERE fired_at IS NOT NULL"), due, 'only community events fire here');
     assert.equal(await one("SELECT count(*) FROM scheduled_events WHERE fired_at IS NOT NULL AND result_id IS NULL"), 0, 'every event fired cleanly');
     const posts = await one("SELECT count(*) FROM scheduled_events WHERE fired_at IS NOT NULL AND kind = 'world.post'");
     assert.equal(await one('SELECT count(*) FROM comments'), before + due - posts);
-    assert.equal(await one(`SELECT count(*) FROM world_items WHERE row_id IS NULL AND ts <= '${untilSql}'`), 0);
+    assert.equal(await one(`SELECT count(*) FROM world_items WHERE net = 'community' AND row_id IS NULL AND ts <= '${untilSql}'`), 0);
   });
 
   await t.test('reset restores the base state; tenants are isolated', async () => {
