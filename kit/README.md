@@ -18,7 +18,7 @@ node examples/notes/server.js --tenants 4 --port 7110 --data $WSB_TMP/notes
 Contents: [site layout](#site-layout) · [server.js](#serverjs-site-config) · [running](#running-a-site-cli) ·
 [the transaction model (rules!)](#the-transaction-model--rules-for-site-code) · [routes](#routes-and-the-request-api) ·
 [views](#views-layout-skins) · [helpers](#url-pagination-sort-filter-validation) · [search](#search-fts5) ·
-[jobs](#background-jobs) · [scenarios and events](#scenarios-and-events) · [second hosts](#second-hosts-cross-site-frames) ·
+[jobs](#background-jobs) · [scenarios and events](#scenarios-and-events) · [widget slots](#widget-slots) · [second hosts](#second-hosts-cross-site-frames) ·
 [auth](#auth-and-passwords) · [control API](#control-api-__rl) · [grading](#grading) ·
 [building base.db](#building-basedb) · [testing](#testing-a-site)
 
@@ -351,6 +351,35 @@ only (a form was submitted twice, a planted action was attempted and refused, a 
 applied), never to score the path an agent took. State checks query them like any table:
 `SELECT count(*) FROM kit_events WHERE kind = 'expense.submit'`.
 
+## Widget slots
+
+Scenario widgets are per-rollout, **off-by-default** variants of how a page shows, edits or submits its
+data -- a list rendered as a virtual list, a conversation that loads older messages on scroll up, a
+controlled editor in a shadow root, form fields in a cross-site frame, a slow job, links without
+`href`, a planted instruction. A site declares its slots and allowed values; a rollout turns one on:
+
+```js
+// server.js
+widgets: { comments: kit.widgets.LIST_KINDS, editor: kit.widgets.EDITOR_KINDS, links: ['js'] },
+scenarioKeys: [],            // other top-level scenario keys this site accepts (default: only `widgets`)
+```
+```
+POST /__rl/reset {"scenario": {"widgets": {"comments": "recycle"}}}    // unknown slot / value / key -> 400
+```
+
+`kit.widget('comments')` / `it.widget('comments')` = the value or `null` (off); `kit.widgets.need(name)`
+404s a widget-only endpoint while its slot is off. Rules: with no scenario (or `{}`) every page must
+render byte-identical to a site without slots (test it with `kit/test/snapshot.js`); a slot changes only
+how data is shown/edited/submitted, never DB content or what is reachable; control only through the
+scenario; no `Math.random` in page JS, the site clock for timing. Helpers (`kit/lib/widgets.js`):
+`vlist({src, total, kind, ...})` (items = server-rendered HTML from `src?offset=&limit=` ->
+`{total, items}`), `older({src, cursor, more, items})` (`src?before=` -> `{items, cursor, more}`),
+`shadow(html, {css})`, `navButton(href, html)`, `range(req)`, `hash(s)`, `jobSeconds(key)`, `script(...)`.
+Browser side: `kit/public/widgets/` (`vlist.js`, `older.js`, `editor.js`, `shadow.js`, `frame.js`,
+`jobwait.js`, `nav.js`, `fill.js`), served at `/_kit/widgets/`. Sites without `cfg.widgets` keep the
+plain scenario contract above. The slots of forum, store, mail and code and the variant tasks:
+[docs/WIDGETS.md](../docs/WIDGETS.md).
+
 ## Second hosts (cross-site frames)
 
 `cfg.altHosts = { pay: { label: 'labpay', siteIndex: 18 } }` serves the same tenant under a second
@@ -527,6 +556,8 @@ kit/lib/web.js          urlWith, paginate, countCapped, sorter, filters, validat
 kit/lib/search.js       FTS5 helpers           kit/lib/grader.js   grader
 kit/lib/auth.js         password hashes        kit/lib/build.js    base.db build helpers
 kit/views/, public/     base layout, partials, error/login pages, kit.css, kit.js
+kit/lib/widgets.js      scenario widget slots (validation, value, markup helpers)
+kit/public/widgets/     browser side of the widget slots (virtual lists, editors, frames, ...)
 kit/bin/wsb-grade.js    grading CLI            kit/bench/          benchmark (BENCH.md)
 kit/examples/notes/     the toy site
 ```
