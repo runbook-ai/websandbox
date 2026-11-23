@@ -37,19 +37,22 @@ Generated tasks keep their generator's skills and difficulty.
 
 ## Counts
 
-20692 tasks (807 WebArena + 19885 generated), 5 dropped.
-Train 16237 tasks / 382 templates; held-out 4455 tasks / 145 templates
-(WebArena 140 tasks / 33 templates; generated 4315 / 112).
+23917 tasks (807 WebArena + 23110 generated), 5 dropped.
+Train 18879 tasks / 419 templates; held-out 5038 tasks / 154 templates
+(WebArena 140 tasks / 33 templates; generated 4898 / 121).
 
 ### By source and site
 
 | source | site(s) | train templates | held-out templates | train tasks | held-out tasks |
 |---|---|---|---|---|---|
+| generated | devblog | 14 | 3 | 1039 | 220 |
 | generated | forum | 32 | 8 | 2072 | 562 |
 | generated | gitlab | 32 | 8 | 2172 | 639 |
 | generated | lab | 16 | 8 | 2032 | 770 |
 | generated | mail | 18 | 5 | 1541 | 455 |
+| generated | makers | 12 | 3 | 796 | 123 |
 | generated | map | 28 | 7 | 1415 | 355 |
+| generated | micro | 11 | 3 | 807 | 240 |
 | generated | shopping | 24 | 6 | 1799 | 445 |
 | generated | shopping_admin | 30 | 7 | 1680 | 410 |
 | generated | social | 19 | 5 | 1284 | 304 |
@@ -64,34 +67,34 @@ Train 16237 tasks / 382 templates; held-out 4455 tasks / 145 templates
 | webarena | map+wiki | 3 | 1 | 13 | 4 |
 | webarena | shopping | 42 | 5 | 170 | 16 |
 | webarena | shopping_admin | 34 | 6 | 151 | 28 |
-| **all** |  | 382 | 145 | 16237 | 4455 |
+| **all** |  | 419 | 154 | 18879 | 5038 |
 
 ### By kind, difficulty and skill (tasks)
 
 | kind | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| read | 359 | 70 | 9161 | 2794 |
-| write | 308 | 70 | 6154 | 1416 |
+| read | 359 | 70 | 10284 | 2997 |
+| write | 308 | 70 | 7673 | 1796 |
 
 | difficulty | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| 1 | 227 | 51 | 4062 | 809 |
-| 2 | 300 | 44 | 9187 | 2713 |
-| 3 | 140 | 45 | 2321 | 793 |
+| 1 | 227 | 51 | 5140 | 969 |
+| 2 | 300 | 44 | 10591 | 3062 |
+| 3 | 140 | 45 | 2481 | 867 |
 
 | skill | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| aggregate | 101 | 10 | 2810 | 732 |
-| compare | 12 | 7 | 1279 | 460 |
-| create | 189 | 38 | 3025 | 831 |
-| filter-sort | 175 | 26 | 3061 | 840 |
-| form-edit | 155 | 32 | 3935 | 889 |
+| aggregate | 101 | 10 | 3290 | 812 |
+| compare | 12 | 7 | 1543 | 554 |
+| create | 189 | 38 | 3665 | 1051 |
+| filter-sort | 175 | 26 | 3519 | 1014 |
+| form-edit | 155 | 32 | 4815 | 1129 |
 | moderation | 0 | 0 | 326 | 75 |
-| multi-step | 124 | 26 | 2951 | 875 |
-| navigate | 169 | 46 | 6747 | 1365 |
-| read-detail | 282 | 46 | 6296 | 2064 |
+| multi-step | 124 | 26 | 3270 | 1015 |
+| navigate | 169 | 46 | 8509 | 1728 |
+| read-detail | 282 | 46 | 7005 | 2153 |
 | safety | 0 | 0 | 130 | 130 |
-| search | 52 | 5 | 6508 | 1856 |
+| search | 52 | 5 | 7148 | 2045 |
 | vote | 0 | 0 | 71 | 76 |
 
 ## Mapping to the old RL split (WebArena tasks)
@@ -146,6 +149,12 @@ Old train templates (-> train): `wa-t4`, `wa-t5`, `wa-t6`, `wa-t7`, `wa-t9`, `wa
   - train (16): `gen-lab-chat-post`, `gen-lab-chat-window-count`, `gen-lab-directory-count`, `gen-lab-expense-once`, `gen-lab-frame-pay`, `gen-lab-frame-read`, `gen-lab-grid-owner-list`, `gen-lab-injection-read`, `gen-lab-playbook-checkpoints`, `gen-lab-register-batch`, `gen-lab-release-build`, `gen-lab-report-code`, `gen-lab-tracker-eta`, `gen-lab-vlist-count`, `gen-lab-vlist-find`, `gen-lab-vlist-list`
 - **social** held out (5): `gen-social-comments-by-user-on-post`, `gen-social-karma-gap`, `gen-social-message-mods`, `gen-social-mod-remove-title-rule`, `gen-social-oldest-comment-phrase`
   - train (19): `gen-social-can-post-where`, `gen-social-edit-post-update`, `gen-social-follow-commenters`, `gen-social-join-mod-spaces`, `gen-social-karma-total`, `gen-social-link-blocking-rule`, `gen-social-mod-lock-pin-top`, `gen-social-moderated-spaces`, `gen-social-no-self-promo-post`, `gen-social-post-with-flair`, `gen-social-release-version`, `gen-social-replied-to-me-recent`, `gen-social-reply-and-dm-op`, `gen-social-reply-newest-unanswered`, `gen-social-reply-unread-replies`, `gen-social-save-top-flair`, `gen-social-top-flair-post-week`, `gen-social-top-space-of-user`, `gen-social-upvote-user-comments`
+- **devblog** held out (3): `gen-devblog-my-top-article`, `gen-devblog-publish-limit`, `gen-devblog-react-kind`
+  - train (14): `gen-devblog-author-tag-count`, `gen-devblog-edit-add-tag`, `gen-devblog-follow-tags`, `gen-devblog-follow-top-tag-author`, `gen-devblog-followed-tag-most-followers`, `gen-devblog-my-comments-total`, `gen-devblog-publish-article`, `gen-devblog-readinglist-tag-count`, `gen-devblog-reply-to-comment`, `gen-devblog-save-draft`, `gen-devblog-save-latest-article`, `gen-devblog-series-part`, `gen-devblog-top-follower-commenter`, `gen-devblog-top-tag-article`
+- **micro** held out (3): `gen-micro-follow-repliers`, `gen-micro-hashtag-count-by`, `gen-micro-reply-newest-mention`
+  - train (11): `gen-micro-bookmark-newest`, `gen-micro-delete-post-containing`, `gen-micro-dm-user`, `gen-micro-like-recent-posts`, `gen-micro-post-hashtag`, `gen-micro-quote-post`, `gen-micro-replies-last-hours`, `gen-micro-reposters-of-mine`, `gen-micro-thread-reply-count`, `gen-micro-trending-which`, `gen-micro-who-liked`
+- **makers** held out (3): `gen-makers-post-group-product`, `gen-makers-post-product-revenue`, `gen-makers-top-mrr-in-group`
+  - train (12): `gen-makers-add-milestone`, `gen-makers-answer-question-post`, `gen-makers-comment-count-user`, `gen-makers-follow-top-founder`, `gen-makers-join-groups-of`, `gen-makers-latest-milestone`, `gen-makers-mrr-gap`, `gen-makers-no-self-promo-post`, `gen-makers-top-product-topic`, `gen-makers-top-upvoted-post`, `gen-makers-update-revenue`, `gen-makers-upvote-user-posts`
 
 ## Widget variants
 

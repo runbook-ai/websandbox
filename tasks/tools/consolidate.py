@@ -31,6 +31,8 @@ FILES = [
     # newer sites (appended last so the earlier sites' seeded draws are unchanged)
     ('generated', 'tasks/mail/generated.jsonl'), ('generated', 'tasks/lab/generated.jsonl'),
     ('generated', 'tasks/social/generated.jsonl'),
+    ('generated', 'tasks/devblog/generated.jsonl'), ('generated', 'tasks/micro/generated.jsonl'),
+    ('generated', 'tasks/makers/generated.jsonl'),
     # widget variants of generated tasks (tasks/variants/gen.js): last, and never part of a draw
     ('generated', 'tasks/variants/generated.jsonl'),
 ]
@@ -38,8 +40,9 @@ FILES = [
 # kind is held out on every site: variants using it are held out whatever their base's split.
 HELDOUT_WIDGET_VALUE = 'sections'
 GRADER_DIR = {'shopping': 'store', 'shopping_admin': 'store', 'gitlab': 'code', 'forum': 'forum', 'reddit': 'forum',
-              'wiki': 'wiki', 'map': 'map', 'mail': 'mail', 'lab': 'lab', 'social': 'social'}
-SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map', 'mail', 'lab', 'social']
+              'wiki': 'wiki', 'map': 'map', 'mail': 'mail', 'lab': 'lab', 'social': 'social',
+              'devblog': 'devblog', 'micro': 'micro', 'makers': 'makers'}
+SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map', 'mail', 'lab', 'social', 'devblog', 'micro', 'makers']
 
 
 def jl(path):
