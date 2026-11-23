@@ -1,0 +1,476 @@
+{
+ "0:- 0 /": {
+  "status": 200,
+  "location": null,
+  "sha": "1ea744787b6de84ccc52b49708fdda5f25271452a4257f757edf404f347fae69",
+  "bytes": 100597
+ },
+ "0:- 1 /?pbaocw=2": {
+  "status": 200,
+  "location": null,
+  "sha": "4dae76eea8c797fc7117d414118c943415455bca155dfa5657723cebaba85ac1",
+  "bytes": 98563
+ },
+ "0:- 2 /catalogsearch/result/?q=usb+wifi": {
+  "status": 200,
+  "location": null,
+  "sha": "d80a4b803106bf179e2eb43a82cde673d048493858406d271b898b5c7feff45b",
+  "bytes": 109390
+ },
+ "0:- 3 /catalogsearch/result/?q=usb+wifi&p=2": {
+  "status": 200,
+  "location": null,
+  "sha": "742d6645d314912ab6c8e95703bdc6b7de42a37871933f73b76d7131435b208e",
+  "bytes": 109699
+ },
+ "0:- 4 /catalogsearch/result/?q=usb+wifi&product_list_mode=list": {
+  "status": 200,
+  "location": null,
+  "sha": "65b158a8468f3cf40345c47b4f277c8ff1f3d9142587cfb66bd3c0d236ce2501",
+  "bytes": 105613
+ },
+ "0:- 5 /catalogsearch/result/index/?product_list_order=price&q=chairs&product_list_dir=asc": {
+  "status": 200,
+  "location": null,
+  "sha": "1f279ebf04b457d199675f18e70a8a48b12c29540d4e272c530eefe879aff477",
+  "bytes": 118569
+ },
+ "0:- 6 /catalogsearch/result/?q=headphones&product_list_limit=36": {
+  "status": 200,
+  "location": null,
+  "sha": "9b13f764d0b435ec4b36f9c321d2aad0aab6dea0c40dd70a006c5238089f4555",
+  "bytes": 183885
+ },
+ "0:- 7 /catalogsearch/advanced/result/?name=shirt": {
+  "status": 200,
+  "location": null,
+  "sha": "da39a14697811b49f527cafed9e939fc4eef4bf322e50d1b27734466bf82355a",
+  "bytes": 107016
+ },
+ "0:- 8 /video-games.html": {
+  "status": 200,
+  "location": null,
+  "sha": "17a9b80e0aa96714b3d046cbb41d704fc7e003fe48f581ca38c054a3dae6b125",
+  "bytes": 101460
+ },
+ "0:- 9 /video-games/playstation-4/accessories.html?product_list_order=price&product_list_dir=desc": {
+  "status": 200,
+  "location": null,
+  "sha": "66598f7210742da5f0adae6850f6592454d86fc51744a260fddfc909450c461a",
+  "bytes": 107136
+ },
+ "0:- 10 /clothing-shoes-jewelry/women/shoes.html?price=0-25": {
+  "status": 200,
+  "location": null,
+  "sha": "d13c3d19d2af5cc6706aede14adb3bd94dedb18e2bbfcc149936b4df1f0d19dc",
+  "bytes": 100398
+ },
+ "0:- 11 /gear/bags.html": {
+  "status": 200,
+  "location": null,
+  "sha": "846a8d6a3c78f813c71deb9d9125d35bcbeff6eb49ce8468b75b4582fcc2d042",
+  "bytes": 102849
+ },
+ "0:- 12 /gear/bags.html?product_list_mode=list": {
+  "status": 200,
+  "location": null,
+  "sha": "468d10b84c530348e8ef12b65be41090cbda87de90d154dd07f7562baf29b100",
+  "bytes": 99465
+ },
+ "0:- 13 /storagelab-under-bed-shoe-storage-organizer-adjustable-dividers-fits-up-to-12-pairs-underbed-storage-solution-grey.html": {
+  "status": 200,
+  "location": null,
+  "sha": "dc5d176a7bb4c0b8631c4eb30974fbd387b808dab64d284274a7f77dd6cff6b9",
+  "bytes": 97165
+ },
+ "0:- 14 /m-m-s-peanut-chocolate-candy-38-ounce-party-size-bag-yellow.html": {
+  "status": 200,
+  "location": null,
+  "sha": "033c6426ce89b23c5be8ea2c38bc45b42d6c7f15334d9c1290b1aefb6b711bb2",
+  "bytes": 91909
+ },
+ "0:- 15 /antonia-racer-tank.html": {
+  "status": 200,
+  "location": null,
+  "sha": "42457f0fd7d1f49e0320fcf7ab82417fb4d467a8e8c43c1f58e8fa372281257c",
+  "bytes": 83752
+ },
+ "0:- 16 /joust-duffle-bag.html": {
+  "status": 200,
+  "location": null,
+  "sha": "e76102e3de844e2324365bcbc4f8604f11bb086ec2d8caa2323846c949fbc73e",
+  "bytes": 88494
+ },
+ "0:- 17 /6s-wireless-headphones-over-ear-noise-canceling-hi-fi-bass-foldable-stereo-wireless-kid-headsets-earbuds-with-built-in-mic-micro-sd-tf-fm-for-iphone-samsung-ipad-pc-black-gold.html": {
+  "status": 200,
+  "location": null,
+  "sha": "6870462a040e69e83ed218467e3650099af7d9a67de24944232e445eedb4da8f",
+  "bytes": 87620
+ },
+ "0:- 18 /catalog/product_compare/": {
+  "status": 200,
+  "location": null,
+  "sha": "d994a934f055889e3905e360b7e155efbf5427310b75053c75a24a2e584b7f6a",
+  "bytes": 57289
+ },
+ "0:- 19 /checkout/cart/": {
+  "status": 200,
+  "location": null,
+  "sha": "b17d425d44026025ebc3459041566b41dd37a6b75f8c38d709af621b25841bbd",
+  "bytes": 57178
+ },
+ "0:- 20 /checkout/": {
+  "status": 302,
+  "location": "/checkout/cart/",
+  "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "bytes": 0
+ },
+ "0:- 21 /customer/account/login/": {
+  "status": 200,
+  "location": null,
+  "sha": "29177046e978fcdc006147e37ade8a98c5ee0e1ec1daa104d256ae3c42acce9e",
+  "bytes": 59130
+ },
+ "1:emma.lopez@gmail.com 0 /": {
+  "status": 200,
+  "location": null,
+  "sha": "c6e99d6a5d3594cc553373b55056519da3f93722204eabcc8f78f237185dd3a5",
+  "bytes": 100628
+ },
+ "1:emma.lopez@gmail.com 1 /?pbaocw=2": {
+  "status": 200,
+  "location": null,
+  "sha": "e860c8d9cee4d7d92767f211ee2738e17e3738861e38f4beafc0d6082b8ad521",
+  "bytes": 98594
+ },
+ "1:emma.lopez@gmail.com 2 /catalogsearch/result/?q=usb+wifi": {
+  "status": 200,
+  "location": null,
+  "sha": "475b6709d6f37dc5c0d6f9062c943d8d8a4aee87a920c8d4b9d19305adf2e12a",
+  "bytes": 109421
+ },
+ "1:emma.lopez@gmail.com 3 /catalogsearch/result/?q=usb+wifi&p=2": {
+  "status": 200,
+  "location": null,
+  "sha": "83bdcae7a0cf09008ff2cc09c108c954d91ab8b89e882d21c072ef69f6198395",
+  "bytes": 109730
+ },
+ "1:emma.lopez@gmail.com 4 /catalogsearch/result/?q=usb+wifi&product_list_mode=list": {
+  "status": 200,
+  "location": null,
+  "sha": "5cfc321d861fc36c60dda08df1daa22ea72d1e177aa2144a96e68ae0a6461441",
+  "bytes": 105644
+ },
+ "1:emma.lopez@gmail.com 5 /catalogsearch/result/index/?product_list_order=price&q=chairs&product_list_dir=asc": {
+  "status": 200,
+  "location": null,
+  "sha": "94ff0b214f6739eb38795c52f0217506cb863dba049b453a3dc435ce011fb07b",
+  "bytes": 118600
+ },
+ "1:emma.lopez@gmail.com 6 /catalogsearch/result/?q=headphones&product_list_limit=36": {
+  "status": 200,
+  "location": null,
+  "sha": "3ab4ff329a0e029ee6869336cdf346fafce3fccbd40bd6ed2a1a49dc81f7db8c",
+  "bytes": 183916
+ },
+ "1:emma.lopez@gmail.com 7 /catalogsearch/advanced/result/?name=shirt": {
+  "status": 200,
+  "location": null,
+  "sha": "20ed4cd0e6bcc9d6fc5a753c2752c84f89331216e416d3aba6f7af3d03c8ff9f",
+  "bytes": 107047
+ },
+ "1:emma.lopez@gmail.com 8 /video-games.html": {
+  "status": 200,
+  "location": null,
+  "sha": "ad6e3dad4abf33c59c2af596ac055526b06a5a5103bcfb98d830b677b45b2a1e",
+  "bytes": 101491
+ },
+ "1:emma.lopez@gmail.com 9 /video-games/playstation-4/accessories.html?product_list_order=price&product_list_dir=desc": {
+  "status": 200,
+  "location": null,
+  "sha": "93c7c542004c3761c125b695c14bd38dfa2d96981e64cd9c170f4df646db62ae",
+  "bytes": 107167
+ },
+ "1:emma.lopez@gmail.com 10 /clothing-shoes-jewelry/women/shoes.html?price=0-25": {
+  "status": 200,
+  "location": null,
+  "sha": "f0ef57c81c4e561af29ec5910bea2c8a5a25d42b9c690d952781dbb489c3b7a3",
+  "bytes": 100429
+ },
+ "1:emma.lopez@gmail.com 11 /gear/bags.html": {
+  "status": 200,
+  "location": null,
+  "sha": "cc9bf2d7ef40769b93dfab90ee11c36a47eacd5e73a23b2320d11ae631c70648",
+  "bytes": 102880
+ },
+ "1:emma.lopez@gmail.com 12 /gear/bags.html?product_list_mode=list": {
+  "status": 200,
+  "location": null,
+  "sha": "7d16b49fe2d69e2142132101be049363706c10b6c6d2f6a8691414563bd40b39",
+  "bytes": 99496
+ },
+ "1:emma.lopez@gmail.com 13 /storagelab-under-bed-shoe-storage-organizer-adjustable-dividers-fits-up-to-12-pairs-underbed-storage-solution-grey.html": {
+  "status": 200,
+  "location": null,
+  "sha": "9facec68145935123cc6631e0a571f53b72c05caa6cfd42c5578f3b413a9b95e",
+  "bytes": 97200
+ },
+ "1:emma.lopez@gmail.com 14 /m-m-s-peanut-chocolate-candy-38-ounce-party-size-bag-yellow.html": {
+  "status": 200,
+  "location": null,
+  "sha": "f3e968f2205f957470e7b40d393a888b837e0db3126d8c6542382c9dc384130f",
+  "bytes": 91944
+ },
+ "1:emma.lopez@gmail.com 15 /antonia-racer-tank.html": {
+  "status": 200,
+  "location": null,
+  "sha": "252709a89aca636b465add12c06f2753cc1b3be738e12c5c37ca742503e8a06a",
+  "bytes": 83787
+ },
+ "1:emma.lopez@gmail.com 16 /joust-duffle-bag.html": {
+  "status": 200,
+  "location": null,
+  "sha": "064ad1e24994d082779cb0cab799c54fef09988720167f5cea8c14b3869bc021",
+  "bytes": 88529
+ },
+ "1:emma.lopez@gmail.com 17 /6s-wireless-headphones-over-ear-noise-canceling-hi-fi-bass-foldable-stereo-wireless-kid-headsets-earbuds-with-built-in-mic-micro-sd-tf-fm-for-iphone-samsung-ipad-pc-black-gold.html": {
+  "status": 200,
+  "location": null,
+  "sha": "a60b9ab6546298550ef72e64ea11c69ba7c856dee7e4da8087af1ad3984f3dee",
+  "bytes": 87655
+ },
+ "1:emma.lopez@gmail.com 18 /catalog/product_compare/": {
+  "status": 200,
+  "location": null,
+  "sha": "a43105a2dd5268e3175205e3465a8a9c8b0558dc8ee390668c7f9574fcd15127",
+  "bytes": 57320
+ },
+ "1:emma.lopez@gmail.com 19 /checkout/cart/": {
+  "status": 200,
+  "location": null,
+  "sha": "5593ae91d0365c741a82f203b3745346ecef3cc8560d920ecc48ae59c7ce7943",
+  "bytes": 66076
+ },
+ "1:emma.lopez@gmail.com 20 /checkout/": {
+  "status": 200,
+  "location": null,
+  "sha": "f57b8fc60fc6e82d5361f80e954f77603ade79a64982db32d3d629f6d7a3947a",
+  "bytes": 127650
+ },
+ "1:emma.lopez@gmail.com 21 /checkout/payment/": {
+  "status": 302,
+  "location": "/checkout/",
+  "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "bytes": 0
+ },
+ "1:emma.lopez@gmail.com 22 /customer/account/": {
+  "status": 200,
+  "location": null,
+  "sha": "962bf3459987d7eea5136b6cb1029db481b7055a9852d22768f09c2e64e5dbe5",
+  "bytes": 64442
+ },
+ "1:emma.lopez@gmail.com 23 /customer/address/": {
+  "status": 200,
+  "location": null,
+  "sha": "28e77e80d6b4d7169cc0cb64aa30f2b8473e09dbfb350ea6ee97a1281c0d3695",
+  "bytes": 59352
+ },
+ "1:emma.lopez@gmail.com 24 /sales/order/history/": {
+  "status": 200,
+  "location": null,
+  "sha": "bc0eb33b06b427b081bd1a42433ab1e686252235c2dd9bb3248d0791eead326a",
+  "bytes": 66526
+ },
+ "1:emma.lopez@gmail.com 25 /review/customer/": {
+  "status": 200,
+  "location": null,
+  "sha": "83fcca6c500775fb94d61d62ef914b53d935c317738ff8dfc08353ba590d6498",
+  "bytes": 59239
+ },
+ "1:emma.lopez@gmail.com 26 /wishlist/": {
+  "status": 200,
+  "location": null,
+  "sha": "15f95f45d6401dec24944421ad479131f3359c280ad253b4326523dd7e5155f3",
+  "bytes": 58079
+ },
+ "2:emma.lopez@gmail.com 0 /checkout/payment/": {
+  "status": 200,
+  "location": null,
+  "sha": "aa8bd7012191cfac2ccc5aba7f7b6e07596d0b777439359d2cdb45e17f952bad",
+  "bytes": 63192
+ },
+ "2:emma.lopez@gmail.com 1 /checkout/": {
+  "status": 200,
+  "location": null,
+  "sha": "f57b8fc60fc6e82d5361f80e954f77603ade79a64982db32d3d629f6d7a3947a",
+  "bytes": 127650
+ },
+ "3:admin 0 /admin/dashboard/": {
+  "status": 200,
+  "location": null,
+  "sha": "9444b7ad08d1d8c68bbd7e2e6b7be9c4572b57272a59fb15456adcea161ada6e",
+  "bytes": 25813
+ },
+ "3:admin 1 /admin/sales/order/": {
+  "status": 200,
+  "location": null,
+  "sha": "2373a9e531e0788560d8e0d9cae54c4267672e7431fd3d3f030ffa575cb7ab32",
+  "bytes": 50808
+ },
+ "3:admin 2 /admin/sales/order/?q=000000299": {
+  "status": 200,
+  "location": null,
+  "sha": "23e279cbabd50752adde044631015ec7ba89abfa892648a1785e55c77a99eff8",
+  "bytes": 31146
+ },
+ "3:admin 3 /admin/sales/order/?status=fraud": {
+  "status": 200,
+  "location": null,
+  "sha": "91d9dd55ac728393258270844029646cf9fcf84bee53d65477c5df1ea39bb469",
+  "bytes": 30186
+ },
+ "3:admin 4 /admin/sales/order/?page=2": {
+  "status": 200,
+  "location": null,
+  "sha": "319e23efb6e40a86117d126a93545a906e31f7cd846f8c396042a958972520fe",
+  "bytes": 50834
+ },
+ "3:admin 5 /admin/sales/order/view/order_id/299/": {
+  "status": 200,
+  "location": null,
+  "sha": "39d111948683fab8f83c5f89f0640c563b9828fb50c8a7e446a0488dcdbbd0dc",
+  "bytes": 28401
+ },
+ "3:admin 6 /admin/sales/invoice/": {
+  "status": 200,
+  "location": null,
+  "sha": "fd4d07d2451a179d270a902c3aa6cb154d6f852ef44f29a8b743158ab56187fb",
+  "bytes": 26841
+ },
+ "3:admin 7 /admin/customer/index/": {
+  "status": 200,
+  "location": null,
+  "sha": "7e78366c4e258558907f06bd6dbd349cc8da8f5a2f7506a8ce710c7e4dd88b6c",
+  "bytes": 65992
+ },
+ "3:admin 8 /admin/customer/index/?q=2058812302": {
+  "status": 200,
+  "location": null,
+  "sha": "2b0cff93bafd215e9aa30b17a381f9ce3d0aae99500794f8ef2c591400b34b2d",
+  "bytes": 43281
+ },
+ "3:admin 9 /admin/customer/index/?page=3": {
+  "status": 200,
+  "location": null,
+  "sha": "d6fc527ecbe556eb30e28dff9dafb0cf88bef3f41faee6cb1f91b904483c2f61",
+  "bytes": 66179
+ },
+ "3:admin 10 /admin/catalog/product/": {
+  "status": 200,
+  "location": null,
+  "sha": "65feae1f1126408318dad33ae168bcf806f22b87058c6e75ffa017c653fd74d0",
+  "bytes": 62172
+ },
+ "3:admin 11 /admin/catalog/product/?sort=name_asc&page=3": {
+  "status": 200,
+  "location": null,
+  "sha": "5458f76e034b01156feb11622cdf0c62eff0938cc74b3d09b40992237a07f798",
+  "bytes": 64567
+ },
+ "3:admin 12 /admin/catalog/product/?q=hollister": {
+  "status": 200,
+  "location": null,
+  "sha": "7b494bfd55428043ea994c1e1e97aab0467a47d589113eb772d21b367c4692a1",
+  "bytes": 63876
+ },
+ "3:admin 13 /admin/catalog/product/edit/id/1481/": {
+  "status": 200,
+  "location": null,
+  "sha": "15e33a3775c9a065383111d6befb5e1e3e05dfd1aca06d820c9d729e0e7e75f3",
+  "bytes": 98186
+ },
+ "3:admin 14 /admin/review/product/": {
+  "status": 200,
+  "location": null,
+  "sha": "23c18979c2a66136b11c5bd3dab5ecda3dd03bf4c18936ae2a454b4930b84afc",
+  "bytes": 55678
+ },
+ "3:admin 15 /admin/review/product/pending/": {
+  "status": 200,
+  "location": null,
+  "sha": "64a3eb6825f90fbf7d85d06a045237602fbfba9a6a23ca1457428c76ce9ed40d",
+  "bytes": 33649
+ },
+ "3:admin 16 /admin/review/product/edit/id/347/": {
+  "status": 200,
+  "location": null,
+  "sha": "70eca9eeb95f9f546a088ccdce73a3b2c3c101b1d57dc634cf49559703a3c1a3",
+  "bytes": 23321
+ },
+ "3:admin 17 /admin/reports/report_sales/bestsellers/": {
+  "status": 200,
+  "location": null,
+  "sha": "64882498843e4fef8850dd6045b682e585ed6d4ea56b4ec4d109d686e84e2b01",
+  "bytes": 19895
+ },
+ "3:admin 18 /admin/reports/report_sales/bestsellers/?report_from=1/1/22&report_to=12/31/22&report_period=year": {
+  "status": 200,
+  "location": null,
+  "sha": "8758ae61e9595fc56154dd572719783a1384fb58b96a406b28d4a345765116c5",
+  "bytes": 20223
+ },
+ "3:admin 19 /admin/reports/report_sales/sales/?report_from=1/1/22&report_to=12/31/22&report_period=month&filter=1": {
+  "status": 200,
+  "location": null,
+  "sha": "7e35b7a0d8e645ded118e4ec50737cb36e09f58275b4895b6420cec96acf654f",
+  "bytes": 20563
+ },
+ "3:admin 20 /admin/reports/report_customer/totals/?report_from=1/1/22&report_to=12/31/22&report_period=year": {
+  "status": 200,
+  "location": null,
+  "sha": "3bcbc630db6f195b30d5783f213a9463038632dc6725b5f8c6699b84c6073de8",
+  "bytes": 18575
+ },
+ "3:admin 21 /admin/reports/report_review/product/": {
+  "status": 200,
+  "location": null,
+  "sha": "a99a5369935d842e6340c9e8b71f49c263f91f0988b6c6c8aef1a2391246741f",
+  "bytes": 17200
+ },
+ "3:admin 22 /admin/reports/report_product/lowstock/": {
+  "status": 200,
+  "location": null,
+  "sha": "abe5ee1428e48809361789e8676f6c8aebc27609c169022a2c22768aff54b0f3",
+  "bytes": 30240
+ },
+ "3:admin 24 /admin/reports/report_sales/bestsellers/?report_from=1/1/22&report_to=12/31/22&report_period=year": {
+  "status": 200,
+  "location": null,
+  "sha": "fc546bf50b55e4271eb8d4cbf4f20076b0d2ace9e922c618d9d3d6839a2d8d97",
+  "bytes": 21437
+ },
+ "3:admin 25 /admin/reports/report_sales/sales/?report_from=1/1/22&report_to=12/31/22&report_period=month&filter=1": {
+  "status": 200,
+  "location": null,
+  "sha": "8bc2b1d8d4e8ef88827db8ee9678961a15e612ceb323a370a26c253ef0160c46",
+  "bytes": 24624
+ },
+ "3:admin 26 /admin/reports/report_customer/totals/?report_from=1/1/22&report_to=12/31/22&report_period=year": {
+  "status": 200,
+  "location": null,
+  "sha": "789dff513a1c9c72e5a65e2b38ab6c47c65dfc367e806430a39709bf2f62239d",
+  "bytes": 19936
+ },
+ "3:admin 27 /admin/reports/report_review/product/": {
+  "status": 200,
+  "location": null,
+  "sha": "4b57123f0f6e2e6d23d416d875b5c1c4d2f2e38c40dda77d11402da9adaf732e",
+  "bytes": 25007
+ },
+ "3:admin 28 /admin/reports/report_product/lowstock/": {
+  "status": 200,
+  "location": null,
+  "sha": "abe5ee1428e48809361789e8676f6c8aebc27609c169022a2c22768aff54b0f3",
+  "bytes": 30240
+ }
+}

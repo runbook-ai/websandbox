@@ -1,0 +1,356 @@
+{
+ "0:- 0 /": {
+  "status": 200,
+  "location": null,
+  "sha": "2d77deffacc1a0776b8d8dd084fcb1efb7470974a66f8ec079575089e16efa34",
+  "bytes": 47349
+ },
+ "0:- 1 /all": {
+  "status": 200,
+  "location": null,
+  "sha": "9a9c20b71e49b779dca4bb57c5e2738061c4ceec7e70dde3cd4e8590c976de08",
+  "bytes": 47473
+ },
+ "0:- 2 /new": {
+  "status": 200,
+  "location": null,
+  "sha": "2e3fb8c6a57af6b73114dad0326b07673b11093d8e20cd0720ac7d892fc83651",
+  "bytes": 46245
+ },
+ "0:- 3 /all/top?t=all": {
+  "status": 200,
+  "location": null,
+  "sha": "5356a47b7eb7780eca95861c9394bf6b92d4361436dfb10f7e2923d4770283fc",
+  "bytes": 48491
+ },
+ "0:- 4 /featured": {
+  "status": 200,
+  "location": null,
+  "sha": "ed2b1cf38fd55cd8afc66414c29ae9cb24d9dcbed721568b62976b12a8484628",
+  "bytes": 3834
+ },
+ "0:- 5 /f/books": {
+  "status": 200,
+  "location": null,
+  "sha": "0898bb891824d78d0d364330e232290397f73483099d556a38a3585e142ea37e",
+  "bytes": 43821
+ },
+ "0:- 6 /f/books/new": {
+  "status": 200,
+  "location": null,
+  "sha": "52d1dabb56ab942fa660e5bce2914553411e0c3f76f7aec7b1ce94ca1817e530",
+  "bytes": 43228
+ },
+ "0:- 7 /f/books?page=2": {
+  "status": 200,
+  "location": null,
+  "sha": "f203280c1917a2fecd4795a9bff1acadb47e43f715bba56d77140386edeca569",
+  "bytes": 41816
+ },
+ "0:- 8 /f/AskReddit/top?t=year": {
+  "status": 200,
+  "location": null,
+  "sha": "05369dcc07a040f60758528300ed9562ea33f3ad6991f93d61280dd5b9880a0a",
+  "bytes": 43006
+ },
+ "0:- 9 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded": {
+  "status": 200,
+  "location": null,
+  "sha": "79b261f2531dcfe65996fee1aa0e03d21ce9538cb69e3b8997ddd68122879877",
+  "bytes": 426843
+ },
+ "0:- 10 /f/nyc/66106/openly-gay-rep-elect-george-santos-didn-t-disclose-divorce": {
+  "status": 200,
+  "location": null,
+  "sha": "a9f06e88cb4e3fc6f141bda69c9ba729e5e8dd3412829b269e01b741633173b7",
+  "bytes": 432840
+ },
+ "0:- 11 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded?sort=new": {
+  "status": 200,
+  "location": null,
+  "sha": "4db49064bbb6e539da8e69956c52150aa53870189536a96179aaeff18889ad14",
+  "bytes": 429087
+ },
+ "0:- 12 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded?sort=old": {
+  "status": 200,
+  "location": null,
+  "sha": "3cb7e3fee68f5f083e5e3005e17d5af07b4247ea3181bd39f2a394819a7abc95",
+  "bytes": 429087
+ },
+ "0:- 13 /f/singularity/27062/the-age-of-magic-has-just-begun/comment/10006": {
+  "status": 200,
+  "location": null,
+  "sha": "55e813c580d90989213b6fd44ac2e7ea57ad21ac695fc928735f147545865be6",
+  "bytes": 45623
+ },
+ "0:- 14 /f/books/59421/friendly-reminder-bookshop-org-exists": {
+  "status": 200,
+  "location": null,
+  "sha": "ee634829dc859e768819ea9c3d8a9e40f48a45d052ed3d60b2a7054210d562b3",
+  "bytes": 215751
+ },
+ "0:- 15 /f/books/59421/-/comment/1235250": {
+  "status": 200,
+  "location": null,
+  "sha": "edfd28bf83c9daf8434206b80b759899f29c838dc6f88b0871c857c520ef3c50",
+  "bytes": 7471
+ },
+ "0:- 16 /f/MachineLearning/1/nvidia-rtx-4090": {
+  "status": 200,
+  "location": null,
+  "sha": "fa3b46379e5970825ae04db5c66dec5312194f812cf151618de0bbccb7825689",
+  "bytes": 5629
+ },
+ "0:- 17 /f/television/28245/cartoon-network-marketing-execs-latest-to-go-in-warner-bros": {
+  "status": 200,
+  "location": null,
+  "sha": "7772f0b6b08de93d418150e5f6d3fdaa3c3107285900f3c3edbb73b4eb4b9f37",
+  "bytes": 152564
+ },
+ "0:- 18 /comments": {
+  "status": 200,
+  "location": null,
+  "sha": "6f06e5aa2532087df791d942da9cd47d87a180cabe5268ec384254688941ece0",
+  "bytes": 43267
+ },
+ "0:- 19 /f/books/comments": {
+  "status": 200,
+  "location": null,
+  "sha": "46a89a5c28dee52b883a26a30180cf05076b95b7256d285f751e8f18f5353b87",
+  "bytes": 45411
+ },
+ "0:- 20 /user/MarvelsGrantMan136": {
+  "status": 200,
+  "location": null,
+  "sha": "dbfd4b12f3dc7b364b9ed5e4ec98f571f51797a718d3a6ff5eb8e923f870c4d1",
+  "bytes": 48685
+ },
+ "0:- 21 /user/MarvelsGrantMan136/comments": {
+  "status": 200,
+  "location": null,
+  "sha": "d72efa425c19bf91323fef8e015047da88c39c91b4f8a068a2fa9f82a27c808d",
+  "bytes": 55671
+ },
+ "0:- 22 /search?q=bookshop": {
+  "status": 200,
+  "location": null,
+  "sha": "1794242b7ac3f0562e7da58bdcd9b422f5d4d32340fef06c77e16759a1ad570b",
+  "bytes": 23388
+ },
+ "0:- 23 /search?q=bookshop&type=comments": {
+  "status": 200,
+  "location": null,
+  "sha": "09ce72be5cc2e75edb50140ea9e59e4be4843deef964e46819d48d4425e10760",
+  "bytes": 44339
+ },
+ "0:- 24 /forums": {
+  "status": 200,
+  "location": null,
+  "sha": "7d1665b90b488df17e72df477f96887919e4b4fe077103147361edeec3c377ae",
+  "bytes": 19476
+ },
+ "0:- 25 /login": {
+  "status": 200,
+  "location": null,
+  "sha": "ee2f89ccf284240c1638943f0cecb8c69d63b3c3073af52c1daf876412f66e91",
+  "bytes": 2455
+ },
+ "0:- 26 /submit": {
+  "status": 302,
+  "location": "/login?next=%2Fsubmit",
+  "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "bytes": 0
+ },
+ "1:MarvelsGrantMan136 0 /": {
+  "status": 200,
+  "location": null,
+  "sha": "b73e39db98b13b79f2fcc1e36335ab0ebe543cb72d7b2e94c7150fc488316e71",
+  "bytes": 49074
+ },
+ "1:MarvelsGrantMan136 1 /all": {
+  "status": 200,
+  "location": null,
+  "sha": "38878e9b1fb4c849b20b8c395f48b250e3aafd710fc6a7ee0775225461f4b858",
+  "bytes": 49059
+ },
+ "1:MarvelsGrantMan136 2 /new": {
+  "status": 200,
+  "location": null,
+  "sha": "fa8808088bbe0f54a4185804c8357a5237ea1ba142559f15cd5afa2ee24cfcba",
+  "bytes": 47942
+ },
+ "1:MarvelsGrantMan136 3 /all/top?t=all": {
+  "status": 200,
+  "location": null,
+  "sha": "97e683d73836d7d266a9cf1a334a56e6baa7d39e559285943951d640b8a2a9df",
+  "bytes": 50036
+ },
+ "1:MarvelsGrantMan136 4 /featured": {
+  "status": 200,
+  "location": null,
+  "sha": "6f89d7558be87140a1e62529bb419b876cd157c28bde1fcdbf94d47d09ec98e4",
+  "bytes": 5390
+ },
+ "1:MarvelsGrantMan136 5 /f/books": {
+  "status": 200,
+  "location": null,
+  "sha": "6178f5586b83800bddc86ae1bd253fd43f61e24b17eb30ae449f3e375d60135d",
+  "bytes": 45386
+ },
+ "1:MarvelsGrantMan136 6 /f/books/new": {
+  "status": 200,
+  "location": null,
+  "sha": "569efdfe239d4f6b5b6ba0b61b21671d5d35c0e29b7c2f7bb9e87c25b969a884",
+  "bytes": 44785
+ },
+ "1:MarvelsGrantMan136 7 /f/books?page=2": {
+  "status": 200,
+  "location": null,
+  "sha": "37e52f043633d1dfb891b4e85185812c69a1cf3e2c51fb32e32ae95952b4664e",
+  "bytes": 43366
+ },
+ "1:MarvelsGrantMan136 8 /f/AskReddit/top?t=year": {
+  "status": 200,
+  "location": null,
+  "sha": "4c10a6321479ebec67fa0633e684912356715079e75e780a15376c4a8f15f954",
+  "bytes": 44552
+ },
+ "1:MarvelsGrantMan136 9 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded": {
+  "status": 200,
+  "location": null,
+  "sha": "50f3ddb576141f5c4ecb44fea965dec3e175c4fbef5342b2d25e797042948b62",
+  "bytes": 571277
+ },
+ "1:MarvelsGrantMan136 10 /f/nyc/66106/openly-gay-rep-elect-george-santos-didn-t-disclose-divorce": {
+  "status": 200,
+  "location": null,
+  "sha": "b564434f898a872300de761707ceb613a4f1f7c9f0a07fef7707ad75811ee00f",
+  "bytes": 572798
+ },
+ "1:MarvelsGrantMan136 11 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded?sort=new": {
+  "status": 200,
+  "location": null,
+  "sha": "35fbe27f737b2c0df1ae824ad455d76a2028d6bb6be124280316fcd487c4cdea",
+  "bytes": 573491
+ },
+ "1:MarvelsGrantMan136 12 /f/Pennsylvania/36068/check-your-mail-in-ballot-now-mine-was-marked-as-recorded?sort=old": {
+  "status": 200,
+  "location": null,
+  "sha": "8263ed1315c3986637f51f13c550299dc222704dd1c80dde79561bef18a23e01",
+  "bytes": 573491
+ },
+ "1:MarvelsGrantMan136 13 /f/singularity/27062/the-age-of-magic-has-just-begun/comment/10006": {
+  "status": 200,
+  "location": null,
+  "sha": "77cc9578262538d4342e83f68001fe3e214eaad4de06a66c179417946f070c1a",
+  "bytes": 59272
+ },
+ "1:MarvelsGrantMan136 14 /f/books/59421/friendly-reminder-bookshop-org-exists": {
+  "status": 200,
+  "location": null,
+  "sha": "d4b2dd4ad53b1ca2001e3a13c030886c42bf9c979a94cdcf9479e8ecef89ab60",
+  "bytes": 287783
+ },
+ "1:MarvelsGrantMan136 15 /f/books/59421/-/comment/1235250": {
+  "status": 200,
+  "location": null,
+  "sha": "868ab9f4a44c77fecf4d035add328d0945b9b7148552a1ca39cb0d7eafb1975d",
+  "bytes": 9557
+ },
+ "1:MarvelsGrantMan136 16 /f/MachineLearning/1/nvidia-rtx-4090": {
+  "status": 200,
+  "location": null,
+  "sha": "497549abdf67660b1b1caae4a97e70afca92908b0ad18e8caca336e8b6712958",
+  "bytes": 7811
+ },
+ "1:MarvelsGrantMan136 17 /f/television/28245/cartoon-network-marketing-execs-latest-to-go-in-warner-bros": {
+  "status": 200,
+  "location": null,
+  "sha": "496e6690578893806d97cc348ef559a179ecf498d33b0798e311bcc02003e8f3",
+  "bytes": 205953
+ },
+ "1:MarvelsGrantMan136 18 /comments": {
+  "status": 200,
+  "location": null,
+  "sha": "62adbd372fa6eea9a2a2ef8bae93440a45b4dfe37d9b1da04a5728028bde3f27",
+  "bytes": 44533
+ },
+ "1:MarvelsGrantMan136 19 /f/books/comments": {
+  "status": 200,
+  "location": null,
+  "sha": "95a8e1fc6b54c1862a03f707e940573b667c611cbf14af9075fc813a49711607",
+  "bytes": 46665
+ },
+ "1:MarvelsGrantMan136 20 /user/MarvelsGrantMan136": {
+  "status": 200,
+  "location": null,
+  "sha": "6ff9cb10f2d54ee24c3a3ece514badaef6bce114a8fad0a015bfbafe39263211",
+  "bytes": 50218
+ },
+ "1:MarvelsGrantMan136 21 /user/MarvelsGrantMan136/comments": {
+  "status": 200,
+  "location": null,
+  "sha": "4ec116b661558c58e85a3a536ee47e65975c5df4a2ab23c99a020645f3bc66d5",
+  "bytes": 57193
+ },
+ "1:MarvelsGrantMan136 22 /search?q=bookshop": {
+  "status": 200,
+  "location": null,
+  "sha": "17340b6b1394d6638fc714ab3f40dcc9225ac3f85b40562890fa0e0457b0bdd1",
+  "bytes": 24641
+ },
+ "1:MarvelsGrantMan136 23 /search?q=bookshop&type=comments": {
+  "status": 200,
+  "location": null,
+  "sha": "cb939395d7b68a878eb22c41aa1913472a31bc6e2171b959da7e238db07f36a4",
+  "bytes": 45574
+ },
+ "1:MarvelsGrantMan136 24 /forums": {
+  "status": 200,
+  "location": null,
+  "sha": "d6282d204426c3efef92410cec437d6e3b390fdedbf8b6807786cebcff084d3f",
+  "bytes": 37376
+ },
+ "1:MarvelsGrantMan136 25 /subscribed": {
+  "status": 200,
+  "location": null,
+  "sha": "9c92ec24edc4f35ddb3835a219dd457c6627117025dabda54720411b1c45c034",
+  "bytes": 5446
+ },
+ "1:MarvelsGrantMan136 26 /submit": {
+  "status": 200,
+  "location": null,
+  "sha": "5d896901bb6b96202c1d89f3ae65573e7d62a66d45e0648c42752837cd995c90",
+  "bytes": 9721
+ },
+ "1:MarvelsGrantMan136 27 /submit/books": {
+  "status": 200,
+  "location": null,
+  "sha": "e6fb6097385b888219a74a48be659b92a13b6e40fb55dfd8d9a2726558ba8897",
+  "bytes": 9737
+ },
+ "1:MarvelsGrantMan136 28 /f/MachineLearning/1/nvidia-rtx-4090/edit": {
+  "status": 200,
+  "location": null,
+  "sha": "fbad12f0e7246e0403651cd34013189e28b5ab1db9c9081c9981a90451777a80",
+  "bytes": 4422
+ },
+ "1:MarvelsGrantMan136 29 /f/television/28245/cartoon-network-marketing-execs-latest-to-go-in-warner-bros/comment/94145/edit": {
+  "status": 200,
+  "location": null,
+  "sha": "d7165888bf7867234beae27b853ebdfa4df6276bc4ffc332e2e02538724ac6b0",
+  "bytes": 4767
+ },
+ "1:MarvelsGrantMan136 30 /messages": {
+  "status": 200,
+  "location": null,
+  "sha": "3a182992d1595ab8a60e8f94e863ad582fb3f18e949f3d5de070868e68fc9eff",
+  "bytes": 3315
+ },
+ "1:MarvelsGrantMan136 31 /notifications": {
+  "status": 200,
+  "location": null,
+  "sha": "a416e6d3b7448991f0178dbc34694d3eddcc22197cd706c724f707c8dca4b680",
+  "bytes": 3509
+ }
+}
