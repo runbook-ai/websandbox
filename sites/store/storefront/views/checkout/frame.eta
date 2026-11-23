@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= it.frame === 'address' ? 'Shipping address' : 'Payment method' %></title>
+<link rel="stylesheet" href="/static/store.css">
+<style>body{margin:0;padding:6px 8px;background:#fff}.payment-method{margin:6px 0}</style>
+</head>
+<body class="checkout-frame">
+<form class="form" data-wsb-frame-form="<%= it.frame %>" data-parent-origin="<%= it.parentOrigin %>" novalidate>
+<% if (it.frame === 'address') { %>
+<%~ include('_address_fields', { ...it, a: it.a }) %>
+<% } else { %>
+<fieldset class="fieldset payment-methods" role="radiogroup" aria-label="Payment method"><legend class="sr-only">Payment Method</legend>
+  <div class="payment-method"><label class="label" for="checkmo"><input type="radio" name="payment_method" value="checkmo" id="checkmo"<%= it.pm === 'checkmo' ? ' checked' : '' %>> <span>Check / Money order</span></label></div>
+  <div class="payment-method"><label class="label" for="cashondelivery"><input type="radio" name="payment_method" value="cashondelivery" id="cashondelivery"<%= it.pm === 'cashondelivery' ? ' checked' : '' %>> <span>Cash On Delivery</span></label></div>
+</fieldset>
+<% } %>
+</form>
+<script src="/static/store.js" defer></script>
+<script src="/_kit/widgets/frame.js" defer></script>
+</body>
+</html>

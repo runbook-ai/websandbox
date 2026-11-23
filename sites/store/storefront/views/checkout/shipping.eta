@@ -18,7 +18,7 @@
       </fieldset>
     <% } else { %><input type="hidden" name="address_id" value="new"><% } %>
     <fieldset class="fieldset address new-shipping-address" id="new-shipping-address"<%= it.saved.length && it.selected ? ' disabled hidden' : '' %>><legend class="legend"><span><%= it.saved.length ? 'New Address' : 'Address' %></span></legend>
-      <%~ include('_address_fields', { ...it, a: it.a }) %>
+      <% if (it.cf) { %><%~ include('checkout/_frame', it) %><% } else { %><%~ include('_address_fields', { ...it, a: it.a }) %><% } %>
       <% if (it.customer) { %><div class="field choice"><input type="checkbox" name="save_in_address_book" value="1" id="save_in_address_book" checked> <label for="save_in_address_book">Save in address book</label></div><% } %>
     </fieldset>
   </section>

@@ -77,6 +77,6 @@
 <% if (it.user) { %><footer class="page-footer"><p class="copyright">Store back office &middot; websandbox lite rebuild of the Magento 2 admin</p><p class="magento-version"><a href="/admin/admin/system_store/">Main Website / Default Store View</a></p></footer><% } %>
 </div>
 <script src="/_kit/kit.js" defer></script>
-<script src="/admin/static/admin.js" defer></script>
+<script src="/admin/static/admin.js" defer></script><%~ it.wScripts || '' %>
 </body>
 </html>

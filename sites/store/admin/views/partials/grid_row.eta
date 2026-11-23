@@ -1,0 +1,5 @@
+<%/* one grid row as a one-row table: the admin_grid list widget's items (lib/grid.js) */%><% const g = it.g; const r = it.r; const fid = g.id + '-mass'; %><table class="data-grid wsb-grid-line" style="table-layout:fixed;width:100%;margin:0"><tbody><tr class="data-row" data-id="<%= r.id %>">
+<% if (g.massActions) { %><td class="data-grid-checkbox-cell"><label class="sr-only" for="<%= g.id %>-sel-<%= r.id %>">Select row <%= r.id %></label><input type="checkbox" id="<%= g.id %>-sel-<%= r.id %>" name="selected" value="<%= r.id %>" form="<%= fid %>"></td><% } %>
+<% for (const c of r.cells) { %><td class="<%= c.cls %>"><div class="data-grid-cell-content"><%~ c.html %></div></td><% } %>
+<% if (g.rowActions) { %><td class="data-grid-actions-cell"><%~ g.rowActions(r.row) %></td><% } %>
+</tr></tbody></table>

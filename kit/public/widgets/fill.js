@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   if (window.WsbFill) return;
-  var data = {}, pending = 0;
+  var data = {}, pending = 0, roots = [];
   function read(root) {
     (root || document).querySelectorAll('script[data-wsb-fill-data]').forEach(function (s) {
       if (s.dataset.read) return;
@@ -31,11 +31,15 @@
         .catch(function () { pending--; });
     });
   }
-  var roots = [];
   window.WsbFill = { apply: apply, data: function () { return data; } };
   document.addEventListener('wsb:mount', function (e) { if (e.detail && e.detail.root) apply(e.detail.root); });
   document.addEventListener('wsb:shadow', function (e) { if (e.detail && e.detail.root) { roots.push(e.detail.root); apply(e.detail.root); } });
-  function start() { apply(); fetchAll(); }
+  function start() {
+    apply();
+    // shadow roots attached before this script ran
+    document.querySelectorAll('*').forEach(function (el) { if (el.shadowRoot && roots.indexOf(el.shadowRoot) < 0) { roots.push(el.shadowRoot); apply(el.shadowRoot); } });
+    fetchAll();
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
 })();

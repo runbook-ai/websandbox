@@ -51,7 +51,9 @@ module.exports = (r, ctx) => {
           }
           if (!run && m.state !== 'failed') {
             const id = Number(kit.sql("INSERT INTO temp.admin_report_runs (type, params, sig, status, created_at) VALUES (?, ?, ?, 'queued', ?)").run(def.type, params, sig, kit.nowSql()).lastInsertRowid);
-            const jid = kit.jobs.enqueue('admin.report', { run_id: id });
+            // admin_job widget slot (../../widgets.js): a slow job, 10-60 s of site time per report/params
+            const slow = kit.widget('admin_job') === 'slow';
+            const jid = kit.jobs.enqueue('admin.report', { run_id: id }, slow ? { delay: kit.widgets.jobSeconds(`${def.type}:${params}`) } : undefined);
             kit.sql('UPDATE temp.admin_report_runs SET job_id = ? WHERE id = ?').run(jid, id);
             run = kit.sql('SELECT * FROM temp.admin_report_runs WHERE id = ?').get(id);
           }
@@ -71,9 +73,17 @@ module.exports = (r, ctx) => {
           } else if (run) m.state = 'pending';
         }
       }
+      if (m.state === 'pending' && kit.widget('admin_job')) m.jobPoll = `/admin/reports/job/${m.run.id}/`;
       return view(reply, 'report', m);
     };
   }
+  // admin_job widget slot: the report page polls its run (404 while the slot is off)
+  r.get('/reports/job/:id', async (req) => {
+    kit.widgets.need('admin_job');
+    const run = kit.sql('SELECT r.status, j.status AS job FROM temp.admin_report_runs r LEFT JOIN temp.kit_jobs j ON j.id = r.job_id WHERE r.id = ?').get(+req.params.id);
+    if (!run) throw kit.httpError(404, 'No such report run.');
+    return { status: run.job === 'failed' ? 'failed' : run.status };
+  });
   for (const def of Object.values(R.REPORTS)) {
     const rel = def.path.replace(/^\/admin/, '').replace(/\/$/, '');
     r.get(rel, reportPage(def));

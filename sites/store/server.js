@@ -41,6 +41,7 @@ const http = require('node:http');
 const kit = require('../../kit');
 const { als } = require('../../kit/lib/context');
 const store = require('./shared');
+const SW = require('./widgets');
 // kit dependencies (fastify plugins) live in kit/node_modules
 const kitRequire = (m) => require(require.resolve(m, { paths: [path.join(__dirname, '..', '..', 'kit')] }));
 
@@ -64,6 +65,12 @@ const site = kit.site({
   db: { mode: 'overlay', file: 'base.db', cacheMB: 64 },
   // "today" for the store: the WebArena shopping tasks say "Today is 6/12/2023" (last order 2023-05-31).
   clock: { start: '2023-06-12T16:00:00Z' },
+  // scenario widget slots (off unless POST /__rl/reset {scenario: {widgets}}; widgets.js, docs/WIDGETS.md)
+  widgets: SW.SLOTS,
+  // the payment host of the checkout frame widget: shoppingpay.<domain> / 127.10.<i>.19 / localhost
+  // (when the main host is 127.0.0.1); pages may frame it only while checkout=frame-cross is on
+  altHosts: { pay: { label: 'shoppingpay', siteIndex: 19 } },
+  csp: (req) => (frameCross(req) ? `${CSP}; frame-src 'self' ${req.originFor(req.altHost ? null : 'pay')}` : CSP),
   auth: {
     get loginPath() {
       const r = ctxReq();
@@ -87,7 +94,7 @@ const site = kit.site({
     warm: { theme: 'warm', labels: { 'nav.cart': 'Basket', 'cart.title': 'Shopping Basket', 'search.placeholder': 'What are you looking for?' } },
   },
   skinFor: () => 'default',
-  locals: (req) => store.locals(req),
+  locals: (req) => ({ ...store.locals(req), ...SW.locals() }),
   jobs: require('./storefront/jobs'),
   onOpen: (db, tenant) => store.onOpen(db, tenant),
   views: { notFound: 'error', 403: 'error' },
@@ -137,6 +144,12 @@ const site = kit.site({
   },
 });
 const kit_COOKIE = require('../../kit/lib/session').COOKIE;
+const { CSP } = require('../../kit/lib/site');
+// checkout=frame-cross on this request's tenant (read before the request runs: its CSP header)
+const frameCross = (req) => {
+  if (!req.tenant || !req.tenant.db || !req.tenant.db.open) return false;
+  try { const w = req.tenant.scenario().widgets; return !!w && w.checkout === 'frame-cross'; } catch { return false; }
+};
 
 // Views: 'admin/x' -> admin/views/x; others: storefront/views, views (shared), kit/views.
 function patchViews(rt) {

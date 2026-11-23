@@ -4,6 +4,8 @@ const C = require('../lib/catalog');
 const S = require('../../shared');
 const cart = require('../lib/cart');
 const pindex = require('../lib/pindex');
+const SW = require('../../widgets');
+const { buildLocals } = require('../../../../kit/lib/site');
 
 module.exports = async function catalogRoutes(app, kit) {
   const db = () => kit.db();
@@ -70,6 +72,28 @@ module.exports = async function catalogRoutes(app, kit) {
     return reply.redirect(kit.urlWith(req, { price_from: null, price_to: null, p: null, price: from || to ? `${from || 0}-${to}` : null }));
   }
 
+  // ---------------------------------------------------------------- widget slots (../../widgets.js)
+  // Render a partial per item with the page's locals (chunk endpoints of the list widgets).
+  function renderItems(req, reply, data, view, list) {
+    const rt = req.tenant.site;
+    const it = buildLocals(rt, req, reply, data, { noFlash: true });
+    return list.map((x) => rt.views.render(view, { ...it, ...x }));
+  }
+  // grid slot: the listing's next GRID_WINDOW products as one list; {json} for a chunk request
+  function gridWidget(req, reply, list, data) {
+    const gw = kit.widget('grid');
+    if (!gw || !list.products.length) return null;
+    const ids = list.windowIds(SW.GRID_WINDOW);
+    if (req.query._w === 'items') {
+      const { offset, limit } = kit.widgets.range(req, { max: 48, dflt: 24 });
+      const cards = C.cards(db(), ids.slice(offset, offset + limit));
+      return { json: { total: ids.length, items: renderItems(req, reply, data, '_product_item', cards.map((p) => ({ p, mode: list.mode }))) } };
+    }
+    const html = `<div class="products wrapper ${list.mode} products-${list.mode}">${kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'items' }), total: ids.length, kind: gw,
+      est: list.mode === 'list' ? 260 : 420, chunk: 24, cols: list.mode === 'list' ? 1 : 'auto:230', lineTag: 'ol', lineClass: 'products list items product-items', label: 'Products' })}</div>`;
+    return { html };
+  }
+
   // ---------------------------------------------------------------- category
   function renderCategory(req, reply, c) {
     const pf = priceFormRedirect(req, reply); if (pf) return pf;
@@ -77,7 +101,11 @@ module.exports = async function catalogRoutes(app, kit) {
     const list = C.listing(req, { category: c });
     const crumbs = [['Home', '/'], ...C.ancestors(t, c).map((a) => [a.name, C.catUrl(a)]), [c.name]];
     const subcats = C.activeChildren(c, false);
-    return reply.render('category', { title: c.name, c, list, crumbs, subcats, catUrl: C.catUrl, bodyClass: 'catalog-category-view' });
+    const data = { title: c.name, c, list, crumbs, subcats, catUrl: C.catUrl, bodyClass: 'catalog-category-view' };
+    const gw = gridWidget(req, reply, list, data);
+    if (gw && gw.json) return gw.json;
+    if (gw) data.gw = gw.html;
+    return reply.render('category', data);
   }
   app.get('/catalog/category/view/id/:id', async (req, reply) => {
     const c = C.tree(db()).byId.get(+req.params.id);
@@ -147,7 +175,21 @@ module.exports = async function catalogRoutes(app, kit) {
         (SELECT group_concat(rt.code || ':' || v.value) FROM review_votes v JOIN ratings rt ON rt.id = v.rating_id WHERE v.review_id = r.id) AS votes
       FROM reviews r WHERE r.product_id = ? AND r.status = 'approved' ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?`).all(p.id, per, (rp - 1) * per);
     const inWish = req.user ? !!db().prepare('SELECT 1 FROM wishlist_items wi JOIN wishlists w ON w.id = wi.wishlist_id WHERE w.customer_id = ? AND wi.product_id = ?').get(req.user.id, p.id) : false;
-    return reply.render('product', { title: p.name, p, ...d, crumbs, reviews, rp, rpages: pages, inWish, bodyClass: 'catalog-product-view', pageTitle: false, reviewHref: (n) => kit.urlWith(req, { rp: n > 1 ? n : null }) + '#reviews' });
+    const data = { title: p.name, p, ...d, crumbs, reviews, rp, rpages: pages, inWish, bodyClass: 'catalog-product-view', pageTitle: false, reviewHref: (n) => kit.urlWith(req, { rp: n > 1 ? n : null }) + '#reviews' };
+    // ---- widget slots (../../widgets.js): plant in one review, all reviews as one list
+    const allReviews = () => db().prepare(`SELECT r.id, r.title, r.detail, r.nickname, r.created_at, (SELECT avg(v.percent) FROM review_votes v WHERE v.review_id = r.id) AS pct
+      FROM reviews r WHERE r.product_id = ? AND r.status = 'approved' ORDER BY r.created_at DESC, r.id DESC`).all(p.id);
+    if (kit.widget('plant')) data.plantFor = SW.plantFn(p, db().prepare("SELECT id FROM reviews WHERE product_id = ? AND status = 'approved' ORDER BY created_at DESC, id DESC LIMIT 10").pluck().all(p.id));
+    const rw = kit.widget('reviews');
+    if (rw && total) {
+      if (req.query._w === 'reviews') {
+        const { offset, limit } = kit.widgets.range(req, { max: 50, dflt: 20 });
+        return { total, items: renderItems(req, reply, data, '_review_item', allReviews().slice(offset, offset + limit).map((r) => ({ r }))) };
+      }
+      data.rw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'reviews', rp: null }), total, kind: rw, est: 150, chunk: 20, label: 'Customer reviews', lineTag: 'ol', lineClass: 'items review-items' });
+    }
+    if (kit.widget('price') === 'js') data.wStock = SW.stockHtml(p);
+    return reply.render('product', data);
   }
   app.get('/catalog/product/view/id/:id', async (req, reply) => {
     const p = loadProduct('p.id = ?', +req.params.id);
@@ -171,9 +213,14 @@ module.exports = async function catalogRoutes(app, kit) {
     const list = C.listing(req, { search: s });
     let suggestion = null;
     if (!s.rows.length) suggestion = kit.search.didYouMean(db(), 'product_search', q);
-    if (!req.query.p && !req.query.price && !req.query.brand && !req.query.cat) C.logSearch(db(), q, s.rows.length);
+    const chunk = req.query._w === 'items' && kit.widget('grid'); // a grid widget's chunk request: not a search
+    if (!req.query.p && !req.query.price && !req.query.brand && !req.query.cat && !chunk) C.logSearch(db(), q, s.rows.length);
     const related = db().prepare("SELECT query_text FROM search_terms WHERE query_text LIKE ? AND query_text != ? AND num_results > 0 ORDER BY popularity DESC LIMIT 5").pluck().all(`%${q.split(/\s+/)[0]}%`, q);
-    return reply.render('search', { title: `Search results for: '${q}'`, heading: `Search results for: '${S.htmlName(q)}'`, q, searchQuery: q, list, mode: s.mode, suggestion, related, crumbs: [['Home', '/'], [`Search results for: '${S.htmlName(q)}'`]], bodyClass: 'catalogsearch-result-index' });
+    const data = { title: `Search results for: '${q}'`, heading: `Search results for: '${S.htmlName(q)}'`, q, searchQuery: q, list, mode: s.mode, suggestion, related, crumbs: [['Home', '/'], [`Search results for: '${S.htmlName(q)}'`]], bodyClass: 'catalogsearch-result-index' };
+    const gw = gridWidget(req, reply, list, data);
+    if (gw && gw.json) return gw.json;
+    if (gw) data.gw = gw.html;
+    return reply.render('search', data);
   }
   app.get('/catalogsearch/result', renderSearch);
   app.get('/catalogsearch/result/index', renderSearch);
@@ -204,7 +251,11 @@ module.exports = async function catalogRoutes(app, kit) {
     if (params.length === 0) { req.flash('error', 'Enter a search term and try again.'); return reply.redirect('/catalogsearch/advanced/'); }
     const rows = C.rowsFor(db(), db().prepare(`SELECT p.id FROM products p WHERE ${where.join(' AND ')} LIMIT 5000`).pluck().all(...params));
     const list = C.listing(req, { search: { rows } });
-    return reply.render('search', { title: 'Catalog Advanced Search', heading: 'Catalog Advanced Search', q: '', list, advanced: v, crumbs: [['Home', '/'], ['Advanced Search', '/catalogsearch/advanced/'], ['Results']], bodyClass: 'catalogsearch-advanced-result' });
+    const data = { title: 'Catalog Advanced Search', heading: 'Catalog Advanced Search', q: '', list, advanced: v, crumbs: [['Home', '/'], ['Advanced Search', '/catalogsearch/advanced/'], ['Results']], bodyClass: 'catalogsearch-advanced-result' };
+    const gw = gridWidget(req, reply, list, data);
+    if (gw && gw.json) return gw.json;
+    if (gw) data.gw = gw.html;
+    return reply.render('search', data);
   });
 
   // ---------------------------------------------------------------- compare

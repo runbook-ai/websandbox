@@ -1,6 +1,6 @@
-<% const p = it.p; %><div class="price-box price-final_price" data-product-id="<%= p.id %>">
+<% const p = it.p; %><% if (it.wPriceHtml) { %><%~ it.wPriceHtml(p, it.money) %><% } else { %><div class="price-box price-final_price" data-product-id="<%= p.id %>">
 <% if (p.type === 'configurable' || p.type === 'grouped' || p.type === 'bundle') { %><span class="normal-price"><span class="price-label">As low as</span> <span class="price-wrapper"><span class="price"><%= it.money(p.final_price) %></span></span></span>
 <% } else if (p.on_sale) { %><span class="special-price"><span class="price-label">Special Price</span> <span class="price-wrapper" data-price-amount="<%= p.final_price %>" data-price-type="finalPrice"><span class="price"><%= it.money(p.final_price) %></span></span></span>
 <span class="old-price"><span class="price-label">Regular Price</span> <span class="price-wrapper" data-price-amount="<%= p.price %>" data-price-type="oldPrice"><span class="price"><%= it.money(p.price) %></span></span></span>
 <% } else { %><span class="price-container"><span class="price-wrapper" data-price-amount="<%= p.final_price %>" data-price-type="finalPrice"><span class="price"><%= it.money(p.final_price) %></span></span></span><% } %>
-</div>
+</div><% } %>

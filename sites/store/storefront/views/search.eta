@@ -10,7 +10,7 @@
   <% } else { %>
     <% if (it.mode === 'or') { %><div class="message info"><div>No products contain all of your search words; showing products that match some of them.</div></div><% } %>
     <%~ include('_toolbar', { ...it, list: l }) %>
-    <%~ include('_products', { ...it, products: l.products, mode: l.mode }) %>
+    <% if (it.gw) { %><%~ it.gw %><% } else { %><%~ include('_products', { ...it, products: l.products, mode: l.mode }) %><% } %>
     <%~ include('_toolbar', { ...it, list: l, bottom: true }) %>
   <% } %>
 </div>

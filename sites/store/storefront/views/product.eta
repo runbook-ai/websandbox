@@ -7,13 +7,13 @@
     <div class="reviews-actions"><a class="action view" href="#reviews"><span itemprop="reviewCount"><%= st.n %></span>&nbsp;<span>Review<%= st.n === 1 ? '' : 's' %></span></a> <a class="action add" href="#review-form">Add Your Review</a></div>
     <% } else { %><div class="reviews-actions"><a class="action add" href="#review-form">Be the first to review this product</a></div><% } %>
   </div>
-  <div class="product-info-price">
+  <div class="product-info-price"><% if (it.wCard) { %><template data-wsb-shadow><link rel="stylesheet" href="/static/store.css"><% } %>
     <%~ include('_price', { ...it, p }) %>
     <div class="product-info-stock-sku">
-      <div class="stock <%= p.is_in_stock ? 'available' : 'unavailable' %>" title="Availability"><span><%= p.is_in_stock ? 'In stock' : 'Out of stock' %></span></div>
+      <% if (it.wStock) { %><div class="stock" title="Availability"><%~ it.wStock %></div><% } else { %><div class="stock <%= p.is_in_stock ? 'available' : 'unavailable' %>" title="Availability"><span><%= p.is_in_stock ? 'In stock' : 'Out of stock' %></span></div><% } %>
       <div class="product attribute sku"><strong class="type">SKU</strong> <div class="value" itemprop="sku"><%= p.sku %></div></div>
     </div>
-  </div>
+  <% if (it.wCard) { %></template><% } %></div>
   <% if (p.short_description) { %><div class="product attribute overview"><div class="value"><%~ p.short_description %></div></div><% } %>
 
   <% if (it.setItems.length) { %>
@@ -85,10 +85,10 @@
     <% if (it.info.length) { %>
     <h2 class="data item title" id="tab-label-additional"><a class="data switch" href="#additional">More Information</a></h2>
     <div class="data item content" id="additional" role="tabpanel" aria-labelledby="tab-label-additional">
-      <div class="additional-attributes-wrapper table-wrapper"><table class="data table additional-attributes" id="product-attribute-specs-table">
+      <div class="additional-attributes-wrapper table-wrapper"><% if (it.wCard) { %><template data-wsb-shadow><link rel="stylesheet" href="/static/store.css"><% } %><table class="data table additional-attributes" id="product-attribute-specs-table">
         <caption class="table-caption">More Information</caption>
         <tbody><% for (const a of it.info) { %><tr><th class="col label" scope="row"><%= a.label %></th><td class="col data" data-th="<%= a.label %>"><%= it.plainName(a.value) %></td></tr><% } %></tbody>
-      </table></div>
+      </table><% if (it.wCard) { %></template><% } %></div>
     </div>
     <% } %>
     <h2 class="data item title" id="tab-label-reviews"><a class="data switch" href="#reviews">Reviews <span class="counter"><%= st.n %></span></a></h2>
@@ -102,18 +102,10 @@
       </div>
       <div class="block review-list" id="customer-reviews">
         <div class="block-title"><strong>Customer Reviews</strong></div>
-        <ol class="items review-items">
-        <% for (const r of it.reviews) { %>
-          <li class="item review-item" id="review-<%= r.id %>">
-            <div class="review-title"><%= r.title %></div>
-            <% if (r.pct != null) { %><div class="review-ratings"><div class="rating-summary item"><span class="label rating-label"><span>Rating</span></span><div class="rating-result" role="img" aria-label="<%= Math.round(r.pct) %>% (<%= Math.round(r.pct / 20) %> out of 5 stars)"><span style="width:<%= Math.round(r.pct) %>%"><span><%= Math.round(r.pct) %>%</span></span></div></div></div><% } %>
-            <div class="review-content"><%= r.detail %></div>
-            <div class="review-details"><p class="review-author"><span class="review-details-label">Review by</span> <strong class="review-details-value"><%= r.nickname %></strong></p>
-              <p class="review-date"><span class="review-details-label">Posted on</span> <time class="review-details-value" datetime="<%= it.date.iso(r.created_at) %>"><%= it.date.short(r.created_at) %></time></p></div>
-          </li>
-        <% } %>
-        </ol>
-        <% if (it.rpages > 1) { %><nav class="pages" aria-label="Review pages"><ul class="items pages-items">
+        <% if (it.rw) { %><%~ it.rw %><% } else { %><ol class="items review-items">
+        <% for (const r of it.reviews) { %><%~ include('_review_item', { ...it, r }) %>        <% } %>
+        </ol><% } %>
+        <% if (it.rpages > 1 && !it.rw) { %><nav class="pages" aria-label="Review pages"><ul class="items pages-items">
           <% if (it.rp > 1) { %><li class="item pages-item-previous"><a class="action previous" href="<%= it.reviewHref(it.rp - 1) %>">Previous</a></li><% } %>
           <% for (let n = Math.max(1, it.rp - 3); n <= Math.min(it.rpages, it.rp + 3); n++) { %><li class="item<%= n === it.rp ? ' current' : '' %>"><% if (n === it.rp) { %><strong class="page"><%= n %></strong><% } else { %><a class="page" href="<%= it.reviewHref(n) %>"><%= n %></a><% } %></li><% } %>
           <% if (it.rp < it.rpages) { %><li class="item pages-item-next"><a class="action next" href="<%= it.reviewHref(it.rp + 1) %>">Next</a></li><% } %>
@@ -134,7 +126,7 @@
             <% } %>
             <div class="field review-field-nickname required"><label for="nickname_field" class="label"><span>Nickname</span></label><input type="text" name="nickname" id="nickname_field" class="input-text" required value="<%= it.customer ? it.customer.firstname : '' %>"></div>
             <div class="field review-field-summary required"><label for="summary_field" class="label"><span>Summary</span></label><input type="text" name="title" id="summary_field" class="input-text" required></div>
-            <div class="field review-field-text required"><label for="review_field" class="label"><span>Review</span></label><textarea name="detail" id="review_field" cols="5" rows="3" required></textarea></div>
+            <div class="field review-field-text required"><label for="review_field" class="label"><span>Review</span></label><textarea name="detail" id="review_field" cols="5" rows="3" required<%~ it.edAttr || '' %>></textarea></div>
           </fieldset>
           <div class="actions-toolbar review-form-actions"><button type="submit" class="action submit primary"><span>Submit Review</span></button></div>
         </form>

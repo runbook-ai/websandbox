@@ -1,0 +1,26 @@
+<%/* include('_product_item', {...it, p, mode}) one product card of a listing (_products) */%><% const p = it.p; const mode = it.mode; %>
+  <li class="item product product-item"><% if (it.wCard) { %><div class="wsb-card"><template data-wsb-shadow><link rel="stylesheet" href="/static/store.css"><% } %>
+    <div class="product-item-info" data-container="product-<%= mode %>">
+      <a href="<%= p.url %>" class="product photo product-item-photo" tabindex="-1">
+        <% if (p.image) { %><img class="product-image-photo" src="<%= it.mediaUrl(p.image) %>" alt="<%= p.plain %>" width="240" height="300"><% } else { %><span class="product-image-placeholder" role="img" aria-label="<%= p.plain %>">No image</span><% } %>
+      </a>
+      <div class="product details product-item-details">
+        <strong class="product name product-item-name"><a class="product-item-link" href="<%= p.url %>"><%~ it.htmlName(p.name) %></a></strong>
+        <% if (p.review_count) { %><div class="product-reviews-summary short"><%~ include('_stars', { ...it, pct: p.rating }) %><div class="reviews-actions"><a class="action view" href="<%= p.url %>#reviews"><%= p.review_count %>&nbsp;<span>Review<%= p.review_count === 1 ? '' : 's' %></span></a></div></div><% } %>
+        <%~ include('_price', { ...it, p, money: it.money }) %>
+        <% if (mode === 'list' && p.short_description) { %><div class="product description product-item-description"><%= it.plainName(String(p.short_description).replace(/<[^>]+>/g, ' ')).slice(0, 300) %> <a href="<%= p.url %>" class="action more">Learn More</a></div><% } %>
+        <div class="product-item-inner"><div class="product actions product-item-actions">
+          <div class="actions-primary">
+          <% if (p.type === 'simple' && !p.required_options && p.is_in_stock) { %>
+            <form method="post" action="/checkout/cart/add/" class="tocart-form"><%~ it.csrfInput() %><input type="hidden" name="product" value="<%= p.id %>"><input type="hidden" name="qty" value="1"><button type="submit" title="Add to Cart" class="action tocart primary"><span>Add to Cart</span></button></form>
+          <% } else if (!p.is_in_stock) { %><div class="stock unavailable"><span>Out of stock</span></div>
+          <% } else { %><a class="action tocart primary" href="<%= p.url %>">Add to Cart</a><% } %>
+          </div>
+          <div class="actions-secondary" data-role="add-to-links">
+            <form method="post" action="/wishlist/index/add/" class="inline"><%~ it.csrfInput() %><input type="hidden" name="product" value="<%= p.id %>"><button type="submit" class="action towishlist link" title="Add to Wish List" aria-label="Add to Wish List: <%= p.plain %>">Add to Wish List</button></form>
+            <form method="post" action="/catalog/product_compare/add/" class="inline"><%~ it.csrfInput() %><input type="hidden" name="product" value="<%= p.id %>"><button type="submit" class="action tocompare link" title="Add to Compare" aria-label="Add to Compare: <%= p.plain %>">Add to Compare</button></form>
+          </div>
+        </div></div>
+      </div>
+    </div><% if (it.wCard) { %></template></div><% } %>
+  </li>

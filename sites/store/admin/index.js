@@ -52,7 +52,8 @@ async function adminPlugin(app, opts = {}) {
   const ctx = {
     kit, U, grid, r, menu,
     // render an admin page
-    view: (reply, name, data = {}, status) => reply.render(`admin/${name}`, data, status),
+    // (a grid model with .json is a list widget's chunk request: lib/grid.js)
+    view: (reply, name, data = {}, status) => (data.g && data.g.json ? data.g.json : reply.render(`admin/${name}`, data, status)),
     back: (req, fallback) => { const b = U.str(req.body && req.body.back_url); return b.startsWith('/admin') ? b : fallback; },
     notFound: (what) => kit.httpError(404, `This ${what} no longer exists.`),
     store: opts.store || require('../shared'),

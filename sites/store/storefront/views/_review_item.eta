@@ -1,0 +1,8 @@
+<%/* include('_review_item', {...it, r}) one review of the product page */%><% const r = it.r; %>
+          <li class="item review-item" id="review-<%= r.id %>">
+            <div class="review-title"><%= r.title %></div>
+            <% if (r.pct != null) { %><div class="review-ratings"><div class="rating-summary item"><span class="label rating-label"><span>Rating</span></span><div class="rating-result" role="img" aria-label="<%= Math.round(r.pct) %>% (<%= Math.round(r.pct / 20) %> out of 5 stars)"><span style="width:<%= Math.round(r.pct) %>%"><span><%= Math.round(r.pct) %>%</span></span></div></div></div><% } %>
+            <div class="review-content"><%= r.detail %><%~ it.plantFor ? it.plantFor(r) : '' %></div>
+            <div class="review-details"><p class="review-author"><span class="review-details-label">Review by</span> <strong class="review-details-value"><%= r.nickname %></strong></p>
+              <p class="review-date"><span class="review-details-label">Posted on</span> <time class="review-details-value" datetime="<%= it.date.iso(r.created_at) %>"><%= it.date.short(r.created_at) %></time></p></div>
+          </li>

@@ -256,6 +256,7 @@ function listing(req, { category = null, search = null, base }) {
   const products = cards(db, ids); mark('cards'); if (PROF) console.log('[listing]', PROF.join(' '));
   return {
     products, pager, facets: facetsOut, active, mode, limit, limits, order, dir, sorts,
+    windowIds: (n) => rows.slice((page - 1) * limit, (page - 1) * limit + n).map((r) => r.id), // the grid widget's window (../../widgets.js)
     clearAll: kit.urlWith(req, Object.fromEntries(['cat', 'brand', 'price', 'p', ...defs.map((d) => d.code)].map((k) => [k, null]))),
     sortHref: (o) => kit.urlWith(req, { product_list_order: o, product_list_dir: o === 'relevance' ? 'desc' : 'asc', p: null }),
     dirHref: kit.urlWith(req, { product_list_dir: dir === 'asc' ? 'desc' : 'asc', product_list_order: order, p: null }),

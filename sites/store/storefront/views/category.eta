@@ -9,7 +9,7 @@
   <% if (c.description) { %><div class="category-description"><%~ c.description %></div><% } %>
   <% if (!l.products.length) { %><div class="message info empty"><div>We can't find products matching the selection.</div></div><% } else { %>
   <%~ include('_toolbar', { ...it, list: l }) %>
-  <%~ include('_products', { ...it, products: l.products, mode: l.mode }) %>
+  <% if (it.gw) { %><%~ it.gw %><% } else { %><%~ include('_products', { ...it, products: l.products, mode: l.mode }) %><% } %>
   <%~ include('_toolbar', { ...it, list: l, bottom: true }) %>
   <% } %>
 </div>

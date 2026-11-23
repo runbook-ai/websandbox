@@ -6,10 +6,10 @@
   <h2 class="step-title" id="payment-title">Payment Method</h2>
   <form method="post" action="/checkout/placeOrder/" id="co-payment-form" class="form payments">
     <%~ it.csrfInput() %>
-    <fieldset class="fieldset payment-methods" role="radiogroup" aria-label="Payment method"><legend class="sr-only">Payment Method</legend>
+    <% if (it.cf) { %><%~ include('checkout/_frame', it) %><% } else { %><fieldset class="fieldset payment-methods" role="radiogroup" aria-label="Payment method"><legend class="sr-only">Payment Method</legend>
       <div class="payment-method _active"><label class="label" for="checkmo"><input type="radio" name="payment_method" value="checkmo" id="checkmo" checked> <span>Check / Money order</span></label></div>
       <div class="payment-method"><label class="label" for="cashondelivery"><input type="radio" name="payment_method" value="cashondelivery" id="cashondelivery"> <span>Cash On Delivery</span></label></div>
-    </fieldset>
+    </fieldset><% } %>
     <div class="billing-address-same-as-shipping-block field choice"><input type="checkbox" name="billing_same" id="billing-address-same-as-shipping" value="1" checked> <label for="billing-address-same-as-shipping"><span>My billing and shipping address are the same</span></label></div>
     <div class="billing-address-details"><address><% for (const l of it.fmtAddr(it.addr)) { %><%= l %><br><% } %></address>
       <% if (it.billing) { %><p class="note">Unchecked: your default billing address is used:</p><address class="muted"><% for (const l of it.fmtAddr(it.billing)) { %><%= l %><br><% } %></address><% } %></div>

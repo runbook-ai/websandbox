@@ -21,7 +21,8 @@
 </form>
 <% } %>
 <% if (it.state === 'pending') { %>
-  <div class="message message-notice notice" data-report-wait="700" role="status"><div>The report is being generated (run #<%= it.run.id %>). This page refreshes automatically&hellip; <a href="<%= it.req.url %>">Refresh now</a></div></div>
+<% if (it.jobPoll) { %>  <div class="message message-notice notice" id="wsb-job" data-poll="<%= it.jobPoll %>"><div><span class="wsb-spin" role="status">Generating the report (run #<%= it.run.id %>)&hellip;</span> This can take a minute; the page shows the report when it is ready. <a href="<%= it.req.url %>">Refresh now</a></div></div><%~ it.widgets.script('jobwait') %>
+<% } else { %>  <div class="message message-notice notice" data-report-wait="700" role="status"><div>The report is being generated (run #<%= it.run.id %>). This page refreshes automatically&hellip; <a href="<%= it.req.url %>">Refresh now</a></div></div><% } %>
 <% } else if (it.state === 'failed') { %>
   <div class="message message-error error" role="alert"><div>The report could not be generated: <%= it.error %>. <a href="<%= it.req.url %>">Try again</a></div></div>
 <% } else if (it.state === 'done') { %>

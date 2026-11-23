@@ -100,20 +100,20 @@
     </form>
   </div>
   <div class="admin__data-grid-wrap" data-role="grid-wrapper">
-    <table class="data-grid" id="<%= g.id %>-table">
+    <table class="data-grid" id="<%= g.id %>-table"<%~ g.vw ? ' style="table-layout:fixed;width:100%"' : '' %>>
       <thead><tr>
         <% if (g.massActions) { %><th class="data-grid-multicheck-cell data-grid-checkbox-cell"><label class="sr-only" for="<%= g.id %>-check-page">Select all on this page</label><input type="checkbox" id="<%= g.id %>-check-page" data-select-page></th><% } %>
         <% for (const c of g.columns.filter((x) => x.visible)) { %><th class="data-grid-th <%= c.cls %><%= c.arrow ? ' sort-' + c.arrow : '' %>" scope="col"<%= c.arrow ? ` aria-sort="${c.arrow === 'asc' ? 'ascending' : 'descending'}"` : '' %>><% if (c.sortable) { %><a href="<%= c.sortHref %>" class="data-grid-cell-content"><%= c.label %></a><% } else { %><span class="data-grid-cell-content"><%= c.label %></span><% } %></th><% } %>
         <% if (g.rowActions) { %><th class="data-grid-th">Action</th><% } %>
       </tr></thead>
-      <tbody>
+      <% if (g.vw) { %></table><%~ g.vw.html %><% } else { %><tbody>
       <% if (!g.rows.length) { %><tr class="data-grid-tr-no-data"><td colspan="<%= g.shown.length + 2 %>"><%= g.emptyText %></td></tr><% } %>
       <% for (const r of g.rows) { %><tr class="data-row" data-id="<%= r.id %>">
         <% if (g.massActions) { %><td class="data-grid-checkbox-cell"><label class="sr-only" for="<%= g.id %>-sel-<%= r.id %>">Select row <%= r.id %></label><input type="checkbox" id="<%= g.id %>-sel-<%= r.id %>" name="selected" value="<%= r.id %>" form="<%= fid %>"></td><% } %>
-        <% for (const c of r.cells) { %><td class="<%= c.cls %>"><div class="data-grid-cell-content"><%~ c.html %></div></td><% } %>
+        <% for (const c of r.cells) { %><td class="<%= c.cls %>"><div class="data-grid-cell-content"><% if (g.cellShadow) { %><template data-wsb-shadow><% } %><%~ c.html %><% if (g.cellShadow) { %></template><% } %></div></td><% } %>
         <% if (g.rowActions) { %><td class="data-grid-actions-cell"><%~ g.rowActions(r.row) %></td><% } %>
       </tr><% } %>
       </tbody>
-    </table>
+    </table><% } %><% if (g.cellShadow) { %><%~ it.widgets.script('shadow') %><% } %>
   </div>
 </div>

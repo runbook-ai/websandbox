@@ -7,6 +7,7 @@
 //             sort=<key>_<asc|desc>  page=N  per_page=20|30|50|100|200  cols=k1,k2,...
 const web = require('../../../../kit/lib/web');
 const U = require('./util');
+const SW = require('../../widgets');
 
 const PER_PAGE = [20, 30, 50, 100, 200];
 const esc = web.escapeHtml;
@@ -86,8 +87,26 @@ function visibleCols(req, spec) {
   return all.map((c) => ({ ...c, visible: c.always || (set ? set.has(c.key) : c.visible !== false) }));
 }
 
-// Build the grid model for a page.
+// Build the grid model for a page. (admin_grid widget slot, ../../widgets.js: for the orders /
+// customers / products grids, `vw` = the next ADMIN_WINDOW rows as one list, `json` = a chunk of it
+// (?_w=rows&offset=&limit=), `cellShadow` = cell contents in shadow roots.)
 function build(req, kit, spec) {
+  const aw = SW.ADMIN_GRIDS.has(spec.id) ? kit.widget('admin_grid') : null;
+  if (!aw) return buildModel(req, kit, spec);
+  if (aw === 'shadow') return Object.assign(buildModel(req, kit, spec), { cellShadow: true });
+  const page = buildModel(req, kit, spec, { offset: 0, limit: 0, count: true });
+  const total = Math.max(0, Math.min(SW.ADMIN_WINDOW, page.total - page.pager.offset));
+  if (req.query._w === 'rows') {
+    const { offset, limit } = kit.widgets.range(req, { max: 100, dflt: 50 });
+    const m = buildModel(req, kit, spec, { offset: page.pager.offset + offset, limit: Math.max(0, Math.min(limit, total - offset)) });
+    m.json = { total, items: m.rows.map((r) => req.tenant.site.views.render('admin/partials/grid_row', { g: m, r })) };
+    return m;
+  }
+  const m = buildModel(req, kit, spec);
+  if (total) m.vw = { html: kit.widgets.vlist({ src: web.urlWith(req, { _w: 'rows' }, spec.url), total, kind: aw, est: 46, chunk: 50, label: `${spec.title || 'Grid'} rows`, cls: 'wsb-grid' }) };
+  return m;
+}
+function buildModel(req, kit, spec, win) {
   const db = kit.db();
   U.ensureSqlFunctions(db);
   const { where, params, active } = computeWhere(req, spec, kit);
@@ -101,7 +120,7 @@ function build(req, kit, spec) {
   const phase1 = sc && sc.sortVia
     ? `SELECT ${sc.sortVia.id} AS _id FROM ${sc.sortVia.from} WHERE ${sc.sortVia.id} IN (SELECT ${spec.idCol} FROM ${from} WHERE ${where}) ORDER BY ${sc.sortVia.expr} ${D}, ${sc.sortVia.id} ${D} LIMIT ? OFFSET ?`
     : `SELECT ${spec.idCol} AS _id FROM ${from} WHERE ${where} ORDER BY ${sort.orderBy} LIMIT ? OFFSET ?`;
-  const idRows = kit.sql(phase1).pluck().all(...params, pager.limit, pager.offset);
+  const idRows = win && !win.limit ? [] : kit.sql(phase1).pluck().all(...params, win ? win.limit : pager.limit, win ? win.offset : pager.offset);
   const cols = visibleCols(req, spec);
   const shown = cols.filter((c) => c.visible);
   let rows = [];

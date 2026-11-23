@@ -8,6 +8,16 @@ const cart = require('../lib/cart');
 const { helpers: H } = require('./customer');
 const { safeBack } = require('./catalog');
 
+// checkout widget slot (../../widgets.js): fields in a same-site or cross-site frame
+const ADDRESS_FIELDS = ['firstname', 'lastname', 'company', 'telephone', 'street[0]', 'street[1]', 'street[2]', 'city', 'region_id', 'region', 'postcode', 'country_id'];
+function frameOf(req, kit, name, query) {
+  const cf = kit.widget('checkout');
+  if (!cf) return null;
+  const origin = cf === 'frame-cross' ? req.originFor('pay') : req.originFor(null);
+  const path = `/checkout/frame/${name}/?${new URLSearchParams(query).toString()}`;
+  return { origin, src: cf === 'frame-cross' ? origin + path : path };
+}
+
 // Parse the add-to-cart form: super_attribute[code]=option_id, options[id]=value_id|text, options[id][]=...
 function parseOptions(db, product, body) {
   const errors = [];
@@ -158,7 +168,14 @@ module.exports = async function checkoutRoutes(app, kit) {
     const methods = cart.shippingOptions(t, addr);
     const countries = db().prepare("SELECT id, name FROM countries WHERE coalesce(name, '') <> '' ORDER BY name").all();
     const regions = db().prepare('SELECT id, country_id, code, name FROM regions ORDER BY country_id, name').all();
-    return reply.render('checkout/shipping', { title: 'Checkout', pageTitle: false, t, saved, selected, methods, method: st.method || 'flatrate_flatrate', a: st.address || { country_id: 'US' }, email: st.email || '', countries, regions, errors: {}, fmtAddr: (x) => H.formatAddress(db(), x), bodyClass: 'checkout-index-index', ...extra }, status);
+    const data = { title: 'Checkout', pageTitle: false, t, saved, selected, methods, method: st.method || 'flatrate_flatrate', a: st.address || { country_id: 'US' }, email: st.email || '', countries, regions, errors: {}, fmtAddr: (x) => H.formatAddress(db(), x), bodyClass: 'checkout-index-index', ...extra };
+    if (kit.widget('checkout')) {
+      const a = data.a || {}; const street = String(a.street || '').split('\n');
+      const vals = Object.fromEntries(ADDRESS_FIELDS.map((k) => { const m = /^street\[(\d)\]$/.exec(k); return [k, String((m ? street[+m[1]] : a[k]) ?? '')]; }));
+      if (!vals.country_id) vals.country_id = 'US';
+      data.cf = { ...frameOf(req, kit, 'address', vals), fields: Object.entries(vals), name: 'address', title: 'Shipping address' };
+    }
+    return reply.render('checkout/shipping', data, status);
   };
   app.get('/checkout', shippingPage);
   app.get('/checkout/index', shippingPage);
@@ -206,7 +223,23 @@ module.exports = async function checkoutRoutes(app, kit) {
     const t = cart.totals(c, { customerGroupId: group(req), address: addr, shippingMethod: st.method });
     const billing = req.user && req.user.default_billing_id ? db().prepare('SELECT * FROM customer_addresses WHERE id = ?').get(req.user.default_billing_id) : null;
     const m = cart.SHIPPING_METHODS.find((x) => x.code === st.method);
-    return reply.render('checkout/payment', { title: 'Checkout', pageTitle: false, t, c, addr, billing, method: m, email: req.user ? req.user.email : st.email, fmtAddr: (x) => H.formatAddress(db(), x), bodyClass: 'checkout-index-index' });
+    const data = { title: 'Checkout', pageTitle: false, t, c, addr, billing, method: m, email: req.user ? req.user.email : st.email, fmtAddr: (x) => H.formatAddress(db(), x), bodyClass: 'checkout-index-index' };
+    if (kit.widget('checkout')) data.cf = { ...frameOf(req, kit, 'payment', { payment_method: 'checkmo' }), fields: [['payment_method', 'checkmo']], name: 'payment', title: 'Payment method' };
+    return reply.render('checkout/payment', data);
+  });
+
+  // the frames of the checkout widget slot (404 while it is off); stateless: values come in the query
+  app.get('/checkout/frame/:name', async (req, reply) => {
+    kit.widgets.need('checkout');
+    const name = req.params.name;
+    if (name !== 'address' && name !== 'payment') throw kit.httpError(404, 'Page not found');
+    const q = req.query || {};
+    const a = { ...Object.fromEntries(ADDRESS_FIELDS.filter((k) => !k.startsWith('street')).map((k) => [k, q[k] ?? ''])), street: [0, 1, 2].map((i) => q[`street[${i}]`] || '').join('\n').replace(/\n+$/, '') };
+    if (a.region_id) a.region_id = +a.region_id;
+    if (!a.country_id) a.country_id = 'US';
+    const countries = db().prepare("SELECT id, name FROM countries WHERE coalesce(name, '') <> '' ORDER BY name").all();
+    const regions = db().prepare('SELECT id, country_id, code, name FROM regions ORDER BY country_id, name').all();
+    return reply.render('checkout/frame', { frame: name, a, countries, regions, errors: {}, pm: q.payment_method === 'cashondelivery' ? 'cashondelivery' : 'checkmo', parentOrigin: req.originFor(null) });
   });
 
   app.post('/checkout/placeOrder', async (req, reply) => {
