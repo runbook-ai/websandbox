@@ -160,7 +160,9 @@ class Tenant {
   // ---- clock: fixed per-site "today"; running (advances with real time) or frozen
   resetClock(o = {}) {
     const c = this.site.cfg.clock || {};
-    this.clock = { base: parseTime(o.now || c.start || Date.now()), at: Date.now(), frozen: o.frozen ?? !!c.frozen };
+    // start may be a function of the DB (data-defined "today", e.g. a meta row the build wrote)
+    if (this.clockStart === undefined) this.clockStart = typeof c.start === 'function' ? c.start(this.db) : c.start;
+    this.clock = { base: parseTime(o.now || this.clockStart || Date.now()), at: Date.now(), frozen: o.frozen ?? !!c.frozen };
   }
   setClock({ now, frozen, advance } = {}) {
     const cur = this.nowMs();

@@ -300,6 +300,10 @@ function listDate(s, now, tz) {
   return d.toLocaleDateString('en-US', { ...o, year: '2-digit', month: 'numeric', day: 'numeric' });
 }
 const fullDate = (s, tz) => new Date(String(s).replace(' ', 'T') + 'Z').toLocaleString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+// The data's "today" (world_meta, written by build/build.js); null for builds without it.
+function dataClock(db) {
+  try { return db.prepare("SELECT value FROM world_meta WHERE key = 'clock'").pluck().get() || null; } catch { return null; }
+}
 
 module.exports = { FOLDERS, CATEGORIES, PERSONAL_DOMAIN, DAEMON, parseAddrList, validEmail, fmtAddrs, parseSearch, tokenize, listThreads, counts, threadAction, ACTIONS,
-  send, saveDraft, deliverLocal, applyFilters, jobs, listDate, fullDate };
+  send, saveDraft, deliverLocal, applyFilters, jobs, listDate, fullDate, dataClock };

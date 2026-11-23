@@ -15,8 +15,10 @@ module.exports = [
         const by = new Map();
         for (const m of people(u)) { if (!by.has(m.from_email)) by.set(m.from_email, []); by.get(m.from_email).push(m); }
         for (const [email, ms] of r.shuffle([...by])) {
-          const n = ms.filter((m) => !m.is_read && !m.is_spam).length;
-          if (n < 1 || ms.length < 2 || L.val('SELECT count(DISTINCT from_name) FROM messages WHERE owner_id = ? AND from_name = ? AND from_email != ?', u.id, ms[0].from_name, email)) continue;
+          const unread = ms.filter((m) => !m.is_read && !m.is_spam);
+          const n = unread.length;
+          // unambiguous: as many unread threads as unread messages (the list shows threads)
+          if (n < 1 || new Set(unread.map((m) => m.thread_id)).size !== n || ms.length < 2 || L.val('SELECT count(DISTINCT from_name) FROM messages WHERE owner_id = ? AND from_name = ? AND from_email != ?', u.id, ms[0].from_name, email)) continue;
           yield { slots: { name: ms[0].from_name }, login_user: u.username,
             eval: answer(`SELECT count(*) FROM messages WHERE owner_id = ${uid(u.username)} AND from_email = ${lit(email)} AND is_read = 0 AND is_trash = 0 AND is_spam = 0 AND is_draft = 0`, n, { strict_numbers: true }) };
           break;

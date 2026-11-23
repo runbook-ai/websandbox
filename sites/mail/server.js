@@ -12,7 +12,8 @@ module.exports = kit.site({
   siteIndex: 10,
   dir: __dirname,
   db: { file: 'base.db', cacheMB: 32 },
-  clock: { start: process.env.WSB_MAIL_CLOCK || '2026-10-15T15:00:00Z' },
+  // "today" comes with the data (world_meta, written by build.js); older builds: the dev world's
+  clock: { start: (db) => process.env.WSB_MAIL_CLOCK || M.dataClock(db) || '2026-10-15T15:00:00Z' },
   auth: {
     loginPath: '/login',
     findUser: (db, login) => db.prepare(`SELECT u.* FROM users u WHERE u.username = lower(?) OR u.email = lower(?)

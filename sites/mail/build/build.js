@@ -187,6 +187,10 @@ function main() {
     if (r.chance(0.3)) insL.run(id, r.pick(['Receipts', 'Family', 'Travel', 'To do', 'Later']), r.pick(['#e37400', '#188038', '#d93025', '#9334e6']));
   }
 
+  // The site's "today" (server.js clock): the morning after the world's last day.
+  db.exec('CREATE TABLE world_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID');
+  db.prepare("INSERT INTO world_meta VALUES ('clock', ?)").run(new Date(end + 15 * 3600e3).toISOString());
+
   db.prepare("INSERT INTO messages_fts(messages_fts, rank) VALUES ('merge', 500)").run();
   kit.build.finalize(db, { fts: ['messages_fts'] });
   console.log(JSON.stringify({ file, mb: +(fs.statSync(file).size / 2 ** 20).toFixed(1), users: owners.length, messages: n, skipped, clock: new Date(end).toISOString() }));
