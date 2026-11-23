@@ -8,7 +8,7 @@ web skills (search, browse, filter, forms, multi-step edits on shopping /
 social / CRM / dev / reference / map sites), not overfitting to specific apps.
 
 Status: building (started 2026-11-15). Build conventions: [CONVENTIONS.md](CONVENTIONS.md).
-Code: github.com/junfengzh/websandbox (public). Data: huggingface.co/datasets/junfengzhou/websandbox (public, with licence and attribution).
+Code: github.com/runbook-ai/websandbox (public). Data: huggingface.co/datasets/junfengzhou/websandbox (public, with licence and attribution).
 
 Decisions:
 - Node (not Python) for the servers.

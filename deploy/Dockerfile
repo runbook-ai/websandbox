@@ -14,7 +14,7 @@ RUN apt-get update \
 COPY bootstrap.sh /usr/local/bin/wsb-bootstrap
 RUN chmod +x /usr/local/bin/wsb-bootstrap
 
-ENV WSB_REPO=https://github.com/junfengzh/websandbox.git \
+ENV WSB_REPO=https://github.com/runbook-ai/websandbox.git \
     WSB_REF=main \
     WSB_HF_REPO=junfengzhou/websandbox \
     WSB_HF_REV=main \

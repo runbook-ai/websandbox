@@ -10,7 +10,7 @@ bootstrap image), `compose.yaml`, and the start scripts the container runs from 
 ## Run your own
 
 ```bash
-git clone https://github.com/junfengzh/websandbox.git && cd websandbox/deploy
+git clone https://github.com/runbook-ai/websandbox.git && cd websandbox/deploy
 # edit compose.yaml: WSB_DOMAIN (your host name), the ./srv volume path, the published port
 docker compose up -d --build     # first start downloads ~21 GB from Hugging Face (see the log)
 docker compose logs -f           # bootstrap / data sync / router log
@@ -38,7 +38,7 @@ you serve the demo over plain HTTP.
 The image (`Dockerfile`: node 20, git, build tools, python3 + huggingface_hub, zstd) only holds
 `bootstrap.sh`. On start it:
 
-1. fetches `github.com/junfengzh/websandbox` at `WSB_REF` (default `main`) into `/srv/repo`
+1. fetches `github.com/runbook-ai/websandbox` at `WSB_REF` (default `main`) into `/srv/repo`
    (shallow, no credentials) and runs that checkout's `deploy/start.sh`, which
 2. runs `npm ci --omit=dev` in `kit/` and the sites only when their `package*.json` (or the node
    version) changed -- `node_modules` stay in the volume, so a restart takes seconds;

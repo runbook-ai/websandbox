@@ -5,7 +5,7 @@ Rules for everyone (human or agent) building websandbox. Read with
 
 ## Repo
 
-- `github.com/junfengzh/websandbox`, branch `main`.
+- `github.com/runbook-ai/websandbox`, branch `main`.
 - Several builders may work in the **same working tree** at the same time. Stage
   **explicit paths you own** (never `git add -A` / `git add .` / `commit -a`),
   commit, `git push`; if a push is rejected, `git pull --rebase --autostash`.

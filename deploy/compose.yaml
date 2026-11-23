@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     init: true
     environment:
-      WSB_REF: main                       # git branch / tag / commit of github.com/junfengzh/websandbox
+      WSB_REF: main                       # git branch / tag / commit of github.com/runbook-ai/websandbox
       WSB_HF_REV: main                    # revision of the HF dataset junfengzhou/websandbox
       WSB_DOMAIN: websandbox.example.com  # your public host name; sites under /shop/ /forum/ /code/ /wiki/ /map/
       WSB_RESET_MINUTES: "60"
