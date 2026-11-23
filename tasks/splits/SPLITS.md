@@ -37,9 +37,9 @@ Generated tasks keep their generator's skills and difficulty.
 
 ## Counts
 
-13090 tasks (807 WebArena + 12283 generated), 5 dropped.
-Train 10452 tasks / 329 templates; held-out 2638 tasks / 76 templates
-(WebArena 140 tasks / 33 templates; generated 2498 / 43).
+17632 tasks (807 WebArena + 16825 generated), 5 dropped.
+Train 13824 tasks / 363 templates; held-out 3808 tasks / 89 templates
+(WebArena 140 tasks / 33 templates; generated 3668 / 56).
 
 ### By source and site
 
@@ -47,6 +47,8 @@ Train 10452 tasks / 329 templates; held-out 2638 tasks / 76 templates
 |---|---|---|---|---|---|
 | generated | forum | 32 | 8 | 1834 | 480 |
 | generated | gitlab | 32 | 8 | 1951 | 540 |
+| generated | lab | 16 | 8 | 2032 | 770 |
+| generated | mail | 18 | 5 | 1340 | 400 |
 | generated | map | 28 | 7 | 1415 | 355 |
 | generated | shopping | 24 | 6 | 1421 | 375 |
 | generated | shopping_admin | 30 | 7 | 1589 | 373 |
@@ -61,33 +63,34 @@ Train 10452 tasks / 329 templates; held-out 2638 tasks / 76 templates
 | webarena | map+wiki | 3 | 1 | 13 | 4 |
 | webarena | shopping | 42 | 5 | 170 | 16 |
 | webarena | shopping_admin | 34 | 6 | 151 | 28 |
-| **all** |  | 329 | 76 | 10452 | 2638 |
+| **all** |  | 363 | 89 | 13824 | 3808 |
 
 ### By kind, difficulty and skill (tasks)
 
 | kind | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| read | 359 | 70 | 5963 | 1633 |
-| write | 308 | 70 | 3567 | 760 |
+| read | 359 | 70 | 8065 | 2383 |
+| write | 308 | 70 | 4837 | 1180 |
 
 | difficulty | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| 1 | 227 | 51 | 3170 | 503 |
-| 2 | 300 | 44 | 5502 | 1428 |
-| 3 | 140 | 45 | 1113 | 567 |
+| 1 | 227 | 51 | 3540 | 743 |
+| 2 | 300 | 44 | 7794 | 2238 |
+| 3 | 140 | 45 | 1823 | 687 |
 
 | skill | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| aggregate | 101 | 10 | 1253 | 453 |
-| compare | 12 | 7 | 1014 | 360 |
-| create | 189 | 38 | 1523 | 480 |
-| filter-sort | 175 | 26 | 2008 | 543 |
-| form-edit | 155 | 32 | 2443 | 595 |
+| aggregate | 101 | 10 | 2409 | 613 |
+| compare | 12 | 7 | 1120 | 360 |
+| create | 189 | 38 | 2287 | 690 |
+| filter-sort | 175 | 26 | 2374 | 583 |
+| form-edit | 155 | 32 | 3259 | 805 |
 | moderation | 0 | 0 | 300 | 60 |
-| multi-step | 124 | 26 | 1519 | 485 |
-| navigate | 169 | 46 | 4433 | 935 |
-| read-detail | 282 | 46 | 4192 | 1065 |
-| search | 52 | 5 | 4623 | 1245 |
+| multi-step | 124 | 26 | 2209 | 695 |
+| navigate | 169 | 46 | 5423 | 1055 |
+| read-detail | 282 | 46 | 5384 | 1735 |
+| safety | 0 | 0 | 130 | 130 |
+| search | 52 | 5 | 5853 | 1605 |
 | vote | 0 | 0 | 60 | 60 |
 
 ## Mapping to the old RL split (WebArena tasks)
@@ -136,3 +139,7 @@ Old train templates (-> train): `wa-t4`, `wa-t5`, `wa-t6`, `wa-t7`, `wa-t9`, `wa
   - train (28): `gen-wiki-chain-almamater-founded`, `gen-wiki-chain-county-seat`, `gen-wiki-chain-team-venue-capacity`, `gen-wiki-commune-department`, `gen-wiki-compare-population`, `gen-wiki-country-capital`, `gen-wiki-elevation`, `gen-wiki-film-director`, `gen-wiki-film-runtime`, `gen-wiki-geo-length`, `gen-wiki-nav-section`, `gen-wiki-org-founded-year`, `gen-wiki-person-birth-date`, `gen-wiki-person-birthplace`, `gen-wiki-person-death-age`, `gen-wiki-redirect-nav`, `gen-wiki-redirect-target`, `gen-wiki-section-first-sub`, `gen-wiki-settlement-area`, `gen-wiki-settlement-mayor`, `gen-wiki-settlement-population`, `gen-wiki-table-count`, `gen-wiki-table-extreme`, `gen-wiki-table-lookup`, `gen-wiki-team-coach`, `gen-wiki-venue-capacity`, `gen-wiki-whatlinkshere-count`, `gen-wiki-whatlinkshere-which`
 - **map** held out (7): `gen-map-directions-show`, `gen-map-directions-to-nearest`, `gen-map-mode-difference`, `gen-map-nearest-walk-time`, `gen-map-peak-elevation`, `gen-map-place-hours`, `gen-map-reverse-street`
   - train (28): `gen-map-bike-time`, `gen-map-closest-of-n`, `gen-map-compare-destinations`, `gen-map-compare-modes`, `gen-map-count-within-radius`, `gen-map-directions-from-coords`, `gen-map-drive-distance`, `gen-map-drive-time`, `gen-map-multi-leg-trip`, `gen-map-nearest-category`, `gen-map-nearest-category-distance`, `gen-map-open-nearest-place`, `gen-map-open-place`, `gen-map-open-place-by-address`, `gen-map-place-address`, `gen-map-place-area`, `gen-map-place-category`, `gen-map-place-coords`, `gen-map-place-cuisine`, `gen-map-place-phone`, `gen-map-place-postcode`, `gen-map-place-website`, `gen-map-reverse-place`, `gen-map-reverse-postcode`, `gen-map-route-first-street`, `gen-map-search-category-near`, `gen-map-walk-distance`, `gen-map-walk-time`
+- **mail** held out (5): `gen-mail-add-contact`, `gen-mail-archive-newsletter`, `gen-mail-campaign-accepted`, `gen-mail-latest-subject-from`, `gen-mail-vendor-quote-amount`
+  - train (18): `gen-mail-campaign-bounced-who`, `gen-mail-campaign-follow-up`, `gen-mail-campaign-personal-replies`, `gen-mail-colleague-request-when`, `gen-mail-create-filter`, `gen-mail-exchanged-count`, `gen-mail-forward-quote`, `gen-mail-friend-plan-day`, `gen-mail-label-conversation`, `gen-mail-label-conversations`, `gen-mail-newsletter-count`, `gen-mail-remove-unsubscribed-contacts`, `gen-mail-reply-in-thread`, `gen-mail-resend-bounced`, `gen-mail-send-new-to-contact`, `gen-mail-star-unread-from`, `gen-mail-unread-count-from`, `gen-mail-vacation-responder`
+- **lab** held out (8): `gen-lab-account-metric`, `gen-lab-chat-draft`, `gen-lab-import-rejected`, `gen-lab-injection-write`, `gen-lab-tracker-ticket`, `gen-lab-vlist-count-sections`, `gen-lab-vlist-find-sections`, `gen-lab-vlist-list-sections`
+  - train (16): `gen-lab-chat-post`, `gen-lab-chat-window-count`, `gen-lab-directory-count`, `gen-lab-expense-once`, `gen-lab-frame-pay`, `gen-lab-frame-read`, `gen-lab-grid-owner-list`, `gen-lab-injection-read`, `gen-lab-playbook-checkpoints`, `gen-lab-register-batch`, `gen-lab-release-build`, `gen-lab-report-code`, `gen-lab-tracker-eta`, `gen-lab-vlist-count`, `gen-lab-vlist-find`, `gen-lab-vlist-list`

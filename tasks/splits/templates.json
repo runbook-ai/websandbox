@@ -469,6 +469,194 @@
 "split": "train",
 "why": "gen-draw"
 },
+"gen-lab-account-metric": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-chat-draft": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-chat-post": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-chat-window-count": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-directory-count": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-expense-once": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-frame-pay": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-frame-read": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-grid-owner-list": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-import-rejected": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-injection-read": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-injection-write": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-playbook-checkpoints": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-register-batch": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-release-build": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-report-code": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-tracker-eta": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-tracker-ticket": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-vlist-count": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-vlist-count-sections": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-vlist-find": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-vlist-find-sections": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-vlist-list": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-vlist-list-sections": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-mail-add-contact": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-mail-archive-newsletter": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-mail-campaign-accepted": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-mail-campaign-bounced-who": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-campaign-follow-up": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-campaign-personal-replies": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-colleague-request-when": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-create-filter": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-exchanged-count": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-forward-quote": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-friend-plan-day": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-label-conversation": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-label-conversations": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-latest-subject-from": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-mail-newsletter-count": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-remove-unsubscribed-contacts": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-reply-in-thread": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-resend-bounced": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-send-new-to-contact": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-star-unread-from": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-unread-count-from": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-vacation-responder": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-mail-vendor-quote-amount": {
+"split": "heldout",
+"why": "gen-draw"
+},
 "gen-map-bike-time": {
 "split": "train",
 "why": "gen-draw"
