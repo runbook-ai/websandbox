@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.title ? it.title + ' : ' : '' %><%= it.L('site.title', it.site.title) %></title>
+<link rel="stylesheet" href="/static/social.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<% const u = it.user; const sp = it.space; const n = it.unread || {}; %>
+<body class="cr skin-<%= it.skin.name %> theme-<%= it.skin.theme || 'light' %>"<% if (u) { %> data-user="<%= u.username %>"<% } %>>
+<cr-header role="banner">
+  <a class="cr-logo" href="/" aria-label="<%= it.site.title %> home"><span class="cr-logo-mark" aria-hidden="true"></span><span class="cr-logo-text"><%= it.L('site.title', it.site.title) %></span></a>
+  <form class="cr-search" method="get" action="<%= sp ? `/c/${sp.name}/search` : '/search' %>" role="search">
+    <% if (sp) { %><a class="cr-search-scope" href="/search<%= it.q ? '?q=' + encodeURIComponent(it.q) : '' %>" title="Search all of <%= it.site.title %>">c/<%= sp.name %> <span aria-hidden="true">&times;</span><span class="sr-only">Remove community filter</span></a><% } %>
+    <input type="search" name="q" value="<%= it.q || '' %>" placeholder="<%= sp ? `Search in c/${sp.name}` : `Search ${it.site.title}` %>" aria-label="Search" autocomplete="off">
+  </form>
+  <div class="cr-actions">
+    <% if (u) { %>
+      <a class="cr-icon-btn cr-create" href="<%= sp ? `/c/${sp.name}/submit` : '/submit' %>" aria-label="Create post"><span aria-hidden="true">+</span> Create</a>
+      <a class="cr-icon-btn" href="/inbox" aria-label="Open inbox<%= n.messages ? ` (${n.messages} unread)` : '' %>"><span class="ico ico-chat" aria-hidden="true"></span><% if (n.messages) { %><b class="cr-badge"><%= n.messages %></b><% } %></a>
+      <a class="cr-icon-btn" href="/notifications" aria-label="Open notifications<%= n.notes ? ` (${n.notes} unread)` : '' %>"><span class="ico ico-bell" aria-hidden="true"></span><% if (n.notes) { %><b class="cr-badge"><%= n.notes > 99 ? '99+' : n.notes %></b><% } %></a>
+      <details class="cr-user-menu">
+        <summary aria-label="Open profile menu"><span class="avatar" aria-hidden="true"><%= u.username.slice(0, 1).toUpperCase() %></span><span class="cr-user-name">u/<%= u.username %></span></summary>
+        <div class="cr-menu" role="menu">
+          <a role="menuitem" href="/u/<%= u.username %>">View profile</a>
+          <a role="menuitem" href="/u/<%= u.username %>/saved">Saved</a>
+          <a role="menuitem" href="/communities">Communities</a>
+          <form method="post" action="/logout"><%~ it.csrfInput() %><button type="submit" role="menuitem">Log out</button></form>
+        </div>
+      </details>
+    <% } else { %>
+      <a class="btn btn-primary" href="/login?next=<%= encodeURIComponent(it.req.url) %>">Log In</a>
+    <% } %>
+  </div>
+</cr-header>
+<div class="cr-shell">
+  <nav class="cr-left" aria-label="Primary">
+    <% const here = it.req.path; const item = (href, label, ico, on) => `<a href="${href}" class="cr-nav-item${on ? ' on' : ''}"${on ? ' aria-current="page"' : ''}><span class="ico ico-${ico}" aria-hidden="true"></span>${it.h(label)}</a>`; %>
+    <%~ item('/', 'Home', 'home', here === '/' || /^\/(new|top|rising)$/.test(here)) %>
+    <%~ item('/all', it.L('nav.popular', 'Popular'), 'popular', here.startsWith('/all')) %>
+    <%~ item('/communities', 'Explore communities', 'explore', here === '/communities') %>
+    <% if (u) { %>
+    <details class="cr-nav-group" open>
+      <summary>Your communities</summary>
+      <% if (!it.mySpaces.length) { %><p class="muted small">Join communities to see them here.</p><% } %>
+      <% for (const f of it.mySpaces) { %><a href="/c/<%= f.name %>" class="cr-nav-item<%= sp && sp.name === f.name ? ' on' : '' %>"><span class="space-icon sm" style="background:<%= f.icon_color || '#0079d3' %>" aria-hidden="true"></span>c/<%= f.name %></a><% } %>
+    </details>
+    <% } %>
+  </nav>
+  <main id="main-content" class="cr-main">
+    <%~ include('kit/flash', { flashes: it.flashes }) %>
+    <%~ it.body %>
+  </main>
+</div>
+<% if (!u && it.nag) { %>
+<div class="login-nag" role="dialog" aria-label="Log in to keep reading" id="login-nag">
+  <div class="login-nag-inner">
+    <strong>See more in the app</strong>
+    <p>Log in to vote, comment and join communities.</p>
+    <a class="btn btn-primary" href="/login?next=<%= encodeURIComponent(it.req.url) %>">Log In</a>
+    <button type="button" class="btn btn-ghost" data-close="login-nag" aria-label="Close">Not now</button>
+  </div>
+</div>
+<% } %>
+<div class="hovercard" id="hovercard" role="tooltip" hidden></div>
+<script src="/_kit/kit.js" defer></script>
+<script src="/static/social.js" defer></script>
+</body>
+</html>

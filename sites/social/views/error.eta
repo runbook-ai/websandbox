@@ -1,0 +1,6 @@
+<% layout('layout') %>
+<div class="narrow error-page">
+  <h1 class="page-title"><%= it.status === 404 ? 'Page not found' : it.status === 403 ? 'Not allowed' : it.status === 429 ? "You're doing that too much" : 'Something went wrong' %></h1>
+  <p><%= it.message %></p>
+  <a class="btn btn-primary" href="/">Go home</a>
+</div>

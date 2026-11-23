@@ -11,10 +11,10 @@
 #   tasks/tools/sites.sh reset  [--base P] [--tenant I|--all]
 #
 # Sites (in port order): store (shopping storefront + shopping_admin at /admin), forum, code
-# (gitlab), wiki, map, mail. Ports, --bind ports (default): site k listens on BASE + k*STRIDE + i for
+# (gitlab), wiki, map, mail, social. Ports, --bind ports (default): site k listens on BASE + k*STRIDE + i for
 # tenant i (default BASE 7700, STRIDE 10, so store 7700.., forum 7710.., code 7720.., wiki 7730..,
-# map 7740.., mail 7750..; STRIDE must be >= N). --bind rl: tenant i of site k on 127.10.<i>.<k>:PORT (default
-# 80; shopping .2 + shopping_admin .3, forum .4, gitlab .5, wiki .6, map .7, mail .10, the RL hostMap
+# map 7740.., mail 7750.., social 7760..; STRIDE must be >= N). --bind rl: tenant i of site k on 127.10.<i>.<k>:PORT (default
+# 80; shopping .2 + shopping_admin .3, forum .4, gitlab .5, wiki .6, map .7, mail .10, social .11, the RL hostMap
 # scheme), and each site's 127.0.0.1 control listener on BASE + k*STRIDE (--loopback-port).
 # Ports < 1024 need privileges (CAP_NET_BIND_SERVICE or net.ipv4.ip_unprivileged_port_start).
 # Data: --data-root DIR | $WSB_DATA_ROOT (default <repo>/data), one <site>/ dir each.
@@ -23,10 +23,10 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-ALL=(store forum code wiki map mail)
-declare -A IDX=([store]=0 [forum]=1 [code]=2 [wiki]=3 [map]=4 [mail]=5)
+ALL=(store forum code wiki map mail social)
+declare -A IDX=([store]=0 [forum]=1 [code]=2 [wiki]=3 [map]=4 [mail]=5 [social]=6)
 # --bind rl address byte k of 127.10.<i>.<k> = the site's siteIndex (kit SITE_INDEX)
-declare -A KIDX=([store]=2 [forum]=4 [code]=5 [wiki]=6 [map]=7 [mail]=10)
+declare -A KIDX=([store]=2 [forum]=4 [code]=5 [wiki]=6 [map]=7 [mail]=10 [social]=11)
 
 cmd=${1:-help}; shift || true
 tenants=1 base=7700 stride=10 only="" bind=ports port=80 workers=1 token="" fresh="" timeout=300 tenant=0 all=""
@@ -68,7 +68,7 @@ ctl_url() {                                                      # site, tenant 
 tenant_url() {                                                   # site, tenant -> browser URL
   local s=$1 i=$2
   if [ "$(mode)" = rl ]; then
-    local k=${KIDX[$s]}                                            # 127.10.<i>.<k>: store 2 (admin 3), forum 4, code 5, wiki 6, map 7, mail 10
+    local k=${KIDX[$s]}                                            # 127.10.<i>.<k>: store 2 (admin 3), forum 4, code 5, wiki 6, map 7, mail 10, social 11
     local p; p=$(cat "$STATE/port" 2>/dev/null || echo "$port")
     if [ "$p" = 80 ]; then echo "http://127.10.$i.$k"; else echo "http://127.10.$i.$k:$p"; fi
   else echo "http://127.0.0.1:$(( $(ctl_port "$s") + i ))"; fi
@@ -122,13 +122,13 @@ case "$cmd" in
     done ;;
   urls)
     st=$(tenant_url store "$tenant"); fo=$(tenant_url forum "$tenant"); co=$(tenant_url code "$tenant")
-    wi=$(tenant_url wiki "$tenant"); ma=$(tenant_url map "$tenant"); ml=$(tenant_url mail "$tenant")
+    wi=$(tenant_url wiki "$tenant"); ma=$(tenant_url map "$tenant"); ml=$(tenant_url mail "$tenant"); so=$(tenant_url social "$tenant")
     ad=$st; [ "$(mode)" = rl ] && ad=${st/127.10.$tenant.2/127.10.$tenant.3}   # shopping_admin: same process (tasks add /admin)
     echo "__SHOPPING__=$st"; echo "__SHOPPING_ADMIN__=$ad"; echo "__REDDIT__=$fo"
-    echo "__GITLAB__=$co"; echo "__WIKIPEDIA__=$wi"; echo "__MAP__=$ma"; echo "__MAIL__=$ml"
+    echo "__GITLAB__=$co"; echo "__WIKIPEDIA__=$wi"; echo "__MAP__=$ma"; echo "__MAIL__=$ml"; echo "__SOCIAL__=$so"
     # control API base per task site name (tasks/tools/grade.js --sites), tenant via X-WSB-Tenant
     c() { ctl_url "$1" "$tenant"; }
-    echo "--sites shopping=$(c store),shopping_admin=$(c store),forum=$(c forum),gitlab=$(c code),wiki=$(c wiki),map=$(c map),mail=$(c mail) --tenant $tenant" ;;
+    echo "--sites shopping=$(c store),shopping_admin=$(c store),forum=$(c forum),gitlab=$(c code),wiki=$(c wiki),map=$(c map),mail=$(c mail),social=$(c social) --tenant $tenant" ;;
   reset)
     for s in "${SITES[@]}"; do
       q=""; [ -n "$all" ] && q="?all=1"

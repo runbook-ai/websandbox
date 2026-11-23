@@ -1,0 +1,10 @@
+<%/* include('_vote', {g, thing: 't3_<id>' | 't1_<id>', score, mine: 1|-1|0, size}) */%>
+<% const g = it.g; const up = it.mine === 1; const down = it.mine === -1; const what = it.thing.startsWith('t1') ? 'comment' : 'post'; %>
+<vote-bar thing="<%= it.thing %>" class="<%= up ? 'is-up' : down ? 'is-down' : '' %> <%= it.size || '' %>">
+  <form method="post" action="/vote">
+    <%~ g.csrfInput() %><input type="hidden" name="thing" value="<%= it.thing %>"><input type="hidden" name="next" value="<%= g.req.url %>#<%= it.thing %>">
+    <button type="submit" name="dir" value="<%= up ? 0 : 1 %>" class="vb-up" aria-label="Upvote <%= what %>" aria-pressed="<%= up %>"><span aria-hidden="true">&#8679;</span></button>
+    <span class="vb-score" data-score="<%= it.score %>"><%= g.S.compact(it.score) %></span>
+    <button type="submit" name="dir" value="<%= down ? 0 : -1 %>" class="vb-down" aria-label="Downvote <%= what %>" aria-pressed="<%= down %>"><span aria-hidden="true">&#8681;</span></button>
+  </form>
+</vote-bar>

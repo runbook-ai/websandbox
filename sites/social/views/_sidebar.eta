@@ -1,0 +1,34 @@
+<%/* include('_sidebar', {g, sb: S.spaceSidebar(...)}) space sidebar: about, rules, flair, moderators */%>
+<% const g = it.g; const sb = it.sb; const sp = sb.space; const S = g.S; %>
+<section class="side-card about-card">
+  <h2 class="side-title">About Community</h2>
+  <p class="about-text"><%= sp.about || sp.description || sp.title %></p>
+  <dl class="about-stats">
+    <div><dt>Members</dt><dd data-members><%= S.compact(sb.members) %></dd></div>
+    <div><dt>Posts</dt><dd><%= S.compact(sb.posts) %></dd></div>
+  </dl>
+  <p class="muted small">Created <%= S.shortDate(sp.created_at) %></p>
+  <a class="btn btn-primary btn-block" href="/c/<%= sp.name %>/submit">Create Post</a>
+</section>
+<% if (sb.rules.length) { %>
+<section class="side-card rules-card" aria-labelledby="rules-h">
+  <h2 class="side-title" id="rules-h">c/<%= sp.name %> Rules</h2>
+  <ol class="rules">
+  <% for (const r of sb.rules) { %>
+    <li class="rule" data-rule-kind="<%= r.kind %>"><details><summary><span class="rule-n"><%= r.position %></span><span class="rule-title"><%= r.title %></span></summary><p><%= r.description %></p></details></li>
+  <% } %>
+  </ol>
+</section>
+<% } %>
+<% const fl = sb.flairs.filter((f) => !f.mod_only); if (fl.length) { %>
+<section class="side-card">
+  <h2 class="side-title">Filter by flair</h2>
+  <div class="flair-list"><% for (const f of fl) { %><a class="flair" style="--flair:<%= f.color %>" href="/c/<%= sp.name %>?flair=<%= f.id %>"><%= f.name %></a><% } %></div>
+</section>
+<% } %>
+<section class="side-card">
+  <h2 class="side-title">Moderators</h2>
+  <% if (!sb.mods.length) { %><p class="muted small">No moderators.</p><% } %>
+  <ul class="mod-list"><% for (const m of sb.mods) { %><li><a href="/u/<%= m %>" class="user-link" data-hovercard="<%= m %>">u/<%= m %></a></li><% } %></ul>
+  <% if (sb.mods.length) { %><a class="btn btn-outline btn-block" href="/message/compose?to=<%= encodeURIComponent(sb.mods[0]) %>&amp;subject=<%= encodeURIComponent(`Question about c/${sp.name}`) %>">Message the mods</a><% } %>
+</section>

@@ -1,0 +1,34 @@
+<% layout('layout') %>
+<% const S = it.S; %>
+<div class="narrow">
+  <header class="page-head">
+    <h1 class="page-title">Notifications</h1>
+    <form method="post" action="/notifications/read" class="inline"><%~ it.csrfInput() %><input type="hidden" name="all" value="1"><button type="submit" class="btn btn-outline">Mark all as read</button></form>
+  </header>
+  <nav class="profile-tabs" aria-label="Filter notifications">
+    <a href="/notifications" class="ptab<%= it.filter === 'all' ? ' on' : '' %>">All</a>
+    <a href="/notifications?filter=unread" class="ptab<%= it.filter === 'unread' ? ' on' : '' %>">Unread</a>
+  </nav>
+  <% if (!it.rows.length) { %><div class="empty-state"><p><strong>You're all caught up.</strong></p></div><% } %>
+  <ul class="notif-list">
+  <% for (const n of it.rows) {
+       const post = n.submission_id && n.slug ? { id: n.submission_id, space: n.space, slug: n.slug } : null;
+       const href = n.notification_type === 'follow' ? `/u/${n.actor}` : post ? (n.comment_id ? S.commentUrl(post, n.comment_id) : S.postUrl(post)) : '/notifications';
+       const text = { comment: `u/${n.actor} replied to you in c/${n.space}`, comment_mention: `u/${n.actor} mentioned you in c/${n.space}`, submission_mention: `u/${n.actor} mentioned you in a post in c/${n.space}`, follow: `u/${n.actor} started following you`, reaction: `u/${n.actor} reacted to your post` }[n.notification_type] || n.notification_type; %>
+    <li>
+      <notification-item class="<%= n.read_at ? '' : 'unread' %>" kind="<%= n.notification_type %>" data-id="<%= n.id %>">
+        <span class="ico ico-<%= n.notification_type === 'follow' ? 'user' : 'comment' %>" aria-hidden="true"></span>
+        <form method="post" action="/notifications/read" class="notif-open"><%~ it.csrfInput() %><input type="hidden" name="id" value="<%= n.id %>"><input type="hidden" name="go" value="<%= href %>">
+          <button type="submit" class="notif-main">
+            <span class="notif-text"><%= text %><% if (n.title) { %>: <b><%= n.title %></b><% } %></span>
+            <% if (n.comment_body) { %><span class="notif-excerpt"><%= S.excerpt(n.comment_body, 140) %></span><% } %>
+          </button>
+        </form>
+        <span class="notif-time"><%~ it.when(n.created_at) %></span>
+        <% if (!n.read_at) { %><span class="unread-dot" aria-label="Unread"></span><% } %>
+      </notification-item>
+    </li>
+  <% } %>
+  </ul>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Newer</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Older &rarr;</a><% } %></p>
+</div>

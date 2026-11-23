@@ -1,0 +1,53 @@
+<% layout('layout') %>
+<% const S = it.S; const u = it.u; const me = it.user && it.user.id === u.id; %>
+<div class="cr-cols">
+<div class="cr-content">
+  <header class="profile-head">
+    <span class="avatar lg" aria-hidden="true" style="background:<%= (it.account && it.account.avatar_color) || '#ff4500' %>"><%= u.username.slice(0, 1).toUpperCase() %></span>
+    <div><h1><%= u.username %></h1><p class="muted">u/<%= u.username %></p></div>
+  </header>
+  <nav class="profile-tabs" aria-label="Profile sections">
+    <% for (const [k, l] of [['overview', 'Overview'], ['posts', 'Posts'], ['comments', 'Comments'], ...(me ? [['saved', 'Saved']] : [])]) { %>
+      <a href="/u/<%= u.username %><%= k === 'overview' ? '' : '/' + k %>" class="ptab<%= it.tab === k ? ' on' : '' %>"<%~ it.tab === k ? ' aria-current="page"' : '' %>><%= l %></a>
+    <% } %>
+  </nav>
+  <% if (!it.items.length) { %><div class="empty-state"><p>u/<%= u.username %> hasn't <%= it.tab === 'comments' ? 'commented' : it.tab === 'saved' ? 'saved anything' : 'posted' %> yet.</p></div><% } %>
+  <div class="profile-items">
+  <% for (const x of it.items) { %>
+    <% if (x.type === 'post') { %><%~ include('_card', { g: it, r: x, mine: it.votes.get(x.id), saved: it.saved.has(x.id) }) %>
+    <% } else { %>
+    <comment-preview id="t1_<%= x.id %>">
+      <p class="cp-context"><a href="/u/<%= x.username %>">u/<%= x.username %></a> commented on <a href="<%= S.postUrl({ id: x.submission_id, space: x.space, slug: x.slug }) %>"><%= x.title %></a>
+        <span class="dot" aria-hidden="true">&bull;</span><a href="/c/<%= x.space %>">c/<%= x.space %></a> <span class="dot" aria-hidden="true">&bull;</span> Posted by u/<%= x.op %></p>
+      <div class="cp-body">
+        <p class="cp-meta"><b><%= x.username %></b> <%= S.compact(x.net_score) %> point<%= x.net_score === 1 ? '' : 's' %> &bull; <%~ it.when(x.created_at) %></p>
+        <div class="md"><%~ it.md(x.body) %></div>
+        <a class="act" href="<%= S.commentUrl(x, x.id) %>">Go to comment</a>
+      </div>
+    </comment-preview>
+    <% } %>
+  <% } %>
+  </div>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>" rel="prev">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>" rel="next">Next &rarr;</a><% } %></p>
+</div>
+<aside class="cr-side" aria-label="Profile">
+  <section class="side-card profile-card">
+    <h2 class="side-title"><%= u.username %></h2>
+    <% if (it.account && it.account.bio) { %><p><%= it.account.bio %></p><% } else if (u.biography && !/^t2_/.test(u.biography)) { %><p><%= u.biography %></p><% } %>
+    <dl class="about-stats">
+      <div><dt>Post karma</dt><dd><%= S.compact(it.karma.post) %></dd></div>
+      <div><dt>Comment karma</dt><dd><%= S.compact(it.karma.comment) %></dd></div>
+      <div><dt>Cake day</dt><dd><%= S.shortDate(u.created_at) %></dd></div>
+      <div><dt>Followers</dt><dd><%= it.followers %></dd></div>
+    </dl>
+    <% if (it.user && !me) { %>
+      <form method="post" action="/u/<%= u.username %>/follow" class="inline"><%~ it.csrfInput() %><input type="hidden" name="action" value="<%= it.following ? 'unfollow' : 'follow' %>">
+        <button type="submit" class="btn <%= it.following ? 'btn-outline' : 'btn-primary' %>" aria-pressed="<%= it.following %>"><%= it.following ? 'Following' : 'Follow' %></button></form>
+      <a class="btn btn-outline" href="/message/compose?to=<%= encodeURIComponent(u.username) %>">Send message</a>
+    <% } %>
+  </section>
+  <% if (it.modOf.length) { %>
+  <section class="side-card"><h2 class="side-title">Moderator of</h2><ul class="mod-list"><% for (const f of it.modOf) { %><li><a href="/c/<%= f %>">c/<%= f %></a></li><% } %></ul></section>
+  <% } %>
+</aside>
+</div>

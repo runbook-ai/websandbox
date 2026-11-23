@@ -1,0 +1,5 @@
+<%/* include('_join', {g, space, member}) */%>
+<form method="post" action="/c/<%= it.space.name %>/join" class="inline join-form" data-space="<%= it.space.name %>">
+  <%~ it.g.csrfInput() %><input type="hidden" name="action" value="<%= it.member ? 'leave' : 'join' %>"><input type="hidden" name="next" value="<%= it.g.req.url %>">
+  <button type="submit" class="btn <%= it.member ? 'btn-outline' : 'btn-primary' %> join-btn" aria-pressed="<%= !!it.member %>"><%= it.member ? 'Joined' : 'Join' %></button>
+</form>

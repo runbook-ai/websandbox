@@ -1,0 +1,24 @@
+<%/* include('_card', {g, r: post row, mine, saved, showSpace, snip}) one post in a feed */%>
+<% const g = it.g; const r = it.r; const S = g.S; const url = S.postUrl(r); let domain = null; if (r.url) { try { domain = new URL(r.url).hostname.replace(/^www\./, ''); } catch {} } %>
+<post-card id="t3_<%= r.id %>" post-id="<%= r.id %>" permalink="<%= url %>" class="<%= r.sticky ? 'is-pinned' : '' %>">
+  <%~ include('_vote', { g, thing: `t3_${r.id}`, score: r.net_score, mine: it.mine || 0 }) %>
+  <div class="card-main">
+    <div class="card-meta">
+      <% if (it.showSpace !== false) { %><a class="space-link" href="/c/<%= r.space %>"><span class="space-icon sm" style="background:<%= r.icon_color || '#0079d3' %>" aria-hidden="true"></span>c/<%= r.space %></a><span class="dot" aria-hidden="true">&bull;</span><% } %>
+      <span class="by">Posted by <a href="/u/<%= r.username %>" class="user-link" data-hovercard="<%= r.username %>">u/<%= r.username %></a></span>
+      <%~ g.when(r.created_at) %>
+      <% if (r.sticky) { %><span class="chip chip-pinned">Pinned</span><% } %><% if (r.locked) { %><span class="chip chip-locked" title="Comments are locked">Locked</span><% } %>
+    </div>
+    <h3 class="card-title"><a href="<%= url %>" class="card-title-link"><%= r.title %></a>
+      <% if (r.flair) { %><a class="flair" style="--flair:<%= r.flair_color %>" href="/c/<%= r.space %>?flair=<%= r.flair_id %>"><%= r.flair %></a><% } %></h3>
+    <% if (domain) { %><a class="card-link" href="<%= r.url %>" rel="nofollow ugc noopener" target="_blank"><%= domain %> <span aria-hidden="true">&#8599;</span></a><% } %>
+    <% if (r.image_thumb) { %><a class="card-thumb" href="<%= url %>" tabindex="-1"><img src="<%= S.mediaUrl(r.image_thumb) %>" alt="" loading="lazy"></a><% } %>
+    <% if (it.snip) { %><p class="card-body snippet"><%~ g.mark(it.snip) %></p><% } else if (r.body) { %><div class="card-body"><%= S.excerpt(r.body, 280) %></div><% } %>
+    <div class="card-actions">
+      <a class="act" href="<%= url %>#comments"><span class="ico ico-comment" aria-hidden="true"></span><%= S.compact(r.comment_count) %> Comment<%= r.comment_count === 1 ? '' : 's' %></a>
+      <button type="button" class="act" data-share="<%= url %>"><span class="ico ico-share" aria-hidden="true"></span>Share</button>
+      <form method="post" action="/save" class="inline save-form"><%~ g.csrfInput() %><input type="hidden" name="thing" value="t3_<%= r.id %>"><input type="hidden" name="saved" value="<%= it.saved ? 0 : 1 %>"><input type="hidden" name="next" value="<%= g.req.url %>">
+        <button type="submit" class="act" aria-pressed="<%= !!it.saved %>"><span class="ico ico-save" aria-hidden="true"></span><%= it.saved ? 'Unsave' : 'Save' %></button></form>
+    </div>
+  </div>
+</post-card>

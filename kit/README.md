@@ -48,7 +48,7 @@ const kit = require('../../kit');
 module.exports = kit.site({
   name: 'forum',                 // required; also picks siteIndex from kit.SITE_INDEX
   title: 'Postmill',             // <title> / header brand (skins can relabel: labels['site.title'])
-  siteIndex: 4,                  // k in 127.10.<i>.<k> (shopping 2, shopping_admin 3, forum 4, gitlab 5, wiki 6, map 7, lab 8, mail 10)
+  siteIndex: 4,                  // k in 127.10.<i>.<k> (shopping 2, shopping_admin 3, forum 4, gitlab 5, wiki 6, map 7, lab 8, mail 10, social 11)
   dir: __dirname,                // views/ and public/ are found here
   db: { mode: 'overlay', file: 'base.db', cacheMB: 32 },  // overlay (default) | copy | shared (read-only sites: wiki, map)
   clock: { start: '2023-03-15T10:00:00Z', frozen: false }, // the site's fixed "today"

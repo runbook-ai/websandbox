@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<div class="auth-card">
+  <h1>Log In</h1>
+  <p class="muted">By continuing, you agree to be nice to other members.</p>
+  <% if (it.error) { %><div class="banner banner-error" role="alert"><%= it.error %></div><% } %>
+  <form method="post" action="<%= it.req.path %>" class="stack-form">
+    <%~ it.csrfInput() %>
+    <input type="hidden" name="next" value="<%= it.next %>">
+    <label for="login-name">Username</label>
+    <input id="login-name" name="login" value="<%= (it.values && it.values.login) || '' %>" autocomplete="username" required>
+    <label for="login-pw">Password</label>
+    <input id="login-pw" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" class="btn btn-primary btn-block">Log In</button>
+  </form>
+</div>

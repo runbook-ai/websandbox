@@ -1,0 +1,21 @@
+<%/* include('_editor', {g, name, value, label, placeholder, id, rows}) rich-text editor writing markdown into a textarea.
+   Without JS the textarea is the editor; with JS a contenteditable surface (toolbar: bold, italic, strike, code, link,
+   quote, lists, code block) is shown and converted to markdown on submit. "Markdown mode" switches back. */%>
+<% const id = it.id || `ed-${it.name}`; %>
+<rich-editor data-for="<%= id %>">
+  <div class="re-toolbar" role="toolbar" aria-label="Formatting" hidden>
+    <button type="button" data-cmd="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+    <button type="button" data-cmd="italic" aria-label="Italic" title="Italic"><i>i</i></button>
+    <button type="button" data-cmd="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+    <button type="button" data-cmd="code" aria-label="Inline code" title="Inline code">&lt;/&gt;</button>
+    <button type="button" data-cmd="link" aria-label="Link" title="Link"><span class="ico ico-link" aria-hidden="true"></span></button>
+    <span class="re-sep" aria-hidden="true"></span>
+    <button type="button" data-cmd="quote" aria-label="Quote block" title="Quote block">&#10077;</button>
+    <button type="button" data-cmd="insertUnorderedList" aria-label="Bulleted list" title="Bulleted list">&bull;&#8801;</button>
+    <button type="button" data-cmd="insertOrderedList" aria-label="Numbered list" title="Numbered list">1&#8801;</button>
+    <button type="button" data-cmd="codeblock" aria-label="Code block" title="Code block">{ }</button>
+    <button type="button" class="re-mode" aria-pressed="false">Markdown mode</button>
+  </div>
+  <div class="re-surface" contenteditable="true" role="textbox" aria-multiline="true" aria-label="<%= it.label || 'Body' %>" data-placeholder="<%= it.placeholder || '' %>" hidden><%~ it.value ? it.g.md(it.value) : '' %></div>
+  <textarea id="<%= id %>" name="<%= it.name %>" class="re-source" rows="<%= it.rows || 6 %>" aria-label="<%= it.label || 'Body' %> (Markdown)" placeholder="<%= it.placeholder || '' %>"><%= it.value || '' %></textarea>
+</rich-editor>

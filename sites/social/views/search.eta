@@ -1,0 +1,45 @@
+<% layout('layout') %>
+<% const S = it.S; const base = it.space ? `/c/${it.space.name}/search` : '/search'; const qs = (o) => it.url(o, base); %>
+<div class="cr-cols">
+<div class="cr-content">
+  <h1 class="page-title"><%= it.q ? `Results for "${it.q}"` : 'Search' %><% if (it.space) { %> <span class="muted">in c/<%= it.space.name %></span><% } %></h1>
+  <form method="get" action="<%= base %>" class="search-page-form" role="search">
+    <input type="search" name="q" value="<%= it.q %>" aria-label="Search query" placeholder="Search">
+    <input type="hidden" name="type" value="<%= it.type %>">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+  <nav class="profile-tabs" aria-label="Result type">
+    <% for (const [k, l] of [['posts', 'Posts'], ['comments', 'Comments'], ...(it.space ? [] : [['communities', 'Communities'], ['people', 'People']])]) { %>
+      <a class="ptab<%= it.type === k ? ' on' : '' %>" href="<%= qs({ type: k, page: null }) %>"<%~ it.type === k ? ' aria-current="page"' : '' %>><%= l %></a>
+    <% } %>
+  </nav>
+  <% if (it.q && ['posts', 'comments'].includes(it.type)) { %>
+  <form method="get" action="<%= base %>" class="search-filters">
+    <input type="hidden" name="q" value="<%= it.q %>"><input type="hidden" name="type" value="<%= it.type %>">
+    <label>Sort <select name="sort" data-autosubmit><% for (const [k, l] of [['relevance', 'Relevance'], ['new', 'New'], ['top', 'Top']]) { %><option value="<%= k %>"<%= it.sort === k ? ' selected' : '' %>><%= l %></option><% } %></select></label>
+    <label>Time <select name="t" data-autosubmit><% for (const [k, [l]] of Object.entries(S.WINDOWS)) { %><option value="<%= k %>"<%= it.t === k ? ' selected' : '' %>><%= l %></option><% } %></select></label>
+    <noscript><button type="submit">Apply</button></noscript>
+  </form>
+  <% } %>
+  <% if (it.countLabel) { %><p class="muted"><%= it.countLabel %></p><% } %>
+  <% if (it.q && !it.rows.length) { %><div class="empty-state"><p><strong>Hm... we couldn't find any results for "<%= it.q %>"</strong></p><p>Double-check your spelling or try different keywords.</p></div><% } %>
+  <div class="search-results">
+  <% for (const r of it.rows) { %>
+    <% if (it.type === 'posts') { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), snip: r.snip }) %>
+    <% } else if (it.type === 'comments') { %>
+      <comment-preview id="t1_<%= r.id %>">
+        <p class="cp-context"><a href="/c/<%= r.space %>">c/<%= r.space %></a> <span class="dot" aria-hidden="true">&bull;</span> <a href="<%= S.postUrl({ id: r.submission_id, space: r.space, slug: r.slug }) %>"><%= r.title %></a></p>
+        <div class="cp-body"><p class="cp-meta"><a href="/u/<%= r.username %>">u/<%= r.username %></a> &bull; <%~ it.when(r.created_at) %> &bull; <%= r.net_score %> votes</p>
+          <p><%~ r.snip ? it.mark(r.snip) : it.h(S.excerpt(r.body, 300)) %></p><a class="act" href="<%= S.commentUrl(r, r.id) %>">Go to thread</a></div>
+      </comment-preview>
+    <% } else if (it.type === 'communities') { %>
+      <div class="space-row"><span class="space-icon" style="background:<%= r.icon_color || '#0079d3' %>" aria-hidden="true"></span>
+        <div><a href="/c/<%= r.name %>"><b>c/<%= r.name %></b></a> <span class="muted small"><%= S.compact(r.members) %> members</span><p class="muted small"><%= r.description %></p></div></div>
+    <% } else { %>
+      <div class="space-row"><span class="avatar sm" aria-hidden="true"><%= r.username.slice(0, 1).toUpperCase() %></span><div><a href="/u/<%= r.username %>"><b>u/<%= r.username %></b></a> <span class="muted small"><%= S.compact(r.karma) %> karma</span></div></div>
+    <% } %>
+  <% } %>
+  </div>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Next &rarr;</a><% } %></p>
+</div>
+</div>

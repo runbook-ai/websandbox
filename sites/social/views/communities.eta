@@ -1,0 +1,16 @@
+<% layout('layout') %>
+<% const S = it.S; %>
+<div class="narrow">
+  <h1 class="page-title">Explore communities</h1>
+  <form method="get" action="/communities" class="search-page-form" role="search"><input type="search" name="q" value="<%= it.q %>" placeholder="Filter communities" aria-label="Filter communities"><button class="btn btn-primary" type="submit">Filter</button></form>
+  <ol class="space-directory" start="<%= (it.p.page - 1) * 50 + 1 %>">
+  <% for (const r of it.rows) { %>
+    <li class="space-row">
+      <span class="space-icon" style="background:<%= r.icon_color || '#0079d3' %>" aria-hidden="true"></span>
+      <div class="space-row-main"><a href="/c/<%= r.name %>"><b>c/<%= r.name %></b></a> <span class="muted small"><%= S.compact(r.members) %> members &bull; <%= S.compact(r.posts) %> posts</span><p class="muted small"><%= r.description %></p></div>
+      <% if (it.user) { %><%~ include('_join', { g: it, space: r, member: it.mine.has(r.id) }) %><% } %>
+    </li>
+  <% } %>
+  </ol>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Next &rarr;</a><% } %></p>
+</div>

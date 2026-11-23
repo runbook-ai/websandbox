@@ -1,0 +1,76 @@
+<% layout('layout') %>
+<% const v = it.values || {}; const e = it.errors || {}; const sp = it.space; const type = v.type === 'link' ? 'link' : 'text'; %>
+<% const err = (k) => e[k] ? `<p class="field-error" id="err-${k}" role="alert">${it.h(e[k])}</p>` : ''; %>
+<div class="cr-cols">
+<div class="cr-content">
+  <h1 class="page-title">Create post</h1>
+  <% if (it.banner) { %>
+  <div class="banner banner-error" role="alert" id="submit-banner">
+    <strong><%= it.banner.kind === 'ratelimit' ? "You're posting too fast" : `Your post breaks the rules of c/${sp.name}` %></strong>
+    <ul><% for (const m of it.banner.messages) { %><li><%= m %></li><% } %></ul>
+  </div>
+  <% } %>
+  <form method="post" action="/submit" class="submit-form" id="submit-form" novalidate>
+    <%~ it.csrfInput() %>
+    <div class="space-picker">
+      <label for="space-input" class="sr-only">Community</label>
+      <span class="space-icon" aria-hidden="true" style="background:<%= sp ? sp.icon_color || '#0079d3' : '#ccc' %>"></span>
+      <input id="space-input" name="space" value="<%= v.space || (sp ? sp.name : '') %>" placeholder="Choose a community" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="space-options" autocomplete="off"<%~ e.space ? ' aria-invalid="true" aria-describedby="err-space"' : '' %>>
+      <ul id="space-options" role="listbox" class="space-options" hidden></ul>
+      <%~ err('space') %>
+    </div>
+    <div class="submit-card">
+      <div class="post-type-tabs" role="tablist" aria-label="Post type">
+        <label class="ptab<%= type === 'text' ? ' on' : '' %>" role="tab" aria-selected="<%= type === 'text' %>"><input type="radio" name="type" value="text"<%= type === 'text' ? ' checked' : '' %>> <span class="ico ico-text" aria-hidden="true"></span>Text</label>
+        <label class="ptab<%= type === 'link' ? ' on' : '' %>" role="tab" aria-selected="<%= type === 'link' %>"><input type="radio" name="type" value="link"<%= type === 'link' ? ' checked' : '' %>> <span class="ico ico-link" aria-hidden="true"></span>Link</label>
+      </div>
+      <div class="submit-fields">
+        <div class="title-field">
+          <input type="text" name="title" id="title" maxlength="300" placeholder="Title" aria-label="Title" value="<%= v.title || '' %>" required<%~ e.title ? ' aria-invalid="true" aria-describedby="err-title"' : '' %>>
+          <span class="counter" aria-live="polite"><span data-count-for="title"><%= (v.title || '').length %></span>/300</span>
+        </div>
+        <%~ err('title') %>
+        <div class="type-panel" data-panel="text"<%= type === 'text' ? '' : ' hidden' %>>
+          <%~ include('_editor', { g: it, name: 'body', value: v.body, label: 'Post body', placeholder: 'Text (optional)', id: 'post-body', rows: 8 }) %>
+          <%~ err('body') %>
+        </div>
+        <div class="type-panel" data-panel="link"<%= type === 'link' ? '' : ' hidden' %>>
+          <input type="url" name="url" placeholder="Url" aria-label="Url" value="<%= v.url || '' %>"<%~ e.url ? ' aria-invalid="true" aria-describedby="err-url"' : '' %>>
+          <%~ err('url') %>
+        </div>
+        <div class="flair-row">
+          <label for="flair-select" class="flair-label">Flair</label>
+          <select name="flair_id" id="flair-select" class="flair-select"<%~ e.flair_id ? ' aria-invalid="true" aria-describedby="err-flair_id"' : '' %>>
+            <option value="">No flair</option>
+            <% for (const f of it.flairs) { %><option value="<%= f.id %>"<%= +v.flair_id === f.id ? ' selected' : '' %> data-color="<%= f.color %>"><%= f.name %></option><% } %>
+          </select>
+          <button type="button" class="btn btn-outline flair-btn" data-open-dialog="flair-dialog" hidden><span class="ico ico-tag" aria-hidden="true"></span><span class="flair-btn-label"><%= (it.flairs.find((f) => f.id === +v.flair_id) || {}).name || 'Flair' %></span></button>
+          <%~ err('flair_id') %>
+        </div>
+        <div class="form-actions">
+          <a class="btn btn-ghost" href="<%= sp ? `/c/${sp.name}` : '/' %>">Cancel</a>
+          <button type="submit" class="btn btn-primary" id="post-btn">Post</button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <dialog id="flair-dialog" class="modal" aria-labelledby="flair-dialog-h">
+    <form method="dialog">
+      <h2 id="flair-dialog-h">Select flair</h2>
+      <div class="flair-options" role="radiogroup" aria-label="Flair"></div>
+      <div class="form-actions"><button value="clear" class="btn btn-ghost">Clear flair</button><button value="cancel" class="btn btn-outline">Cancel</button><button value="apply" class="btn btn-primary">Apply</button></div>
+    </form>
+  </dialog>
+</div>
+<aside class="cr-side" aria-label="Posting rules">
+  <section class="side-card rules-card" id="submit-rules" data-space="<%= sp ? sp.name : '' %>">
+    <% if (sp) { %>
+      <h2 class="side-title">Posting to c/<%= sp.name %></h2>
+      <ol class="rules"><% for (const r of it.rules) { %><li class="rule" data-rule-kind="<%= r.kind %>"><details><summary><span class="rule-n"><%= r.position %></span><span class="rule-title"><%= r.title %></span></summary><p><%= r.description %></p></details></li><% } %></ol>
+    <% } else { %>
+      <h2 class="side-title">Posting to <%= it.site.title %></h2>
+      <ol class="rules plain"><li>Remember the human</li><li>Behave like you would in real life</li><li>Look for the original source of content</li><li>Search for duplicates before posting</li><li>Read the community's rules</li></ol>
+    <% } %>
+  </section>
+</aside>
+</div>

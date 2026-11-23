@@ -1,0 +1,14 @@
+<% layout('layout') %>
+<% const v = it.values; const e = it.errors; const err = (k) => e[k] ? `<p class="field-error" role="alert">${it.h(e[k])}</p>` : ''; %>
+<div class="narrow">
+  <h1 class="page-title">Send a private message</h1>
+  <form method="post" action="/message/compose" class="stack-form"><%~ it.csrfInput() %>
+    <label for="to">To <span class="muted small">(username, without u/)</span></label>
+    <input id="to" name="to" value="<%= v.to %>" autocomplete="off"><%~ err('to') %>
+    <label for="subject">Subject</label>
+    <input id="subject" name="subject" value="<%= v.subject %>" maxlength="200"><%~ err('subject') %>
+    <label for="msg-body">Message</label>
+    <textarea id="msg-body" name="body" rows="8"><%= v.body || '' %></textarea><%~ err('body') %>
+    <div class="form-actions"><a class="btn btn-ghost" href="/inbox">Cancel</a><button type="submit" class="btn btn-primary">Send</button></div>
+  </form>
+</div>

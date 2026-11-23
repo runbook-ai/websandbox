@@ -1,0 +1,17 @@
+<% layout('layout') %>
+<div class="narrow">
+  <header class="page-head"><h1 class="page-title">Inbox</h1><a class="btn btn-primary" href="/message/compose">New message</a></header>
+  <% if (!it.rows.length) { %><div class="empty-state"><p><strong>No messages yet.</strong></p></div><% } %>
+  <ul class="thread-list">
+  <% for (const t of it.rows) { %>
+    <li class="<%= t.unread ? 'unread' : '' %>"><a href="/inbox/<%= t.id %>" class="thread-row">
+      <span class="avatar sm" aria-hidden="true"><%= (t.other || '?').slice(0, 1).toUpperCase() %></span>
+      <span class="thread-who">u/<%= t.other || 'nobody' %></span>
+      <span class="thread-subject"><%= t.subject || '(no subject)' %></span>
+      <span class="thread-excerpt"><%= it.S.excerpt(t.last_body, 90) %></span>
+      <span class="thread-time"><%= it.ago(t.last_at) %></span>
+    </a></li>
+  <% } %>
+  </ul>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Newer</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Older &rarr;</a><% } %></p>
+</div>

@@ -1,0 +1,55 @@
+<% if (!it.fragment) layout('layout') %>
+<% const S = it.S; const sp = it.space; const sortHref = (k) => `${it.base}/${k === 'hot' ? '' : k}`.replace(/\/$/, '') || '/'; %>
+<% if (it.fragment) { %>
+<% for (const r of it.rows) { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), showSpace: !sp }) %><% } %>
+<% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>More posts</a><% } %>
+<% } else { %>
+<% if (sp) { %>
+<section class="space-banner" style="--space:<%= sp.icon_color || '#0079d3' %>">
+  <div class="space-banner-strip" aria-hidden="true"></div>
+  <div class="space-banner-row">
+    <span class="space-icon lg" aria-hidden="true"><%= sp.name.slice(0, 1).toLowerCase() %></span>
+    <div class="space-banner-names"><h1><%= sp.title %></h1><p class="space-handle">c/<%= sp.name %></p></div>
+    <div class="space-banner-actions">
+      <a class="btn btn-outline" href="/c/<%= sp.name %>/submit">+ Create Post</a>
+      <%~ include('_join', { g: it, space: sp, member: it.sidebar.member }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+<div class="cr-cols">
+<div class="cr-content">
+  <% if (!sp) { %><h1 class="feed-heading"><%= it.heading %></h1><% } %>
+  <% if (it.joinedNone) { %><p class="notice">You haven't joined any communities yet, so your home feed shows popular posts. <a href="/communities">Find communities to join</a>.</p><% } %>
+  <% if (it.flair) { %><p class="notice">Showing posts flaired <span class="flair" style="--flair:<%= it.flair.color %>"><%= it.flair.name %></span> <a href="/c/<%= sp.name %>">Clear filter</a></p><% } %>
+  <div class="sort-bar" role="navigation" aria-label="Sort posts">
+    <% for (const [k, s] of Object.entries(S.SORTS)) { if (s.hidden) continue; %>
+      <a class="sort-pill<%= it.sort === k ? ' on' : '' %>" href="<%= sortHref(k) %><%= it.flair ? '?flair=' + it.flair.id : '' %>"<%~ it.sort === k ? ' aria-current="page"' : '' %>><%= s.label %></a>
+    <% } %>
+    <% if (S.SORTS[it.sort].window) { %>
+    <form method="get" action="<%= sortHref(it.sort) %>" class="inline">
+      <% if (it.flair) { %><input type="hidden" name="flair" value="<%= it.flair.id %>"><% } %>
+      <select name="t" aria-label="Time range" data-autosubmit><% for (const [k, [l]] of Object.entries(S.WINDOWS)) { %><option value="<%= k %>"<%= it.t === k ? ' selected' : '' %>><%= l %></option><% } %></select>
+      <noscript><button type="submit">Go</button></noscript>
+    </form>
+    <% } %>
+  </div>
+  <cr-feed class="feed" aria-label="Posts">
+  <% if (!it.rows.length) { %><div class="empty-state"><p><strong>Nothing here yet.</strong></p><p><%= sp ? 'Be the first to post in this community.' : 'Try another sort or time range.' %></p></div><% } %>
+  <% for (const r of it.rows) { %><%~ include('_card', { g: it, r, mine: it.votes.get(r.id), saved: it.saved.has(r.id), showSpace: !sp }) %><% } %>
+  <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>More posts</a><% } %>
+  </cr-feed>
+  <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>" rel="prev">&larr; Previous page</a></p><% } %>
+</div>
+<aside class="cr-side" aria-label="Sidebar">
+<% if (sp) { %><%~ include('_sidebar', { g: it, sb: it.sidebar }) %><% } else { %>
+  <section class="side-card">
+    <h2 class="side-title"><%= it.kind === 'all' ? 'Popular' : 'Home' %></h2>
+    <p>Your personal <%= it.site.title %> front page. Come here to check in with your favorite communities.</p>
+    <a class="btn btn-primary btn-block" href="/submit">Create Post</a>
+    <a class="btn btn-outline btn-block" href="/communities">Explore communities</a>
+  </section>
+<% } %>
+</aside>
+</div>
+<% } %>
