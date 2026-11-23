@@ -11,6 +11,10 @@ const COMMENT_PAGES = ['top-comment-author', 'top-level-count', 'parent-comment-
 const LISTING_PAGES = ['top-post-author', 'most-commented-title', 'nth-top-score', 'newest-post-comments', 'most-active-title', 'top-link-domain', 'nth-newest-title',
   'mod-lock-post', 'mod-pin-post', 'mod-ban-author', 'mod-add-moderator', 'message-post-author', 'crosspost-top-link', 'reply-quoting-title'];
 
+// community (social): space feeds, and post pages with comment threads
+const SOCIAL_FEED = ['top-flair-post-week', 'save-top-flair', 'mod-lock-pin-top', 'mod-remove-title-rule', 'reply-newest-unanswered'];
+const SOCIAL_COMMENTS = ['comments-by-user-on-post', 'upvote-user-comments', 'reply-unread-replies', 'follow-commenters', 'reply-and-dm-op'];
+
 const SITES = {
   forum: {
     files: ['tasks/forum/generated.jsonl'], prefix: 'gen-forum-',
@@ -56,13 +60,60 @@ const SITES = {
       counts: { values: ['js'], templates: ['issue-filter-count', 'mr-reviewer-count'] },
     },
   },
+  // the social frontends (sites/social = community, devblog, micro, makers); appended last, so the
+  // earlier sites' seeded draws are unchanged
+  social: {
+    files: ['tasks/social/generated.jsonl'], prefix: 'gen-social-',
+    slots: {
+      feed: { values: FORUM_LIST, templates: SOCIAL_FEED },
+      comments: { values: FORUM_LIST, templates: SOCIAL_COMMENTS },
+      editor: { values: ['shadow', 'contenteditable'], templates: ['reply-newest-unanswered', 'post-with-flair', 'no-self-promo-post', 'reply-unread-replies', 'reply-and-dm-op', 'edit-post-update'] },
+      links: { values: ['js'], templates: [...SOCIAL_FEED.filter((x) => x !== 'reply-newest-unanswered'), 'comments-by-user-on-post', 'upvote-user-comments', 'top-space-of-user', 'oldest-comment-phrase'] },
+      plant: { values: ['reply', 'message', 'post', 'answer'], templates: SOCIAL_COMMENTS },
+      // messages (older): no generated task reads a private conversation (the base data has none)
+    },
+  },
+  devblog: {
+    files: ['tasks/devblog/generated.jsonl'], prefix: 'gen-devblog-',
+    slots: {
+      feed: { values: FORUM_LIST, templates: ['top-tag-article', 'follow-top-tag-author', 'save-latest-article', 'author-tag-count'] },
+      comments: { values: FORUM_LIST, templates: ['top-follower-commenter', 'reply-to-comment'] },
+      editor: { values: ['shadow', 'contenteditable'], templates: ['publish-article', 'save-draft', 'reply-to-comment', 'edit-add-tag', 'publish-limit'] },
+      readinglist: { values: FORUM_LIST, templates: ['readinglist-tag-count'] },
+      plant: { values: ['comment', 'publish', 'answer'], templates: ['top-follower-commenter', 'reply-to-comment', 'react-kind', 'series-part'] },
+      reactions: { values: ['js'], templates: ['top-tag-article', 'my-top-article', 'follow-top-tag-author', 'react-kind'] },
+    },
+  },
+  micro: {
+    files: ['tasks/micro/generated.jsonl'], prefix: 'gen-micro-',
+    slots: {
+      timeline: { values: FORUM_LIST, templates: ['hashtag-count-by', 'like-recent-posts', 'bookmark-newest', 'delete-post-containing', 'follow-repliers'] },
+      thread: { values: ['older'], templates: ['reply-newest-mention', 'thread-reply-count'] },
+      composer: { values: ['shadow', 'contenteditable'], templates: ['post-hashtag', 'reply-newest-mention', 'quote-post'] },
+      // dm (older): no generated task reads a direct-message conversation (the base data has none)
+      plant: { values: ['reply', 'dm', 'post', 'answer'], templates: ['who-liked', 'thread-reply-count', 'reply-newest-mention', 'quote-post', 'like-recent-posts', 'bookmark-newest', 'follow-repliers', 'hashtag-count-by', 'delete-post-containing', 'reposters-of-mine'] },
+      counts: { values: ['js'], templates: ['who-liked', 'reposters-of-mine', 'like-recent-posts'] },
+    },
+  },
+  makers: {
+    files: ['tasks/makers/generated.jsonl'], prefix: 'gen-makers-',
+    slots: {
+      feed: { values: FORUM_LIST, templates: ['top-upvoted-post', 'top-mrr-in-group', 'upvote-user-posts'] },
+      comments: { values: FORUM_LIST, templates: ['answer-question-post', 'post-product-revenue'] },
+      editor: { values: ['shadow', 'contenteditable'], templates: ['post-group-product', 'no-self-promo-post', 'answer-question-post'] },
+      product: { values: ['shadow', 'js'], templates: ['latest-milestone', 'mrr-gap', 'post-product-revenue', 'top-product-topic', 'top-mrr-in-group', 'follow-top-founder', 'update-revenue'] },
+      plant: { values: ['comment', 'post', 'answer'], templates: ['answer-question-post', 'post-product-revenue'] },
+    },
+  },
 };
 
 // short codes for variant ids: <slot>-<value>
 const SLOT_ABBR = { comments: 'cm', listing: 'ls', editor: 'ed', links: 'lk', plant: 'pl', grid: 'gr', reviews: 'rv', card: 'cd', price: 'pr', checkout: 'co',
-  admin_grid: 'ag', admin_job: 'aj', inbox: 'ib', thread: 'th', issues: 'is', commits: 'cs', discussion: 'ds', counts: 'ct' };
+  admin_grid: 'ag', admin_job: 'aj', inbox: 'ib', thread: 'th', issues: 'is', commits: 'cs', discussion: 'ds', counts: 'ct',
+  feed: 'fd', messages: 'mg', readinglist: 'rl', reactions: 'rx', timeline: 'tl', composer: 'cp', dm: 'dm', product: 'pd' };
 const VALUE_ABBR = { unmount: 'un', recycle: 'rc', pinned: 'pn', sections: 'sc', grid: 'gd', infinite: 'in', shadow: 'sh', contenteditable: 'ce', js: 'js',
-  'frame-same': 'fs', 'frame-cross': 'fx', slow: 'sl', older: 'ol', reply: 'rp', message: 'ms', post: 'po', answer: 'an', review: 'rw', contact: 'ct', send: 'sd', forward: 'fw' };
+  'frame-same': 'fs', 'frame-cross': 'fx', slow: 'sl', older: 'ol', reply: 'rp', message: 'ms', post: 'po', answer: 'an', review: 'rw', contact: 'ct', send: 'sd', forward: 'fw',
+  comment: 'cm', publish: 'pb', dm: 'dm' };
 const code = (slot, value) => `${SLOT_ABBR[slot]}-${VALUE_ABBR[value]}`;
 
 // The widget kind held out of training on every site (variants using it go to the held-out split).

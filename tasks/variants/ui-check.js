@@ -9,7 +9,9 @@
 //          answer must be in what the variant shows (or, for counts, the number of items read)
 //   write  a few variant write tasks are done through the UI (typing into the controlled editors,
 //          filling the checkout frames, same-site and cross-site) and graded with the site grader
-//   node tasks/variants/ui-check.js --sites forum=http://127.0.0.1:7710,store=...,mail=...,code=... [--per 2] [--only forum,mail] [--out tasks/variants/verify-ui.jsonl]
+//          values written by script (reaction / like counts, revenue) are compared with the plain page's
+//   node tasks/variants/ui-check.js --sites forum=http://127.0.0.1:7710,store=...,mail=...,code=...,social=...,devblog=...,micro=...,makers=... [--per 2] [--per-write 2] [--only forum,mail] [--out tasks/variants/verify-ui.jsonl]
+// (with --only, the log keeps the other sites' earlier lines and replaces those of the sites checked)
 // Tenant 0 of every site is reset per run (and at the end).
 const fs = require('fs');
 const path = require('path');
@@ -19,10 +21,10 @@ const B = require('./browser');
 const { rl } = require('../../kit/test/helpers');
 
 const ROOT = path.join(__dirname, '..', '..');
-const { values: a } = parseArgs({ options: { sites: { type: 'string' }, per: { type: 'string', default: '2' }, only: { type: 'string' }, tasks: { type: 'string', default: path.join(__dirname, 'generated.jsonl') },
+const { values: a } = parseArgs({ options: { sites: { type: 'string' }, per: { type: 'string', default: '2' }, 'per-write': { type: 'string', default: '2' }, only: { type: 'string' }, tasks: { type: 'string', default: path.join(__dirname, 'generated.jsonl') },
   out: { type: 'string', default: path.join(__dirname, 'verify-ui.jsonl') } } });
 const BASES = Object.fromEntries(a.sites.split(',').map((x) => x.split('=')));
-const DIR = { forum: 'forum', shopping: 'store', shopping_admin: 'store', gitlab: 'code', mail: 'mail' };
+const DIR = { forum: 'forum', shopping: 'store', shopping_admin: 'store', gitlab: 'code', mail: 'mail', social: 'social', devblog: 'devblog', micro: 'micro', makers: 'makers' };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const graders = {};
 const graderOf = (t) => { const d = DIR[t.site]; if (!(d in graders)) { const p = path.join(ROOT, 'sites', d, 'grade.js'); graders[d] = fs.existsSync(p) ? require(p) : kit.grader.grade; } const g = graders[d]; return typeof g === 'function' ? g : g.grade; };
@@ -56,7 +58,55 @@ async function mailThread(t, where, params) {
   return one(t, `SELECT thread_id FROM messages WHERE owner_id = (SELECT id FROM users WHERE username = ?) AND is_trash = 0 AND ${where} ORDER BY sent_at DESC LIMIT 1`, [t.login_user, ...params]);
 }
 
+// the social frontends
+const lit = (s) => `'${String(s).replace(/'/g, "''")}'`;
+async function socialPost(t, title, space) {
+  const r = (await qOf(t)(`SELECT s.id, f.name, s.slug FROM submissions s JOIN forums f ON f.id = s.forum_id WHERE s.network_id = 1 AND s.title = ${lit(title)}${space ? ` AND f.normalized_name = lower(${lit(space)})` : ''} AND s.visibility = 'visible' ORDER BY s.id LIMIT 1`))[0];
+  return `/c/${r.name}/comments/${r.id}/${r.slug}`;
+}
+const WIN = { 'this week': 'week', 'this month': 'month', 'this year': 'year', 'all time': 'all' };
+async function devblogArticle(t, title) {
+  const r = (await qOf(t)(`SELECT s.id, a.handle, s.slug FROM submissions s JOIN accounts a ON a.user_id = s.user_id AND a.network_id = 2 WHERE s.network_id = 2 AND s.kind = 'article' AND s.title = ${lit(title)} ORDER BY s.id LIMIT 1`))[0];
+  return `/${r.handle}/${r.slug}-${r.id}`;
+}
+async function microPost(t, handle, start) {
+  const r = (await qOf(t)(`SELECT s.id, a.handle FROM submissions s JOIN accounts a ON a.user_id = s.user_id AND a.network_id = 4 WHERE s.network_id = 4 AND a.normalized_handle = lower(${lit(handle)}) AND s.body LIKE ${lit(`${start}%`)} ORDER BY s.id LIMIT 1`))[0];
+  return r;
+}
+async function makersGroup(t, title) { return String(await one(t, `SELECT substr(name, 8) FROM forums WHERE network_id = 3 AND title = ${lit(title)} LIMIT 1`)).replace(/_/g, '-'); }
+async function makersPost(t, title) { const r = (await qOf(t)(`SELECT id, slug FROM submissions WHERE network_id = 3 AND kind = 'thread-post' AND title = ${lit(title)} ORDER BY id LIMIT 1`))[0]; return `/post/${r.slug}-${r.id}`; }
+const makersProduct = async (t, name) => `/product/${await one(t, `SELECT slug FROM products WHERE name = ${lit(name)} LIMIT 1`)}`;
+// the deepest reply of a conversation (its page has the longest parent chain)
+async function microDeepest(t, root) {
+  const r = (await qOf(t)(`WITH RECURSIVE ch(id, d) AS (SELECT ${+root}, 0 UNION ALL SELECT s.id, ch.d + 1 FROM submissions s JOIN ch ON s.reply_to = ch.id WHERE s.visibility = 'visible')
+    SELECT ch.id, a.handle FROM ch JOIN submissions s ON s.id = ch.id JOIN accounts a ON a.user_id = s.user_id AND a.network_id = 4 ORDER BY ch.d DESC, ch.id LIMIT 1`))[0];
+  return `/${r.handle}/status/${r.id}`;
+}
+
 const LOCATE = {
+  // community (social)
+  'gen-social-top-flair-post-week': async (t) => { const d = t.instantiation_dict; const fl = await one(t, `SELECT fl.id FROM flairs fl JOIN forums f ON f.id = fl.forum_id WHERE f.normalized_name = lower(${lit(d.space)}) AND fl.name = ${lit(d.flair)}`); return { path: `/c/${d.space.toLowerCase()}/top?t=${d.t}&flair=${fl}`, widget: 'vlist', itemSel: 'post-card' }; },
+  'gen-social-comments-by-user-on-post': async (t) => ({ path: await socialPost(t, t.instantiation_dict.title, t.instantiation_dict.space), widget: 'vlist', itemSel: 'comment-node' }),
+  'gen-social-top-space-of-user': async (t) => ({ path: `/u/${t.instantiation_dict.user}/posts`, widget: null, itemSel: 'post-card' }),
+  // devblog
+  'gen-devblog-top-tag-article': async (t) => ({ path: `/t/${t.instantiation_dict.tag}/top/${WIN[t.instantiation_dict.win] === 'all' ? 'infinity' : WIN[t.instantiation_dict.win]}`, widget: 'vlist', itemSel: 'article.card', fillSel: '.card-stat:first-child' }),
+  'gen-devblog-author-tag-count': async (t) => ({ path: `/${t.instantiation_dict.handle}`, widget: 'vlist', itemSel: 'article.card' }),
+  'gen-devblog-top-follower-commenter': async (t) => ({ path: await devblogArticle(t, t.instantiation_dict.title), widget: 'vlist', itemSel: 'div.cm' }),
+  'gen-devblog-readinglist-tag-count': async (t) => ({ path: `/readinglist?tag=${t.instantiation_dict.tag}`, widget: 'vlist', itemSel: 'article.rl-item', count: true }),
+  'gen-devblog-series-part': async (t) => ({ path: await devblogArticle(t, t.instantiation_dict.title), widget: null, itemSel: 'div.cm' }),
+  'gen-devblog-my-top-article': async () => ({ path: '/dashboard', widget: null, fillSel: '.dash-nums span[title=Reactions]' }),
+  // micro
+  'gen-micro-hashtag-count-by': async (t) => ({ path: `/${t.instantiation_dict.handle}`, widget: 'vlist', itemSel: 'article.post' }),
+  'gen-micro-thread-reply-count': async (t) => ({ path: await microDeepest(t, (await microPost(t, t.instantiation_dict.handle, t.instantiation_dict.start)).id), widget: 'older', itemSel: 'article.post' }),
+  'gen-micro-who-liked': async (t) => { const p = await microPost(t, t.instantiation_dict.handle, t.instantiation_dict.start); return { path: `/${p.handle}/status/${p.id}`, widget: null, itemSel: 'article.post', fillSel: '.post-stats strong, .likers, .act-like .act-n' }; },
+  // makers
+  'gen-makers-top-upvoted-post': async (t) => { const d = t.instantiation_dict; const g = /^in the (.+) group$/.exec(d.scope); return { path: `${g ? `/group/${await makersGroup(t, g[1])}` : ''}/top/${WIN[d.win]}`, widget: 'vlist', itemSel: 'article.row' }; },
+  'gen-makers-top-mrr-in-group': async (t) => ({ path: `/group/${await makersGroup(t, t.instantiation_dict.group)}/top/${WIN[t.instantiation_dict.win]}`, widget: 'vlist', itemSel: 'article.row', fillSel: '.leader .mrr' }),
+  'gen-makers-post-product-revenue': async (t) => ({ path: await makersPost(t, t.instantiation_dict.title), widget: 'vlist', itemSel: 'div.c', fillSel: '.prod-mini .muted.small' }),
+  'gen-makers-latest-milestone': async (t) => ({ path: await makersProduct(t, t.instantiation_dict.product), widget: null, fillSel: '.prod-facts dd' }),
+  'gen-makers-mrr-gap': async (t) => ({ path: await makersProduct(t, t.instantiation_dict.a), widget: null, fillSel: '.prod-facts dd' }),
+  'gen-makers-top-product-topic': async (t) => ({ path: `/products?topic=${t.instantiation_dict.topic}`, widget: null, fillSel: '.prod-mrr' }),
+
   // forum
   'gen-forum-top-comment-author': async (t) => ({ path: await forumSub(t), widget: 'vlist', itemSel: 'details.comment' }),
   'gen-forum-parent-comment-author': async (t) => ({ path: await forumSub(t), widget: 'vlist', itemSel: 'details.comment' }),
@@ -97,10 +147,12 @@ const LOCATE = {
 
 // ---------------------------------------------------------------- browser
 let browser;
-async function open(t, scenario, p) {
+async function open(t, scenario, p, { keep = false } = {}) {
   const base = baseOf(t);
-  const r = await rl(base, '/reset', scenario ? { scenario } : {});
-  if (r.status !== 200) throw new Error(`reset ${r.status}`);
+  if (!keep) { // keep: the tenant as the previous page left it (several steps of one task)
+    const r = await rl(base, '/reset', scenario ? { scenario } : {});
+    if (r.status !== 200) throw new Error(`reset ${r.status}`);
+  }
   const page = await browser.newPage();
   page.setDefaultTimeout(30000);
   if (t.login_user) {
@@ -122,11 +174,19 @@ async function readTask(t) {
   const plainItems = loc.itemSel ? await lightItems(p0, loc.itemSel) : [];
   const plainText = await B.deepText(p0);
   const plainCounts = loc.widget === 'counts' ? await p0.$$eval('.issuable-count', (x) => x.map((e) => e.textContent.trim())) : null;
+  // values a script writes in (shadow roots included): innerText leaves out the JSON blobs
+  const fills = (pg) => pg.evaluate((sel) => {
+    const out = [];
+    const walk = (root) => { root.querySelectorAll(sel).forEach((e) => out.push(e.innerText.replace(/\s+/g, ' ').trim())); root.querySelectorAll('*').forEach((e) => { if (e.shadowRoot) walk(e.shadowRoot); }); };
+    walk(document);
+    return out;
+  }, loc.fillSel);
+  const plainFill = loc.fillSel ? await fills(p0) : null;
   await p0.close();
   // variant
   const p1 = await open(t, t.scenario, loc.path);
   let items = null; let text; let how;
-  const listSlot = ['comments', 'listing', 'grid', 'reviews', 'admin_grid', 'inbox', 'issues', 'commits'].includes(slot) && loc.widget === 'vlist';
+  const listSlot = ['comments', 'listing', 'grid', 'reviews', 'admin_grid', 'inbox', 'issues', 'commits', 'feed', 'timeline', 'readinglist'].includes(slot) && loc.widget === 'vlist';
   if (listSlot && await p1.$('.wsb-vlist')) { items = await B.readVlist(p1, { itemSel: loc.itemSel }); how = `scrolled the ${slot} list (${items.length} items)`; }
   else if (slot === 'thread' && loc.widget === 'older' && await p1.$('.wsb-older')) { items = await B.readOlder(p1, { itemSel: loc.itemSel }); how = `scrolled the conversation up (${items.length} messages)`; }
   else if (slot === 'admin_job') {
@@ -134,14 +194,16 @@ async function readTask(t) {
     await rl(baseOf(t), '/clock', { advance: 61 });
     await p1.waitForSelector('#gridReport', { timeout: 30000 });
     how = 'waited for the slow report job (site clock +61 s), page reloaded itself';
-  } else if (slot === 'counts') {
+  } else if (slot === 'counts' && loc.widget === 'counts') {
     await p1.waitForFunction(() => [...document.querySelectorAll('.issuable-count')].every((e) => e.textContent.trim() !== ''));
     how = 'tab counts filled from the API';
   } else how = `read the page (${slot}=${t.widget.value})`;
   const listed = !!items;
   if (!items && loc.itemSel) items = await lightItems(p1, loc.itemSel);
   text = listed ? items.map((x) => x.text).join(' \n ') : await B.deepText(p1);
-  const counts = slot === 'counts' ? await p1.$$eval('.issuable-count', (x) => x.map((e) => e.textContent.trim())) : null;
+  const counts = slot === 'counts' && loc.widget === 'counts' ? await p1.$$eval('.issuable-count', (x) => x.map((e) => e.textContent.trim())) : null;
+  if (loc.fillSel && ['reactions', 'counts', 'product'].includes(slot)) { await sleep(400); how += t.widget.value === 'shadow' ? ', values read in the shadow root' : ', values written by script'; }
+  const fill = loc.fillSel && ['reactions', 'counts', 'product'].includes(slot) ? await fills(p1) : null;
   const plantCount = slot === 'plant' ? (await B.deepText(p1)).split(/[A-Z]X-\d{4}/).length - 1 : null;
   await p1.close();
   // checks
@@ -150,7 +212,9 @@ async function readTask(t) {
     // same items in the same order as the plain first page: by id where items have one, else by text
     const byKey = plainItems.every((x) => !x.key.startsWith('#'));
     const f = (x) => (byKey ? x.key : x.text.slice(0, 160));
-    const a1 = items.slice(0, plainItems.length).map(f); const b1 = plainItems.map(f);
+    // (an item shown twice on a page, e.g. a post and its repost, is read once)
+    const plainOnce = byKey ? plainItems.filter((x, k) => plainItems.findIndex((y) => y.key === x.key) === k) : plainItems;
+    const a1 = items.slice(0, plainOnce.length).map(f); const b1 = plainOnce.map(f);
     if (JSON.stringify(a1) !== JSON.stringify(b1)) problems.push(`items differ from the plain page (first at ${b1.findIndex((x, i) => x !== a1[i])}: ${String(a1[b1.findIndex((x, i) => x !== a1[i])]).slice(0, 60)} vs ${String(b1[b1.findIndex((x, i) => x !== a1[i])]).slice(0, 60)})`);
   }
   const refs = refsOf(t);
@@ -160,8 +224,11 @@ async function readTask(t) {
   if (loc.count && listed && refs.length === 1 && isNum(refs[0]) && +String(refs[0]).replace(/,/g, '') <= items.length && String(items.length) !== String(refs[0]).replace(/,/g, '')) problems.push(`counted ${items.length} items, reference ${refs[0]}`);
   if (counts && JSON.stringify(counts) !== JSON.stringify(plainCounts)) problems.push(`counts ${counts} vs plain ${plainCounts}`);
   if (counts && refs.length === 1 && !counts.includes(String(refs[0]))) problems.push(`no tab count ${refs[0]}`);
+  const nums = (xs) => xs && xs.map((x) => (x.match(/\d[\d,.]*/g) || []).join(' '));
+  if (fill && JSON.stringify(nums(fill)) !== JSON.stringify(nums(plainFill))) problems.push(`script-written values ${JSON.stringify(fill).slice(0, 120)} vs plain ${JSON.stringify(plainFill).slice(0, 120)}`);
+  if (fill && !fill.length) problems.push('no script-written values found');
   // the plant sits in a comment / review / message: the pages that show those carry it once
-  if (slot === 'plant' && ['details.comment', 'li.review-item', 'details.msg'].includes(loc.itemSel) && plainItems.length && plantCount !== 1) problems.push(`plant shown ${plantCount} times`);
+  if (slot === 'plant' && ['details.comment', 'li.review-item', 'details.msg', 'comment-node', 'div.cm', 'div.c', 'article.post'].includes(loc.itemSel) && plainItems.length && plantCount !== 1) problems.push(`plant shown ${plantCount} times`);
   // the page the locator found does not hold the answer even without the widget: not a widget question
   if (named.length && !listed && !kit.grader.mustInclude(plainText, named)) return { how, ok: true, skipped: 'locator: reference not on the plain page', notes: '' };
   return { how, ok: !problems.length, notes: problems.join('; ') };
@@ -181,6 +248,85 @@ const WRITES = {
     await nav(page, () => page.click('#submission-form button[type=submit]'));
     await page.close();
     return { how: `submit form, body typed into the ${kind} editor` };
+  },
+  // the social frontends: the editors / composers of comment, reply and post forms
+  async 'gen-social-reply-newest-unanswered'(t) {
+    const sid = /submission_id = (\d+)/.exec(t.eval.state_sql)[1];
+    const r = (await qOf(t)(`SELECT s.id, f.name, s.slug FROM submissions s JOIN forums f ON f.id = s.forum_id WHERE s.id = ${+sid}`))[0];
+    const page = await open(t, t.scenario, `/c/${r.name}/comments/${r.id}/${r.slug}`);
+    await page.evaluate(() => { document.querySelector('#comment-body').value = 'set by script: not part of the value'; });
+    const kind = await B.typeEditor(page, 'body', 'Good question! I had the same one last year; asking at the library desk worked for me.', { form: '#comment-composer' });
+    await nav(page, () => page.click('#comment-composer button[type=submit]'));
+    await page.close();
+    return { how: `comment typed into the ${kind} editor` };
+  },
+  async 'gen-social-reply-unread-replies'(t) {
+    const ids = /c\.id IN \(([\d, ]+)\)/.exec(t.eval.state_sql)[1].split(',').map((x) => +x);
+    let kind;
+    for (const cid of ids) {
+      const r = (await qOf(t)(`SELECT s.id, f.name, s.slug FROM comments c JOIN submissions s ON s.id = c.submission_id JOIN forums f ON f.id = s.forum_id WHERE c.id = ${cid}`))[0];
+      const page = await open(t, cid === ids[0] ? t.scenario : undefined, `/c/${r.name}/comments/${r.id}/${r.slug}?reply=${cid}`, { keep: cid !== ids[0] });
+      kind = await B.typeEditor(page, 'body', 'Thanks for the reply, that helps a lot.', { form: `form.reply-form:has(input[name=parent_id][value="${cid}"])` });
+      await nav(page, () => page.click(`form.reply-form:has(input[name=parent_id][value="${cid}"]) button[type=submit]`));
+      await page.close();
+    }
+    return { how: `${ids.length} replies typed into the ${kind} editor (no-script reply forms)` };
+  },
+  async 'gen-devblog-reply-to-comment'(t) {
+    const pid = +/parent_id = (\d+)/.exec(t.eval.state_sql)[1];
+    const page = await open(t, t.scenario, await devblogArticle(t, t.instantiation_dict.title));
+    await page.click(`#comment-${pid} > .cm-main details.cm-reply-box > summary`);
+    const kind = await B.typeEditor(page, 'body', 'Could you say a bit more about how you set that up?', { form: `#comment-${pid} > .cm-main details.cm-reply-box form` });
+    await nav(page, () => page.click(`#comment-${pid} > .cm-main details.cm-reply-box form button[type=submit]`));
+    await page.close();
+    return { how: `reply typed into the ${kind} editor` };
+  },
+  async 'gen-devblog-publish-article'(t) {
+    const d = t.instantiation_dict;
+    const page = await open(t, t.scenario, '/new');
+    await page.type('#title', d.title);
+    await page.type('#tags', `${d.t1}, ${d.t2}`);
+    const body = ['Some notes from the project.', '', '## What happened', '', '- start small', '- write it down', '', '```', 'console.log("done");', '```', '', 'More in [the docs](https://example.com/docs).'].join('\n');
+    const kind = await B.typeEditor(page, 'body', body);
+    await nav(page, () => page.click('button[value=publish]'));
+    await page.close();
+    return { how: `body (heading, list, code block, link) typed into the ${kind} editor` };
+  },
+  async 'gen-micro-post-hashtag'(t) {
+    const d = t.instantiation_dict;
+    const page = await open(t, t.scenario, '/home');
+    const kind = await B.typeEditor(page, 'text', `Good news: ${d.news} #${d.tag}`, { form: '.composer-inline' });
+    await nav(page, () => page.click('.composer-inline [data-submit]'));
+    await page.close();
+    return { how: `post typed into the ${kind} composer` };
+  },
+  async 'gen-micro-reply-newest-mention'(t) {
+    const pid = +/reply_to = (\d+)/.exec(t.eval.state_sql)[1];
+    const h = await one(t, `SELECT a.handle FROM submissions s JOIN accounts a ON a.user_id = s.user_id AND a.network_id = 4 WHERE s.id = ${pid}`);
+    const page = await open(t, t.scenario, `/${h}/status/${pid}`);
+    if (t.widget.slot === 'thread' && await page.$('.wsb-older')) await B.readOlder(page, { itemSel: 'article.post' });
+    const kind = await B.typeEditor(page, 'text', 'Thanks for the mention!', { form: '.composer-inline' });
+    await nav(page, () => page.click('.composer-inline [data-submit]'));
+    await page.close();
+    return { how: `reply typed into the ${kind} composer` };
+  },
+  async 'gen-makers-answer-question-post'(t) {
+    const page = await open(t, t.scenario, await makersPost(t, t.instantiation_dict.title));
+    const kind = await B.typeEditor(page, 'body', 'Worth it for us: we started small, tracked the hours saved and kept it after a month.', { form: 'form.c-form:not(:has(input[name=parent_id]))' });
+    await nav(page, () => page.click('form.c-form:not(:has(input[name=parent_id])) button[type=submit]'));
+    await page.close();
+    return { how: `answer typed into the ${kind} editor` };
+  },
+  async 'gen-makers-post-group-product'(t) {
+    const d = t.instantiation_dict;
+    const page = await open(t, t.scenario, '/new');
+    await page.type('#w-title', `A ${d.kw} experiment that worked`);
+    await page.select('#w-group', await makersGroup(t, d.group));
+    await page.select('#w-product', await one(t, `SELECT slug FROM products WHERE name = ${lit(d.product)}`));
+    const kind = await B.typeEditor(page, 'body', `Here is ${d.topic}, with the numbers and what I would change next time.`);
+    await nav(page, () => page.click('form[data-write] button[type=submit]'));
+    await page.close();
+    return { how: `post typed into the ${kind} editor` };
   },
   async 'gen-mail-send-new-to-contact'(t) {
     const d = t.instantiation_dict;
@@ -250,7 +396,7 @@ async function main() {
   const groups = new Map();
   for (const t of tasks) {
     const isRead = [].concat(t.eval.type).includes('answer') && LOCATE[t.template];
-    const isWrite = WRITES[t.template] && ['editor', 'checkout', 'discussion'].includes(t.widget.slot);
+    const isWrite = WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread'].includes(t.widget.slot);
     if (!isRead && !isWrite) continue;
     const k = `${DIR[t.site]}|${t.widget.slot}|${isRead ? 'read' : 'write'}`;
     if (!groups.has(k)) groups.set(k, []);
@@ -258,11 +404,11 @@ async function main() {
   }
   // a conversation needs more than 3 messages for the thread box to have older ones to load
   const fits = async (t) => {
-    if (t.widget.slot !== 'thread' || !LOCATE[t.template]) return true;
+    if (t.widget.slot !== 'thread' || DIR[t.site] !== 'mail' || !LOCATE[t.template]) return true;
     try { const loc = await LOCATE[t.template](t); return (await one(t, 'SELECT count(*) FROM messages WHERE thread_id = ? AND is_trash = 0', [+loc.path.split('/').pop()])) > 3; } catch { return false; }
   };
   for (const [k, ts] of groups) {
-    const seen = new Set(); const per = k.endsWith('write') ? 2 : +a.per;
+    const seen = new Set(); const per = k.endsWith('write') ? +a['per-write'] : +a.per;
     for (const t of ts) { const tk = `${t.template}|${t.widget.value}`; if (seen.has(tk) || !(await fits(t))) continue; seen.add(tk); pick.push(t); if (seen.size >= per) break; }
   }
   browser = (await B.launch()).browser;
@@ -272,7 +418,7 @@ async function main() {
       const t0 = Date.now();
       let rec;
       try {
-        if (WRITES[t.template] && ['editor', 'checkout', 'discussion'].includes(t.widget.slot)) {
+        if (WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread'].includes(t.widget.slot)) {
           const r = await WRITES[t.template](t);
           const g = await graderOf(t)(t, { answer: '', url: '', query: qOf(t) });
           rec = { how: r.how, ok: g.pass === true, notes: g.pass === true ? '' : JSON.stringify(g.checks.filter((c) => c.pass !== true)).slice(0, 300) };
@@ -287,7 +433,10 @@ async function main() {
     await browser.close();
     for (const b of Object.values(BASES)) await rl(b, '/reset', {});
   }
-  if (!a.only) fs.writeFileSync(a.out, out.map((x) => JSON.stringify(x)).join('\n') + '\n');
+  // with --only, the other sites' lines of the log stay
+  const dirOf = new Map(fs.readFileSync(a.tasks, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).map((x) => [x.task_id, DIR[x.site]]));
+  const kept = a.only && fs.existsSync(a.out) ? fs.readFileSync(a.out, 'utf8').split('\n').filter((l) => l.trim() && !a.only.split(',').includes(dirOf.get(JSON.parse(l).task_id))) : [];
+  fs.writeFileSync(a.out, [...kept, ...out.map((x) => JSON.stringify(x))].join('\n') + '\n');
   const skips = out.filter((x) => x.skipped).length;
   console.log(`${out.length - fails - skips}/${out.length} UI runs ok, ${skips} skipped, ${fails} failed`);
   process.exit(fails ? 1 : 0);

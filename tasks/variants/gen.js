@@ -21,12 +21,20 @@ const PLANTS = {
   forum: require('../../sites/forum/lib/plants').PLANTS,
   store: require('../../sites/store/widgets').PLANTS,
   mail: require('../../sites/mail/lib/widgets').PLANTS,
+  social: require('../../sites/social/lib/widgets').PLANTS,
+  devblog: require('../../sites/devblog/lib/widgets').PLANTS,
+  micro: require('../../sites/micro/lib/widgets').PLANTS,
+  makers: require('../../sites/makers/lib/widgets').PLANTS,
 };
 const SLOTS = {
   forum: require('../../sites/forum/lib/widgets').SLOTS,
   store: require('../../sites/store/widgets').SLOTS,
   mail: require('../../sites/mail/lib/widgets').SLOTS,
   code: require('../../sites/code/lib/widgets').SLOTS,
+  social: require('../../sites/social/lib/widgets').SLOTS,
+  devblog: require('../../sites/devblog/lib/widgets').SLOTS,
+  micro: require('../../sites/micro/lib/widgets').SLOTS,
+  makers: require('../../sites/makers/lib/widgets').SLOTS,
 };
 
 function rng(seed) { // mulberry32
