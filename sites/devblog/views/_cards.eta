@@ -1,0 +1,3 @@
+<%/* include('_cards', {rows, p}) a page of cards + the "load more" link (also the ?fragment=1 response) */%>
+<% for (const r of it.rows) { %><%~ include('_card', { g: it.g || it, r }) %><% } %>
+<% if (it.p && it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>

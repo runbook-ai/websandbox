@@ -65,7 +65,25 @@ Rules for everyone (human or agent) building websandbox. Read with
 | code hosting | 7400-7499 | `wsb-code-*` |
 | wiki | 7500-7599 | `wsb-wiki-*` |
 | map | 7600-7699 | `wsb-map-*` |
-| cross-site tasks | 7700-7799 | -- |
+| cross-site tasks (`tasks/tools/sites.sh`) | 7700-7819 | -- |
+| social frontends (devblog, micro, makers dev runs) | 7900-7999 | -- |
+
+`tasks/tools/sites.sh` runs every site at BASE + k*STRIDE + tenant (default 7700, stride 10), and
+with `--bind rl` at `127.10.<tenant>.<siteIndex>` (kit `SITE_INDEX`):
+
+| Site | k (sites.sh) | --bind ports (tenant 0) | siteIndex (127.10.i.x) | Host placeholder |
+|---|---|---|---|---|
+| store (shopping, shopping_admin) | 0 | 7700 | 2, 3 | `__SHOPPING__`, `__SHOPPING_ADMIN__` |
+| forum | 1 | 7710 | 4 | `__REDDIT__` |
+| code (gitlab) | 2 | 7720 | 5 | `__GITLAB__` |
+| wiki | 3 | 7730 | 6 | `__WIKIPEDIA__` |
+| map | 4 | 7740 | 7 | `__MAP__` |
+| mail | 5 | 7750 | 10 | `__MAIL__` |
+| social (community) | 6 | 7760 | 11 | `__SOCIAL__` |
+| lab (payment host labpay: 18) | 7 | 7770 | 8 | `__LAB__` |
+| devblog | 8 | 7780 | 12 | `__DEVBLOG__` |
+| micro | 9 | 7790 | 13 | `__MICRO__` |
+| makers | 10 | 7800 | 14 | `__MAKERS__` |
 
 If you run the original WebArena sites (their docker images), use them for
 reference with read-only browsing only (do not log in and change state there):

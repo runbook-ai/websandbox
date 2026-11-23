@@ -1,0 +1,27 @@
+<% layout('layout') %>
+<% const tab = (k, label) => `<a class="nav-link${it.tab === k ? ' on' : ''}" href="/notifications${k === 'all' ? '' : '/' + k}"${it.tab === k ? ' aria-current="page"' : ''}>${label}</a>`; %>
+<div class="page-head"><h1>Notifications</h1>
+  <form method="post" action="/notifications/read" class="inline"><%~ it.csrfInput() %><input type="hidden" name="all" value="1"><input type="hidden" name="go" value="<%= it.req.url %>"><button class="btn btn-ghost" type="submit">Mark all as read</button></form></div>
+<div class="grid2">
+  <nav class="dash-nav" aria-label="Notification types"><%~ tab('all', 'All') %><%~ tab('comments', 'Comments') %><%~ tab('reactions', 'Reactions') %><%~ tab('follows', 'Follows') %></nav>
+  <section class="notes">
+    <% if (!it.rows.length) { %><div class="box box-pad empty">You have no notifications here yet.</div><% } %>
+    <% for (const n of it.rows) { const t = n.notification_type; %>
+    <article class="box note<%= n.read_at ? '' : ' unread' %>" id="note-<%= n.id %>">
+      <a href="/<%= n.actor_handle %>"><span class="av av-sm" style="background:<%= n.actor_color %>" aria-hidden="true"><%= it.initials(n.actor_name) %></span></a>
+      <div class="note-main">
+        <p><a href="/<%= n.actor_handle %>"><strong><%= n.actor_name || 'Someone' %></strong></a>
+          <% if (t === 'comment') { %><%= n.post_user_id === it.user.id && !n.comment_body ? 'commented on' : 'replied on' %> <a href="<%= n.url %>"><%= n.post_title %></a>
+          <% } else if (t === 'mention') { %>mentioned you in <a href="<%= n.url %>"><%= n.post_title %></a>
+          <% } else if (t === 'reaction') { %>reacted to <a href="<%= n.url %>"><%= n.comment_id ? 'your comment on ' : '' %><%= n.post_title %></a>
+          <% } else if (t === 'follow') { %>followed you!
+          <% } else { %><%= t %><% } %></p>
+        <% if (n.comment_body) { %><blockquote class="note-quote"><%= it.excerpt(n.comment_body, 200) %></blockquote><% } %>
+        <p class="small muted"><%~ it.when(n.created_at, 'long') %></p>
+      </div>
+      <% if (!n.read_at) { %><form method="post" action="/notifications/read" class="inline"><%~ it.csrfInput() %><input type="hidden" name="id" value="<%= n.id %>"><input type="hidden" name="go" value="<%= n.url %>"><button class="btn btn-sm btn-ghost" type="submit">Open</button></form><% } %>
+    </article>
+    <% } %>
+    <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Newer</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Older &rarr;</a><% } %></p>
+  </section>
+</div>

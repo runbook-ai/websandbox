@@ -10,10 +10,10 @@
 //   POST /grade  {task, answer, url, tenants: {<task site>: i, ...} | tenant: i}
 //     task     a row of tasks/splits/*.jsonl (eval, site(s), grade_site, grader, intent)
 //     tenants  tenant index per task site name (shopping, shopping_admin, forum, gitlab, wiki, map, mail,
-//              social, lab);
+//              social, lab, devblog, micro, makers);
 //              `tenant` = the same index for every site. Site k of tenant i is 127.10.<i>.<k>:<site-port>
 //              (sites.sh up --bind rl: shopping 2, shopping_admin 3 -- one store tenant --, forum 4,
-//              gitlab 5, wiki 6, map 7, lab 8, mail 10, social 11).
+//              gitlab 5, wiki 6, map 7, lab 8, mail 10, social 11, devblog 12, micro 13, makers 14).
 //     -> {pass: true|false|null, checks, ms}; pass null = a fuzzy check is pending: the caller runs
 //        its LLM judge on the checks with `pending: 'fuzzy'` (their `reference`) and combines (all
 //        checks must pass). A check with `error` is a grader/infrastructure failure, not the agent's.
@@ -34,7 +34,7 @@ const { values: a } = parseArgs({ options: {
   'site-port': { type: 'string', default: '80' }, 'token-file': { type: 'string' },
 } });
 const token = a['token-file'] ? fs.readFileSync(a['token-file'], 'utf8').trim() : process.env.WSB_CONTROL_TOKEN || null;
-const SITE_K = { shopping: 2, shopping_admin: 3, forum: 4, reddit: 4, gitlab: 5, wiki: 6, wikipedia: 6, map: 7, lab: 8, mail: 10, social: 11 };
+const SITE_K = { shopping: 2, shopping_admin: 3, forum: 4, reddit: 4, gitlab: 5, wiki: 6, wikipedia: 6, map: 7, lab: 8, mail: 10, social: 11, devblog: 12, micro: 13, makers: 14 };
 const DIRS = { shopping: 'store', shopping_admin: 'store', gitlab: 'code', reddit: 'forum', wikipedia: 'wiki' };
 const sitePort = +a['site-port'];
 const base = (site, i) => `http://127.10.${i}.${SITE_K[site]}${sitePort === 80 ? '' : ':' + sitePort}`;

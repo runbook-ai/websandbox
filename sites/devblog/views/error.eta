@@ -1,0 +1,7 @@
+<% layout('layout') %>
+<div class="narrow error-page box box-pad">
+  <p class="error-code" aria-hidden="true"><%= it.status || 500 %></p>
+  <h1><%= it.status === 404 ? 'This page does not exist' : it.status === 403 ? 'Not allowed' : it.status === 429 ? 'Slow down' : 'Something went wrong' %></h1>
+  <p><%= it.message %></p>
+  <a class="btn btn-primary" href="/">Return to home page</a>
+</div>

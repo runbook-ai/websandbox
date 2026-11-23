@@ -1,0 +1,17 @@
+<% layout('layout') %>
+<div class="page-head">
+  <h1>Tags</h1>
+  <form method="get" action="/tags" class="inline-search" role="search"><input type="search" name="q" value="<%= it.q %>" placeholder="Search for tag" aria-label="Search for tag"><button class="btn btn-ghost" type="submit">Search</button></form>
+</div>
+<% if (!it.rows.length) { %><p class="box box-pad">No tags match <strong><%= it.q %></strong>.</p><% } %>
+<div class="tag-grid">
+<% for (const t of it.rows) { const on = it.mine.has(t.name); %>
+  <article class="box tag-tile" style="--tag:<%= it.D.tagColor(t.name) %>">
+    <h2><a href="/t/<%= t.name %>"><span aria-hidden="true">#</span><%= t.name %></a></h2>
+    <p class="muted small tag-tile-desc"><%= t.description || `Posts tagged #${t.name}.` %></p>
+    <p class="small muted"><%= t.posts %> post<%= t.posts === 1 ? '' : 's' %> published &middot; <%= t.followers %> following</p>
+    <form method="post" action="/t/<%= t.name %>/follow" class="follow-form" data-follow-tag="<%= t.name %>"><%~ it.csrfInput() %><input type="hidden" name="on" value="<%= on ? 0 : 1 %>">
+      <button type="submit" class="btn btn-sm <%= on ? 'btn-outline' : 'btn-secondary' %>" aria-pressed="<%= on %>" aria-label="<%= on ? `Unfollow #${t.name}` : `Follow #${t.name}` %>"><%= on ? 'Following' : 'Follow' %></button></form>
+  </article>
+<% } %>
+</div>

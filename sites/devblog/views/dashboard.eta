@@ -1,0 +1,56 @@
+<% layout('layout') %>
+<% const st = it.stats || {}; const side = (href, label, n, on) => `<a class="nav-link${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${label}${n != null ? `<span class="nav-n">${n}</span>` : ''}</a>`; %>
+<div class="page-head"><h1>Dashboard</h1></div>
+<% if (it.tab === 'posts') { %>
+<div class="stat-row">
+  <div class="box stat"><strong><%= st.reactions %></strong><span>Total post reactions</span></div>
+  <div class="box stat"><strong><%= st.comments %></strong><span>Total post comments</span></div>
+  <div class="box stat"><strong><%= st.saves %></strong><span>Reading list saves</span></div>
+  <div class="box stat"><strong><%= st.posts %></strong><span>Published posts</span></div>
+</div>
+<% } %>
+<div class="dash">
+  <nav class="dash-nav" aria-label="Dashboard">
+    <%~ side('/dashboard', 'Posts', st.posts != null ? st.posts + (st.drafts || 0) : null, it.tab === 'posts') %>
+    <%~ side('/dashboard/followers', 'Followers', st.followers, it.tab === 'followers') %>
+    <%~ side('/dashboard/following', 'Following users', st.following, it.tab === 'following') %>
+    <%~ side('/dashboard/tags', 'Following tags', it.tags ? it.tags.length : it.myTags.length, it.tab === 'tags') %>
+  </nav>
+  <section class="dash-main">
+  <% if (it.tab === 'posts') { %>
+    <div class="dash-bar"><h2>Posts</h2>
+      <form method="get" action="/dashboard" class="inline"><label class="sr-only" for="dfilter">Show</label><select id="dfilter" name="filter" data-autosubmit><% for (const [k, l] of [['all', 'All posts'], ['published', 'Published'], ['draft', 'Drafts']]) { %><option value="<%= k %>"<%= it.filter === k ? ' selected' : '' %>><%= l %></option><% } %></select><noscript><button type="submit">Show</button></noscript></form></div>
+    <% if (!it.rows.length) { %><div class="box box-pad empty"><p>This is where you can manage your posts, but you haven't written anything yet.</p><a class="btn btn-primary" href="/new">Write your first post now</a></div><% } %>
+    <ul class="dash-list box">
+    <% for (const r of it.rows) { %>
+      <li class="dash-item" id="post-<%= r.id %>">
+        <div class="dash-item-main"><a class="dash-title" href="<%= r.status === 'published' ? r.url : r.url + '/edit' %>"><%= r.title %></a>
+          <div class="small muted"><% if (r.status === 'draft') { %><span class="chip chip-draft">Draft</span><% } else { %>Published: <%= it.dateLong(r.published_at || r.created_at) %><% } %><% if (r.edited_at) { %> &middot; Edited: <%= it.dateLong(r.edited_at) %><% } %></div></div>
+        <div class="dash-nums small" aria-label="Stats"><span title="Reactions">&#9829; <%= r.reactions %></span><span title="Comments">&#128172; <%= r.comment_count %></span><span title="Saves">&#9733; <%= r.saves %></span></div>
+        <div class="dash-acts"><a class="btn btn-sm btn-ghost" href="<%= r.url %>/edit">Edit</a>
+          <form method="post" action="<%= r.url %>/delete" class="inline" data-confirm="Delete &quot;<%= r.title %>&quot;?"><%~ it.csrfInput() %><button class="btn btn-sm btn-ghost btn-danger" type="submit">Delete</button></form></div>
+      </li>
+    <% } %>
+    </ul>
+  <% } else if (it.tab === 'tags') { %>
+    <h2>Following tags</h2>
+    <% if (!it.tags.length) { %><div class="box box-pad empty">You don't follow any tags yet. <a href="/tags">Browse tags</a></div><% } %>
+    <div class="tag-grid">
+    <% for (const t of it.tags) { %>
+      <article class="box tag-tile" style="--tag:<%= it.D.tagColor(t.name) %>"><h3><a href="/t/<%= t.name %>">#<%= t.name %></a></h3><p class="small muted"><%= t.posts %> posts</p>
+        <form method="post" action="/t/<%= t.name %>/follow" class="follow-form" data-follow-tag="<%= t.name %>"><%~ it.csrfInput() %><input type="hidden" name="on" value="0"><button type="submit" class="btn btn-sm btn-outline" aria-pressed="true" aria-label="Unfollow #<%= t.name %>">Following</button></form></article>
+    <% } %>
+    </div>
+  <% } else { %>
+    <h2><%= it.tab === 'followers' ? 'Followers' : 'Following users' %></h2>
+    <% if (!it.people.length) { %><div class="box box-pad empty"><%= it.tab === 'followers' ? "You don't have any followers yet." : "You don't follow anyone yet." %></div><% } %>
+    <div class="people-grid">
+    <% for (const u of it.people) { const h = u.handle || u.username; const on = it.mine.has(u.id); %>
+      <article class="box person"><a href="/<%= h %>" class="person-link"><span class="av av-md" style="background:<%= u.avatar_color || '#868e96' %>" aria-hidden="true"><%= it.initials(u.display_name || h) %></span><strong><%= u.display_name || h %></strong><span class="muted small">@<%= h %></span></a>
+        <form method="post" action="/follow" class="follow-form" data-follow-user="<%= h %>"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= h %>"><input type="hidden" name="on" value="<%= on ? 0 : 1 %>"><button type="submit" class="btn btn-sm <%= on ? 'btn-outline' : 'btn-primary' %>" aria-pressed="<%= on %>"><%= on ? 'Following' : 'Follow back' %></button></form></article>
+    <% } %>
+    </div>
+    <% if (it.p) { %><p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Next &rarr;</a><% } %></p><% } %>
+  <% } %>
+  </section>
+</div>

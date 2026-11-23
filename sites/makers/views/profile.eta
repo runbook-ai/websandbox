@@ -1,0 +1,36 @@
+<% layout('layout') %>
+<% const u = it.u; const tab = (k, label, n) => `<a class="pill${it.tab === k ? ' on' : ''}" href="/${u.handle}${k === 'posts' ? '' : '/' + k}"${it.tab === k ? ' aria-current="page"' : ''}>${label}${n != null ? ` <span class="pill-n">${n}</span>` : ''}</a>`; %>
+<section class="card prof">
+  <span class="av av-xl" style="background:<%= u.avatar_color %>" aria-hidden="true"><%= it.initials(u.display_name) %></span>
+  <div class="prof-main">
+    <h1><%= u.display_name %></h1>
+    <p class="muted">@<%= u.handle %> &middot; member since <%= it.monthYear(u.joined_at) %></p>
+    <% if (u.account_bio) { %><p><%= u.account_bio %></p><% } %>
+    <p class="prof-stats small"><span><strong><%= it.stats.posts %></strong> posts</span><span><strong><%= it.stats.upvotes %></strong> upvotes received</span><a href="/<%= u.handle %>/followers"><strong data-followers><%= it.counts.followers %></strong> followers</a><a href="/<%= u.handle %>/following"><strong><%= it.counts.following %></strong> following</a></p>
+  </div>
+  <% if (!it.self && it.user) { %><form method="post" action="/follow" class="follow-form"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= u.handle %>"><input type="hidden" name="on" value="<%= it.following ? 0 : 1 %>">
+    <button class="btn <%= it.following ? 'btn-outline' : 'btn-accent' %>" type="submit" aria-pressed="<%= it.following %>"><%= it.following ? 'Following' : 'Follow' %></button></form><% } %>
+</section>
+<div class="cols cols-2r">
+  <section class="col-main">
+    <div class="pills"><%~ tab('posts', 'Posts') %><%~ tab('comments', 'Comments') %><%~ tab('followers', 'Followers', it.counts.followers) %><%~ tab('following', 'Following', it.counts.following) %></div>
+    <% if (it.tab === 'posts') { %>
+      <div class="rows" data-feed><% if (!it.rows.length) { %><div class="card card-pad empty">No posts yet.</div><% } %><%~ include('_rows', { g: it, rows: it.rows, p: it.p }) %></div>
+    <% } else if (it.tab === 'comments') { %>
+      <div class="card"><% if (!it.comments.length) { %><p class="card-pad muted">No comments yet.</p><% } %>
+      <% for (const c of it.comments) { %><div class="pc"><p class="small muted">on <a href="<%= it.K.postUrl({ id: c.post_id, slug: c.slug }) %>#comment-<%= c.id %>"><%= c.title %></a> &middot; <%= it.dateShort(c.created_at) %></p><div class="prose prose-sm"><%~ it.md(c.body) %></div></div><% } %></div>
+      <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Newer</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Older &rarr;</a><% } %></p>
+    <% } else { %>
+      <div class="card"><% if (!it.people.length) { %><p class="card-pad muted">Nobody here yet.</p><% } %>
+      <% for (const x of it.people) { const h = x.handle || x.username; %><a class="person" href="/<%= h %>"><span class="av av-sm" style="background:<%= x.avatar_color || '#868e96' %>" aria-hidden="true"><%= it.initials(x.display_name || h) %></span><span><strong><%= x.display_name || h %></strong><br><span class="muted small">@<%= h %></span></span></a><% } %></div>
+      <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Next &rarr;</a><% } %></p>
+    <% } %>
+  </section>
+  <aside class="col-right">
+    <section class="card"><h2 class="card-h">Products</h2>
+      <% if (!it.products.length) { %><p class="card-pad muted small">No products listed.</p><% } %>
+      <% for (const x of it.products) { %><a class="prod-mini prod-mini-row" href="/product/<%= x.slug %>"><span class="prod-logo" style="--p:<%= it.colorFor(x.slug) %>" aria-hidden="true"><%= x.name.slice(0, 1) %></span><span><strong><%= x.name %></strong><br><span class="muted small"><%= x.mrr ? it.K.money(x.mrr) + '/mo' : x.mrr === 0 ? 'Pre-revenue' : 'Revenue not shared' %></span></span></a><% } %>
+    </section>
+    <% if (it.groups.length) { %><section class="card"><h2 class="card-h">Groups</h2><ul class="more-list"><% for (const g of it.groups) { %><li><a href="/group/<%= g.slug %>"><%= g.title %></a></li><% } %></ul></section><% } %>
+  </aside>
+</div>

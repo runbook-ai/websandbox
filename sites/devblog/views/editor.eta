@@ -1,0 +1,43 @@
+<% layout('layout') %>
+<% const v = it.values; const e = it.errors || {}; const a = it.a; const action = a ? `${a.url}/edit` : '/new'; %>
+<div class="editor-wrap">
+  <div class="editor-top"><a class="bl-brand" href="/" aria-label="Back home"><span class="bl-mark" aria-hidden="true">B/</span></a><h1 class="editor-h"><%= a ? (a.status === 'published' ? 'Edit post' : 'Edit draft') : 'Create Post' %></h1>
+    <div class="editor-tabs" role="tablist"><button type="button" role="tab" class="tab on" aria-selected="true" data-etab="edit">Edit</button><button type="button" role="tab" class="tab" aria-selected="false" data-etab="preview">Preview</button></div></div>
+  <% if (it.banner) { %><div class="banner banner-error" role="alert"><strong>You can't publish right now.</strong> <%= it.banner %></div><% } %>
+  <% if (Object.keys(e).length) { %><div class="banner banner-error" role="alert"><strong>Your post couldn't be saved:</strong><ul><% for (const m of Object.values(e)) { %><li><%= m %></li><% } %></ul></div><% } %>
+  <form method="post" action="<%= action %>" class="editor box" id="editor-form" data-editor><%~ it.csrfInput() %>
+    <div class="editor-pane" data-pane="edit">
+      <label class="sr-only" for="title">Post title</label>
+      <textarea id="title" name="title" class="editor-title<%= e.title ? ' invalid' : '' %>" rows="1" maxlength="128" placeholder="New post title here..." aria-invalid="<%= !!e.title %>" required><%= v.title %></textarea>
+      <div class="editor-tags">
+        <label for="tags" class="small muted">Tags (up to <%= it.D.MAX_TAGS %>, separated by commas)</label>
+        <input id="tags" name="tags" value="<%= v.tags %>" placeholder="Add up to <%= it.D.MAX_TAGS %> tags..." list="tag-suggest" autocomplete="off" aria-invalid="<%= !!e.tags %>"<%~ e.tags ? ' class="invalid"' : '' %>>
+        <datalist id="tag-suggest"><% for (const t of it.popular) { %><option value="<%= t.name %>"><% } %></datalist>
+        <% if (e.tags) { %><p class="field-error"><%= e.tags %></p><% } %>
+      </div>
+      <div class="editor-toolbar" role="toolbar" aria-label="Formatting">
+        <button type="button" data-md="**" title="Bold" aria-label="Bold"><b>B</b></button><button type="button" data-md="_" title="Italic" aria-label="Italic"><i>I</i></button>
+        <button type="button" data-md="[](url)" title="Link" aria-label="Link">&#128279;</button><button type="button" data-md="## " data-line title="Heading" aria-label="Heading">H</button>
+        <button type="button" data-md="- " data-line title="List" aria-label="Bulleted list">&bull;</button><button type="button" data-md="> " data-line title="Quote" aria-label="Quote">&ldquo;</button>
+        <button type="button" data-md="`" title="Code" aria-label="Inline code">&lt;/&gt;</button><button type="button" data-md="```&#10;" data-block title="Code block" aria-label="Code block">{ }</button>
+      </div>
+      <label class="sr-only" for="body">Post content</label>
+      <textarea id="body" name="body" class="editor-body<%= e.body ? ' invalid' : '' %>" rows="18" placeholder="Write your post content here... (Markdown)" aria-invalid="<%= !!e.body %>"><%= v.body %></textarea>
+      <div class="editor-series">
+        <label for="series_id" class="small muted">Series</label>
+        <select id="series_id" name="series_id"><option value="">No series</option><% for (const s of it.series) { %><option value="<%= s.id %>"<%= String(s.id) === String(v.series_id) ? ' selected' : '' %>><%= s.title %></option><% } %></select>
+        <label for="new_series" class="small muted">or start a new series</label>
+        <input id="new_series" name="new_series" value="<%= v.new_series || '' %>" placeholder="Series name" maxlength="100">
+        <% if (e.series_id) { %><p class="field-error"><%= e.series_id %></p><% } %>
+      </div>
+    </div>
+    <div class="editor-pane prose" data-pane="preview" hidden aria-live="polite"></div>
+    <div class="editor-foot">
+      <button type="submit" name="action" value="publish" class="btn btn-primary"><%= a && a.status === 'published' ? 'Save changes' : 'Publish' %></button>
+      <% if (!a || a.status !== 'published') { %><button type="submit" name="action" value="draft" class="btn btn-ghost">Save draft</button><% } %>
+      <a class="btn btn-ghost" href="<%= a && a.status === 'published' ? a.url : '/dashboard' %>">Cancel</a>
+    </div>
+  </form>
+  <aside class="editor-help box box-pad small"><h2 class="box-title">Writing a great post title</h2><p class="muted">Think of your title as a super short (but compelling!) description, like an overview of the actual post in one short sentence.</p>
+    <h2 class="box-title">Tagging guidelines</h2><p class="muted">Tags help people find your post. Use existing tags whenever possible; a new tag is created the first time someone uses it.</p></aside>
+</div>

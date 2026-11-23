@@ -1,0 +1,26 @@
+<% layout('layout') %>
+<% const v = it.values; const e = it.errors || {}; %>
+<div class="narrow">
+  <h1 class="page-h">Write a post</h1>
+  <% if (it.banner) { %><div class="banner banner-error" role="alert"><strong>Slow down.</strong> <%= it.banner %></div><% } %>
+  <% if (Object.keys(e).length) { %><div class="banner banner-error" role="alert">Please fix the highlighted fields.</div><% } %>
+  <form method="post" action="/new" class="card card-pad stack-form" data-write><%~ it.csrfInput() %>
+    <label for="w-title">Title</label>
+    <input id="w-title" name="title" value="<%= v.title %>" maxlength="150" placeholder="e.g. We just crossed $1k MRR. Here's what worked" aria-invalid="<%= !!e.title %>"<%~ e.title ? ' class="invalid"' : '' %> required>
+    <% if (e.title) { %><p class="field-error"><%= e.title %></p><% } %>
+    <div class="two">
+      <div><label for="w-group">Group</label>
+        <select id="w-group" name="group"><option value="">No group (main feed)</option><% for (const g of it.groups) { %><option value="<%= g.slug %>"<%= v.group === g.slug ? ' selected' : '' %>><%= g.title %></option><% } %></select>
+        <% if (e.group) { %><p class="field-error"><%= e.group %></p><% } %></div>
+      <div><label for="w-product">Product</label>
+        <select id="w-product" name="product"><option value="">Not about one of my products</option><% for (const x of it.products) { %><option value="<%= x.slug %>"<%= v.product === x.slug ? ' selected' : '' %>><%= x.name %></option><% } %></select>
+        <% if (e.product) { %><p class="field-error"><%= e.product %></p><% } %></div>
+    </div>
+    <label for="w-body">Post <span class="muted small">(Markdown supported)</span></label>
+    <textarea id="w-body" name="body" rows="16" placeholder="Share the details: numbers, what you tried, what you learned, what you need help with." aria-invalid="<%= !!e.body %>"<%~ e.body ? ' class="invalid"' : '' %>><%= v.body %></textarea>
+    <% if (e.body) { %><p class="field-error"><%= e.body %></p><% } %>
+    <p class="muted small" data-wordcount></p>
+    <div class="row-btns"><button type="submit" class="btn btn-accent">Publish post</button><a class="btn btn-ghost" href="/">Cancel</a></div>
+  </form>
+  <p class="muted small">You can publish up to two posts a day. Be specific: posts with real numbers and honest lessons do best here.</p>
+</div>

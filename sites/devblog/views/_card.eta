@@ -1,0 +1,21 @@
+<%/* include('_card', {g, r, big}) one article in a feed */%>
+<% const g = it.g; const r = it.r; %>
+<article class="card<%= it.big ? ' card-big' : '' %>" id="article-<%= r.id %>" data-article="<%= r.id %>">
+  <div class="card-head">
+    <a href="/<%= r.handle %>" class="card-author"><span class="av av-sm" style="background:<%= r.avatar_color %>" aria-hidden="true"><%= g.initials(r.display_name) %></span>
+      <span class="card-who"><span class="card-name"><%= r.display_name %></span><span class="card-date"><%~ g.when(r.published_at || r.created_at, 'date') %> (<%= g.agoLong(r.published_at || r.created_at) %>)</span></span></a>
+  </div>
+  <div class="card-body">
+    <h2 class="card-title"><a href="<%= r.url %>" id="article-link-<%= r.id %>"><%= r.title %></a></h2>
+    <% if (r.tags.length) { %><div class="tags"><% for (const t of r.tags) { %><a class="tag" href="/t/<%= t %>" style="--tag:<%= g.D.tagColor(t) %>"><span aria-hidden="true">#</span><%= t %></a><% } %></div><% } %>
+    <div class="card-foot">
+      <a class="card-stat" href="<%= r.url %>"><span aria-hidden="true">&#9829;</span> <%= r.reactions %> <span class="hide-sm">reaction<%= r.reactions === 1 ? '' : 's' %></span></a>
+      <a class="card-stat" href="<%= r.url %>#comments"><span aria-hidden="true">&#128172;</span> <%= r.comment_count %> <span class="hide-sm">comment<%= r.comment_count === 1 ? '' : 's' %></span></a>
+      <span class="card-right">
+        <span class="muted small"><%= r.reading_time || 1 %> min read</span>
+        <form method="post" action="/readinglist" class="inline save-form" data-save="<%= r.id %>"><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="on" value="<%= r.saved ? 0 : 1 %>">
+          <button type="submit" class="btn-save<%= r.saved ? ' on' : '' %>" aria-pressed="<%= !!r.saved %>" aria-label="<%= r.saved ? 'Remove from reading list' : 'Save to reading list' %>"><%= r.saved ? 'Saved' : 'Save' %></button></form>
+      </span>
+    </div>
+  </div>
+</article>

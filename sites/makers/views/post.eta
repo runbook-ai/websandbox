@@ -1,0 +1,43 @@
+<% layout('layout') %>
+<% const p = it.p; const prod = it.product; %>
+<div class="post-cols">
+  <article class="card post" aria-labelledby="post-title">
+    <div class="post-top">
+      <form method="post" action="/upvote" class="up-form up-form-lg"><%~ it.csrfInput() %><input type="hidden" name="target" value="post"><input type="hidden" name="id" value="<%= p.id %>"><input type="hidden" name="on" value="<%= p.upvoted ? 0 : 1 %>">
+        <button type="submit" class="up up-lg<%= p.upvoted ? ' on' : '' %>" aria-pressed="<%= p.upvoted %>" aria-label="<%= p.upvoted ? 'Remove upvote' : 'Upvote' %> (<%= p.upvotes %>)"<%= it.own ? ' disabled title="Your post"' : '' %>><span class="up-arrow" aria-hidden="true">&#9650;</span><span class="up-n" data-n><%= p.upvotes %></span></button></form>
+      <div class="post-head">
+        <% if (p.group) { %><a class="row-group" href="/group/<%= p.group.slug %>" style="--g:<%= p.group.color || '#6c757d' %>"><%= p.group.title %></a><% } %>
+        <h1 id="post-title"><%= p.title %></h1>
+        <div class="post-by small"><a class="row-author" href="/<%= p.handle %>"><span class="av av-sm" style="background:<%= p.avatar_color %>" aria-hidden="true"><%= it.initials(p.display_name) %></span><strong><%= p.display_name %></strong></a>
+          <span class="muted">&middot; <%~ it.when(p.created_at, 'date') %><% if (p.edited_at) { %> &middot; edited<% } %></span>
+          <% if (p.product) { %><span class="muted">&middot; about</span> <a class="row-product" href="/product/<%= p.product.slug %>"><%= p.product.name %></a><% } %></div>
+      </div>
+    </div>
+    <% if (it.editing && it.own) { %>
+      <form method="post" action="<%= p.url %>/edit" class="stack-form post-edit"><%~ it.csrfInput() %><label for="edit-body">Edit your post</label><textarea id="edit-body" name="body" rows="14"><%= p.body %></textarea>
+        <div class="row-btns"><button class="btn btn-accent" type="submit">Save</button><a class="btn btn-ghost" href="<%= p.url %>">Cancel</a></div></form>
+    <% } else { %>
+      <div class="prose"><%~ it.md(p.body) %></div>
+    <% } %>
+    <% if (it.own && !it.editing) { %><div class="post-own"><a class="btn btn-ghost btn-sm" href="<%= p.url %>?edit=1">Edit</a>
+      <form method="post" action="<%= p.url %>/delete" class="inline" data-confirm="Delete this post?"><%~ it.csrfInput() %><button class="btn btn-ghost btn-sm danger" type="submit">Delete</button></form></div><% } %>
+  </article>
+  <aside class="post-side">
+    <section class="card card-pad founder">
+      <a class="founder-top" href="/<%= p.handle %>"><span class="av av-md" style="background:<%= p.avatar_color %>" aria-hidden="true"><%= it.initials(p.display_name) %></span><span><strong><%= p.display_name %></strong><br><span class="muted small">@<%= p.handle %></span></span></a>
+      <% if (it.author && it.author.account_bio) { %><p class="small"><%= it.author.account_bio %></p><% } %>
+      <% if (!it.own && it.user) { %><form method="post" action="/follow" class="follow-form"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= p.handle %>"><input type="hidden" name="on" value="<%= it.following ? 0 : 1 %>">
+        <button class="btn btn-block <%= it.following ? 'btn-outline' : 'btn-accent' %>" type="submit" aria-pressed="<%= it.following %>"><%= it.following ? 'Following' : 'Follow' %></button></form><% } %>
+      <% if (prod) { %><a class="prod-mini" href="/product/<%= prod.slug %>"><span class="prod-logo" style="--p:<%= it.colorFor(prod.slug) %>" aria-hidden="true"><%= prod.name.slice(0, 1) %></span><span><strong><%= prod.name %></strong><br><span class="muted small"><%= prod.mrr ? it.K.money(prod.mrr) + '/mo' : 'Revenue not shared' %></span></span></a><% } %>
+    </section>
+    <% if (it.more.length) { %><section class="card"><h2 class="card-h">More from <%= p.display_name %></h2><ul class="more-list"><% for (const m of it.more) { %><li><a href="<%= m.url %>"><%= m.title %></a><span class="muted small"><%= m.upvotes %> upvotes</span></li><% } %></ul></section><% } %>
+  </aside>
+</div>
+<section class="card comments" id="comments" aria-labelledby="c-title">
+  <div class="comments-head"><h2 id="c-title"><%= it.tree.count %> comment<%= it.tree.count === 1 ? '' : 's' %></h2>
+    <form method="get" action="<%= p.url %>#comments" class="inline"><label class="sr-only" for="csort">Sort comments</label><select id="csort" name="sort" data-autosubmit><% for (const [k, l] of [['top', 'Top'], ['latest', 'Newest'], ['oldest', 'Oldest']]) { %><option value="<%= k %>"<%= it.sort === k ? ' selected' : '' %>><%= l %></option><% } %></select><noscript><button type="submit">Sort</button></noscript></form></div>
+  <% if (it.user) { %>
+  <form method="post" action="<%= p.url %>/comments" class="c-form"><%~ it.csrfInput() %><label class="sr-only" for="c-new">Write a comment</label><textarea id="c-new" name="body" rows="3" placeholder="Share your thoughts, feedback or a question..." required></textarea><button class="btn btn-accent btn-sm" type="submit">Post comment</button></form>
+  <% } else { %><p class="muted"><a href="/login?next=<%= encodeURIComponent(p.url + '#comments') %>">Sign in</a> to comment.</p><% } %>
+  <div class="c-list"><% for (const c of it.tree.roots) { %><%~ include('_comment', { g: it, c, p }) %><% } %></div>
+</section>

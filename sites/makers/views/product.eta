@@ -1,0 +1,48 @@
+<% layout('layout') %>
+<% const x = it.prod; const v = it.values || {}; const e = it.errors || {}; %>
+<section class="prod-hero card">
+  <span class="prod-logo prod-logo-lg" style="--p:<%= it.colorFor(x.slug) %>" aria-hidden="true"><%= x.name.slice(0, 1) %></span>
+  <div class="prod-hero-main">
+    <h1><%= x.name %></h1>
+    <p class="prod-tagline"><%= x.tagline %></p>
+    <p class="small muted"><%= it.K.topicLabel(x.topic) %> &middot; Launched <%= it.dateLong(x.launched_at) %></p>
+  </div>
+  <dl class="prod-facts">
+    <div><dt>Monthly revenue</dt><dd><%= x.mrr ? it.K.money(x.mrr) : x.mrr === 0 ? '$0' : 'Not shared' %></dd></div>
+    <% if (it.rank && x.mrr) { %><div><dt>Revenue rank</dt><dd>#<%= it.rank %></dd></div><% } %>
+    <div><dt>Founder</dt><dd><% if (x.founder_account) { %><a href="/<%= x.founder_handle %>"><%= x.founder_name %></a><% } else { %><%= x.founder_name %><% } %></dd></div>
+  </dl>
+</section>
+<div class="post-cols">
+  <section>
+    <section class="card card-pad"><h2 class="card-h0">About</h2><p><%= x.description %></p></section>
+    <section class="card" id="milestones"><h2 class="card-h">Milestones</h2>
+      <ol class="timeline">
+        <% for (const m of it.ms) { %><li class="tl-<%= m.kind %>"><span class="tl-dot" aria-hidden="true"></span><div><p class="small muted"><%= it.dateLong(m.at) %></p><p><strong><%= m.title %></strong><% if (m.value) { %> <span class="tl-value"><%= m.value %></span><% } %></p><% if (m.post_url) { %><a class="small" href="<%= m.post_url %>">Read the post &rarr;</a><% } %></div></li><% } %>
+      </ol>
+      <% if (it.own) { %>
+      <form method="post" action="/product/<%= x.slug %>/milestones" class="ms-form stack-form"><%~ it.csrfInput() %>
+        <h3>Add a milestone</h3>
+        <label for="ms-title">What happened?</label><input id="ms-title" name="title" value="<%= v.title || '' %>" maxlength="150" placeholder="e.g. First paying customer" aria-invalid="<%= !!e.title %>"<%~ e.title ? ' class="invalid"' : '' %>>
+        <% if (e.title) { %><p class="field-error"><%= e.title %></p><% } %>
+        <div class="two"><div><label for="ms-value">Number (optional)</label><input id="ms-value" name="value" value="<%= v.value || '' %>" placeholder="e.g. 250 users"><% if (e.value) { %><p class="field-error"><%= e.value %></p><% } %></div>
+          <div><label for="ms-mrr">New monthly revenue in $ (optional)</label><input id="ms-mrr" name="mrr" value="<%= v.mrr || '' %>" inputmode="numeric" placeholder="<%= x.mrr || 0 %>" aria-invalid="<%= !!e.mrr %>"<%~ e.mrr ? ' class="invalid"' : '' %>><% if (e.mrr) { %><p class="field-error"><%= e.mrr %></p><% } %></div></div>
+        <button class="btn btn-accent" type="submit">Add milestone</button>
+      </form>
+      <% } %>
+    </section>
+    <section class="card"><h2 class="card-h"><%= it.posts.length ? `Posts about ${x.name}` : `Recent posts by ${x.founder_name}` %></h2>
+      <div class="rows rows-flat"><% for (const r of (it.posts.length ? it.posts : it.founderPosts)) { %><%~ include('_row', { g: it, r }) %><% } %>
+      <% if (!it.posts.length && !it.founderPosts.length) { %><p class="card-pad muted">No posts yet.</p><% } %></div>
+    </section>
+  </section>
+  <aside class="post-side">
+    <section class="card card-pad founder">
+      <p class="eyebrow">Founder</p>
+      <a class="founder-top" href="<%= x.founder_account ? '/' + x.founder_handle : '#' %>"><span class="av av-md" style="background:<%= x.founder_color %>" aria-hidden="true"><%= it.initials(x.founder_name) %></span><span><strong><%= x.founder_name %></strong><% if (x.founder_account) { %><br><span class="muted small">@<%= x.founder_handle %></span><% } %></span></a>
+      <% if (it.user && !it.own && x.founder_account) { %><form method="post" action="/follow" class="follow-form"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= x.founder_handle %>"><input type="hidden" name="on" value="<%= it.following ? 0 : 1 %>">
+        <button class="btn btn-block <%= it.following ? 'btn-outline' : 'btn-accent' %>" type="submit" aria-pressed="<%= it.following %>"><%= it.following ? 'Following' : 'Follow founder' %></button></form><% } %>
+      <% if (it.own) { %><a class="btn btn-block btn-outline" href="/new?product=<%= x.slug %>">Post an update</a><% } %>
+    </section>
+  </aside>
+</div>

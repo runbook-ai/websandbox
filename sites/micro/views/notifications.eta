@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<div class="col-head sticky">
+  <div class="col-head-row"><h1 class="col-h1">Notifications</h1>
+    <form method="post" action="/notifications/read"><%~ it.csrfInput() %><input type="hidden" name="all" value="1"><input type="hidden" name="next" value="<%= it.req.url %>"><button class="btn btn-sm btn-outline" type="submit">Mark all as read</button></form></div>
+  <nav class="tabs" aria-label="Notification types"><a class="tab<%= it.tab === 'all' ? ' on' : '' %>" href="/notifications"<%~ it.tab === 'all' ? ' aria-current="page"' : '' %>><span>All</span></a><a class="tab<%= it.tab === 'mentions' ? ' on' : '' %>" href="/notifications/mentions"<%~ it.tab === 'mentions' ? ' aria-current="page"' : '' %>><span>Mentions</span></a></nav>
+</div>
+<section class="timeline" data-timeline aria-label="Notifications">
+  <% if (!it.rows.length) { %><div class="empty"><h2>Nothing to see here — yet</h2><p class="muted"><%= it.tab === 'mentions' ? 'When someone mentions or replies to you, you’ll find it here.' : 'Likes, reposts, follows and replies show up here.' %></p></div><% } %>
+  <%~ include('_notes', { g: it, rows: it.rows, p: it.p }) %>
+</section>

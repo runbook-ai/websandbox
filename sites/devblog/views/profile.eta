@@ -1,0 +1,36 @@
+<% layout('layout') %>
+<% const u = it.u; const st = it.stats; %>
+<section class="profile-hero" style="--brand:<%= u.avatar_color %>">
+  <div class="profile-band" aria-hidden="true"></div>
+  <div class="box profile-card">
+    <span class="av av-xl" style="background:<%= u.avatar_color %>" aria-hidden="true"><%= it.initials(u.display_name || u.handle) %></span>
+    <div class="profile-act">
+      <% if (it.self) { %><a class="btn btn-primary" href="/settings">Edit profile</a>
+      <% } else { %><form method="post" action="/follow" class="follow-form" data-follow-user="<%= u.handle %>"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= u.handle %>"><input type="hidden" name="on" value="<%= it.following ? 0 : 1 %>">
+        <button type="submit" class="btn <%= it.following ? 'btn-outline' : 'btn-primary' %>" aria-pressed="<%= it.following %>"><%= it.following ? 'Following' : 'Follow' %></button></form><% } %>
+    </div>
+    <h1 class="profile-name"><%= u.display_name || u.handle %></h1>
+    <p class="muted">@<%= u.handle %></p>
+    <p class="profile-bio"><%= u.account_bio || '404 bio not found' %></p>
+    <p class="profile-meta small muted"><span>&#127874; Joined on <%= it.dateLong(u.joined_at) %></span><span><%= st.followers %> followers</span><span><%= st.following %> following</span></p>
+  </div>
+</section>
+<div class="grid2 profile-grid">
+  <aside class="profile-side">
+    <section class="box box-pad small profile-stats">
+      <p>&#128221; <%= st.posts %> post<%= st.posts === 1 ? '' : 's' %> published</p>
+      <p>&#128172; <%= st.comments %> comment<%= st.comments === 1 ? '' : 's' %> written</p>
+      <p># <%= st.tags %> tag<%= st.tags === 1 ? '' : 's' %> followed</p>
+    </section>
+    <% if (it.series.length) { %><section class="box"><h2 class="box-head">Series</h2><ul class="more-list"><% for (const s of it.series) { %><li><a href="/<%= u.handle %>/series/<%= s.id %>"><%= s.title %></a> <span class="muted small"><%= s.n %> parts</span></li><% } %></ul></section><% } %>
+  </aside>
+  <section class="feed" data-feed aria-label="Posts by <%= u.display_name || u.handle %>">
+    <% if (it.recentComments.length && it.p.page === 1) { %>
+    <section class="box recent-comments"><h2 class="box-head">Recent comments</h2>
+      <ul class="more-list"><% for (const c of it.recentComments) { %><li><a href="/<%= c.handle %>/<%= c.slug %>-<%= c.post_id %>#comment-<%= c.id %>"><strong><%= c.title %></strong><br><span class="muted small"><%= it.excerpt(c.body, 120) %></span></a></li><% } %></ul></section>
+    <% } %>
+    <% if (!it.rows.length) { %><div class="box box-pad empty">No posts yet.</div><% } %>
+    <% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %>
+    <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+  </section>
+</div>

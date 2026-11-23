@@ -1,0 +1,8 @@
+<%/* include('_person', {g, u}) one account row (search, followers) */%>
+<% const g = it.g; const u = it.u; const self = g.user && g.user.id === u.id; %>
+<div class="person">
+  <a href="/<%= u.handle %>" class="person-link"><span class="av av-md" style="background:<%= u.avatar_color || '#868e96' %>" aria-hidden="true"><%= g.initials(u.display_name || u.handle) %></span>
+    <span class="person-names"><strong><%= u.display_name || u.handle %></strong><span class="muted">@<%= u.handle %></span><% if (u.bio || u.account_bio) { %><span class="person-bio"><%= u.bio || u.account_bio %></span><% } %></span></a>
+  <% if (g.user && !self) { %><form method="post" action="/i/follow" class="follow-form"><%~ g.csrfInput() %><input type="hidden" name="handle" value="<%= u.handle %>"><input type="hidden" name="on" value="<%= u.following ? 0 : 1 %>">
+    <button class="btn btn-sm <%= u.following ? 'btn-outline' : 'btn-dark' %>" type="submit" aria-pressed="<%= !!u.following %>" aria-label="<%= u.following ? 'Unfollow' : 'Follow' %> @<%= u.handle %>"><%= u.following ? 'Following' : 'Follow' %></button></form><% } %>
+</div>

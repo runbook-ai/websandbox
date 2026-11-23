@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<div class="col-head sticky"><h1 class="sr-only">Home</h1>
+  <nav class="tabs" aria-label="Timelines"><a class="tab<%= it.tab === 'foryou' ? ' on' : '' %>" href="/home"<%~ it.tab === 'foryou' ? ' aria-current="page"' : '' %>><span>For you</span></a><a class="tab<%= it.tab === 'following' ? ' on' : '' %>" href="/home/following"<%~ it.tab === 'following' ? ' aria-current="page"' : '' %>><span>Following</span></a></nav></div>
+<%~ include('_composer', { g: it, text: it.draft }) %>
+<section class="timeline" data-timeline aria-label="Timeline: <%= it.tab === 'following' ? 'Following' : 'For you' %>">
+  <% if (!it.posts.length) { %><div class="empty"><h2>Welcome to your timeline</h2><p class="muted"><%= it.tab === 'following' ? 'When you follow people, their posts show up here.' : 'Nothing new in the last two days.' %> <a href="/explore">Explore</a></p></div><% } %>
+  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+</section>

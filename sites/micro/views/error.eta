@@ -1,0 +1,3 @@
+<% layout('layout') %>
+<div class="col-head"><h1 class="col-h1"><%= it.status === 404 ? 'Not found' : it.status === 403 ? 'Not allowed' : it.status === 429 ? 'Slow down' : 'Error' %></h1></div>
+<div class="empty"><h2><%= it.status === 404 ? 'Hmm...this page doesn’t exist.' : 'Something went wrong.' %></h2><p class="muted"><%= it.message %></p><a class="btn btn-primary" href="/explore">Search</a></div>

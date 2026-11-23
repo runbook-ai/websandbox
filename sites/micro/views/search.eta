@@ -1,0 +1,18 @@
+<% layout('layout') %>
+<% const tab = (k, l) => `<a class="tab${it.f === k ? ' on' : ''}" href="/search?q=${encodeURIComponent(it.q)}${k === 'top' ? '' : '&f=' + k}"${it.f === k ? ' aria-current="page"' : ''}><span>${l}</span></a>`; %>
+<div class="col-head sticky">
+  <form class="mm-search mm-search-top" action="/search" method="get" role="search"><span aria-hidden="true">&#9906;</span><input type="search" name="q" value="<%= it.q %>" placeholder="Search" aria-label="Search Murmur"><% if (it.f !== 'top') { %><input type="hidden" name="f" value="<%= it.f %>"><% } %></form>
+  <% if (it.q) { %><nav class="tabs" aria-label="Result types"><%~ tab('top', 'Top') %><%~ tab('live', 'Latest') %><%~ tab('user', 'People') %></nav><% } %>
+</div>
+<h1 class="sr-only">Search<%= it.q ? ` results for ${it.q}` : '' %></h1>
+<% if (!it.q) { %><div class="empty"><p class="muted">Search for posts and people. Try <code>from:handle</code> to search one account.</p></div><% } else if (it.f === 'user') { %>
+  <section class="people" aria-label="People">
+  <% if (!it.people.length) { %><div class="empty"><h2>No results for “<%= it.q %>”</h2></div><% } %>
+  <% for (const u of it.people) { %><%~ include('_person', { g: it, u }) %><% } %>
+  </section>
+<% } else { %>
+  <section class="timeline" data-timeline aria-label="Posts">
+  <% if (!it.posts.length) { %><div class="empty"><h2>No results for “<%= it.q %>”</h2><p class="muted">Try searching for something else.</p></div><% } %>
+  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+  </section>
+<% } %>

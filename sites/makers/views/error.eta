@@ -1,0 +1,6 @@
+<% layout('layout') %>
+<div class="narrow card card-pad error-page">
+  <h1 class="page-h"><%= it.status === 404 ? 'Page not found' : it.status === 403 ? 'Not allowed' : it.status === 429 ? 'Slow down' : 'Something went wrong' %></h1>
+  <p><%= it.message %></p>
+  <a class="btn btn-accent" href="/">Back to posts</a>
+</div>

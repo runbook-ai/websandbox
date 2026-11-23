@@ -1,0 +1,20 @@
+<% layout('layout') %>
+<div class="narrow">
+  <div class="page-row"><h1 class="page-h">Notifications</h1>
+    <form method="post" action="/notifications/read"><%~ it.csrfInput() %><input type="hidden" name="all" value="1"><input type="hidden" name="go" value="<%= it.req.url %>"><button class="btn btn-outline btn-sm" type="submit">Mark all read</button></form></div>
+  <div class="pills"><a class="pill<%= it.filter === 'all' ? ' on' : '' %>" href="/notifications">All</a><a class="pill<%= it.filter === 'unread' ? ' on' : '' %>" href="/notifications?filter=unread">Unread</a></div>
+  <div class="card">
+    <% if (!it.rows.length) { %><p class="card-pad muted">You're all caught up.</p><% } %>
+    <% for (const n of it.rows) { const t = n.notification_type; %>
+    <div class="note<%= n.read_at ? '' : ' unread' %>" id="note-<%= n.id %>">
+      <span class="av av-sm" style="background:<%= n.actor_color %>" aria-hidden="true"><%= it.initials(n.actor_name) %></span>
+      <div class="note-main"><p><a href="/<%= n.actor_handle %>"><strong><%= n.actor_name || 'Someone' %></strong></a>
+        <% if (t === 'comment') { %>commented on <a href="<%= n.url %>"><%= n.post_title %></a><% } else if (t === 'mention') { %>mentioned you in <a href="<%= n.url %>"><%= n.post_title %></a><% } else if (t === 'reaction') { %>upvoted <a href="<%= n.url %>"><%= n.comment_id ? 'your comment on ' : '' %><%= n.post_title %></a><% } else if (t === 'follow') { %>started following you<% } else { %><%= t %><% } %></p>
+        <% if (n.comment_body && t !== 'reaction') { %><p class="note-q muted"><%= it.excerpt(n.comment_body, 180) %></p><% } %>
+        <p class="small muted"><%~ it.when(n.created_at, 'long') %></p></div>
+      <% if (!n.read_at) { %><form method="post" action="/notifications/read"><%~ it.csrfInput() %><input type="hidden" name="id" value="<%= n.id %>"><input type="hidden" name="go" value="<%= n.url %>"><button class="btn btn-ghost btn-sm" type="submit">View</button></form><% } %>
+    </div>
+    <% } %>
+  </div>
+  <p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Newer</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Older &rarr;</a><% } %></p>
+</div>

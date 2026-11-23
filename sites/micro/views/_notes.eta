@@ -1,0 +1,19 @@
+<%/* include('_notes', {rows, p}) notification cells */%>
+<% const g = it.g || it; const VERB = { like: 'liked your post', repost: 'reposted your post', follow: 'followed you', reaction: 'reacted to your post' }; const ICON = { like: '&#9829;', repost: '&#8634;', follow: '&#9786;', reaction: '&#9733;' }; %>
+<% for (const n of it.rows) { const t = n.notification_type; %>
+  <% if (n.post) { %>
+  <div class="note-cell<%= n.read_at ? '' : ' unread' %>" id="note-<%= n.id %>">
+    <% if (t === 'mention') { %><p class="note-kind muted small">Mentioned you</p><% } else if (t === 'quote') { %><p class="note-kind muted small">Quoted your post</p><% } %>
+    <%~ include('_post', { g, p: n.post }) %></div>
+  <% } else { %>
+  <article class="note<%= n.read_at ? '' : ' unread' %>" id="note-<%= n.id %>">
+    <span class="note-ico note-<%= t %>" aria-hidden="true"><%~ ICON[t] || '&#9673;' %></span>
+    <div class="note-main">
+      <a href="/<%= n.actor_handle %>"><span class="av av-sm" style="background:<%= n.actor_color %>" aria-hidden="true"><%= g.initials(n.actor_name) %></span></a>
+      <p><a href="/<%= n.actor_handle %>"><strong><%= n.actor_name || 'Someone' %></strong></a> <%= VERB[t] || (t === 'reply' ? 'replied' : t === 'mention' ? 'mentioned you' : t) %> <span class="muted small">&middot; <%~ g.when(n.created_at) %></span></p>
+      <% if (n.target) { %><a class="note-target muted" href="<%= n.target.url %>"><%= g.excerpt(n.target.body, 160) %></a><% } %>
+    </div>
+  </article>
+  <% } %>
+<% } %>
+<% if (it.p && it.p.next) { %><a class="tl-more" href="<%= it.p.next %>" data-more>Show more</a><% } %>

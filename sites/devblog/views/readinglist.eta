@@ -1,0 +1,20 @@
+<% layout('layout') %>
+<div class="page-head"><h1>Reading list (<%= it.rows.length %>)</h1>
+  <form method="get" action="/readinglist" class="inline-search" role="search"><% if (it.tag) { %><input type="hidden" name="tag" value="<%= it.tag.name %>"><% } %><input type="search" name="q" value="<%= it.q %>" placeholder="Search in your reading list" aria-label="Search in your reading list"><button class="btn btn-ghost" type="submit">Search</button></form></div>
+<div class="grid2">
+  <nav class="rl-tags" aria-label="Filter by tag">
+    <a class="nav-link<%= !it.tag ? ' on' : '' %>" href="/readinglist<%= it.q ? '?q=' + encodeURIComponent(it.q) : '' %>">All tags</a>
+    <% for (const t of it.tagCounts) { %><a class="nav-link<%= it.tag && it.tag.name === t.name ? ' on' : '' %>" href="/readinglist?tag=<%= t.name %><%= it.q ? '&q=' + encodeURIComponent(it.q) : '' %>">#<%= t.name %><span class="nav-n"><%= t.n %></span></a><% } %>
+  </nav>
+  <section class="box rl-list">
+    <% if (!it.rows.length) { %><div class="box-pad empty"><p><strong>Your reading list is empty</strong></p><p class="muted">Click the <strong>Save</strong> button on any article to add it here.</p></div><% } %>
+    <% for (const r of it.rows) { %>
+    <article class="rl-item" id="article-<%= r.id %>">
+      <a href="/<%= r.handle %>"><span class="av av-sm" style="background:<%= r.avatar_color %>" aria-hidden="true"><%= it.initials(r.display_name) %></span></a>
+      <div class="rl-main"><a class="rl-title" href="<%= r.url %>"><%= r.title %></a>
+        <div class="small muted"><a href="/<%= r.handle %>"><%= r.display_name %></a> &bull; <%= it.dateShort(r.published_at || r.created_at) %> &bull; <%= r.reading_time || 1 %> min read <% for (const t of r.tags) { %><a class="muted" href="/readinglist?tag=<%= t %>">#<%= t %></a> <% } %></div></div>
+      <form method="post" action="/readinglist" class="inline save-form" data-save="<%= r.id %>" data-remove><%~ it.csrfInput() %><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="on" value="0"><button type="submit" class="btn btn-sm btn-ghost">Archive</button></form>
+    </article>
+    <% } %>
+  </section>
+</div>

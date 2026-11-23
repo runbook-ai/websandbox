@@ -1,0 +1,13 @@
+<% layout('layout') %>
+<div class="narrow auth">
+  <h1 class="page-h">Sign in to <%= it.site.title %></h1>
+  <% if (it.error) { %><div class="banner banner-error" role="alert"><%= it.error %></div><% } %>
+  <form method="post" action="<%= it.req.path %>" class="card card-pad stack-form"><%~ it.csrfInput() %>
+    <input type="hidden" name="next" value="<%= it.next %>">
+    <label for="login-name">Username or email</label>
+    <input id="login-name" name="login" value="<%= (it.values && it.values.login) || '' %>" autocomplete="username" required>
+    <label for="login-pw">Password</label>
+    <input id="login-pw" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" class="btn btn-accent btn-block">Sign in</button>
+  </form>
+</div>

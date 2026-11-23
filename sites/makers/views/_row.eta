@@ -1,0 +1,17 @@
+<%/* include('_row', {g, r, showGroup}) one post in a feed */%>
+<% const g = it.g; const r = it.r; const own = g.user && g.user.id === r.user_id; %>
+<article class="row" id="post-<%= r.id %>">
+  <form method="post" action="/upvote" class="up-form"><%~ g.csrfInput() %><input type="hidden" name="target" value="post"><input type="hidden" name="id" value="<%= r.id %>"><input type="hidden" name="on" value="<%= r.upvoted ? 0 : 1 %>">
+    <button type="submit" class="up<%= r.upvoted ? ' on' : '' %>" aria-pressed="<%= r.upvoted %>" aria-label="<%= r.upvoted ? 'Remove upvote' : 'Upvote' %> (<%= r.upvotes %>)"<%= own ? ' disabled title="Your post"' : '' %>><span class="up-arrow" aria-hidden="true">&#9650;</span><span class="up-n" data-n><%= r.upvotes %></span></button></form>
+  <div class="row-main">
+    <h2 class="row-title"><a href="<%= r.url %>"><%= r.title %></a></h2>
+    <p class="row-snip muted"><%= g.excerpt(r.body, 170) %></p>
+    <div class="row-meta small">
+      <a class="row-author" href="/<%= r.handle %>"><span class="av av-xs" style="background:<%= r.avatar_color %>" aria-hidden="true"><%= g.initials(r.display_name) %></span><%= r.display_name %></a>
+      <% if (r.group && it.showGroup !== false) { %><span class="sep" aria-hidden="true">/</span><a class="row-group" href="/group/<%= r.group.slug %>" style="--g:<%= r.group.color || '#6c757d' %>"><%= r.group.title %></a><% } %>
+      <% if (r.product) { %><span class="sep" aria-hidden="true">/</span><a class="row-product" href="/product/<%= r.product.slug %>"><%= r.product.name %></a><% } %>
+      <span class="sep" aria-hidden="true">/</span><span class="muted"><%~ g.when(r.created_at, 'long') %></span>
+      <span class="sep" aria-hidden="true">/</span><a class="muted" href="<%= r.url %>#comments"><%= r.comment_count %> comment<%= r.comment_count === 1 ? '' : 's' %></a>
+    </div>
+  </div>
+</article>

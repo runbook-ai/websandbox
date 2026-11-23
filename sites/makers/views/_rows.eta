@@ -1,0 +1,2 @@
+<% for (const r of it.rows) { %><%~ include('_row', { g: it.g || it, r, showGroup: it.showGroup }) %><% } %>
+<% if (it.p && it.p.next) { %><a class="more" href="<%= it.p.next %>" data-more>Load more posts</a><% } %>

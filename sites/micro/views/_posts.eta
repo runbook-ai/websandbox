@@ -1,0 +1,3 @@
+<%/* include('_posts', {posts, p}) a page of timeline cells + the "show more" link (also the ?fragment=1 response) */%>
+<% for (const x of it.posts) { %><%~ include('_post', { g: it.g || it, p: x }) %><% } %>
+<% if (it.p && it.p.next) { %><a class="tl-more" href="<%= it.p.next %>" data-more>Show more posts</a><% } %>

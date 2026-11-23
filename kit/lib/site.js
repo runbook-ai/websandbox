@@ -17,7 +17,7 @@ const { httpError, isLoopback } = require('./context');
 
 const KIT_PUBLIC = path.join(__dirname, '..', 'public');
 const CSP = "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; form-action 'self'";
-const SITE_INDEX = { shopping: 2, shopping_admin: 3, forum: 4, gitlab: 5, wiki: 6, map: 7, lab: 8, mail: 10, social: 11 };
+const SITE_INDEX = { shopping: 2, shopping_admin: 3, forum: 4, gitlab: 5, wiki: 6, map: 7, lab: 8, mail: 10, social: 11, devblog: 12, micro: 13, makers: 14 };
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 // Browser-originated (agent page JS): Chrome sends Origin on every POST, Sec-Fetch-Site on
 // trustworthy origins, and a Mozilla/ user agent it does not let page JS change.
@@ -489,4 +489,4 @@ async function main(rt, argv = process.argv.slice(2)) {
   return s;
 }
 
-module.exports = { site, start, main, buildLocals, SITE_INDEX, fmt, originFor, altHostOf };
+module.exports = { site, start, main, buildLocals, SITE_INDEX, fmt, originFor, altHostOf, CSP };

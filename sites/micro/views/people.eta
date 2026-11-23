@@ -1,0 +1,9 @@
+<% layout('layout') %>
+<% const u = it.u; const tab = (k, l) => `<a class="tab${it.tab === k ? ' on' : ''}" href="/${u.handle}/${k}"${it.tab === k ? ' aria-current="page"' : ''}><span>${l}</span></a>`; %>
+<div class="col-head sticky"><div class="col-head-row"><a class="icon-btn" href="/<%= u.handle %>" aria-label="Back to profile">&larr;</a><div><h1 class="col-h1"><%= u.display_name %></h1><p class="muted small">@<%= u.handle %></p></div></div>
+  <nav class="tabs" aria-label="Connections"><%~ tab('followers', 'Followers') %><%~ tab('following', 'Following') %></nav></div>
+<section class="people" aria-label="<%= it.tab === 'followers' ? 'Followers' : 'Following' %>">
+  <% if (!it.rows.length) { %><div class="empty"><h2><%= it.tab === 'followers' ? `@${u.handle} doesn’t have any followers yet` : `@${u.handle} isn’t following anyone` %></h2></div><% } %>
+  <% for (const x of it.rows) { %><%~ include('_person', { g: it, u: x }) %><% } %>
+  <% if (it.p.next) { %><a class="tl-more" href="<%= it.p.next %>">Show more</a><% } %>
+</section>

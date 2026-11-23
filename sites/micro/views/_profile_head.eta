@@ -1,0 +1,21 @@
+<%/* include('_profile_head', {g}) banner, avatar, names, bio, counts, follow button */%>
+<% const g = it.g; const u = g.u; %>
+<div class="col-head sticky"><div class="col-head-row"><a class="icon-btn" href="/home" data-back aria-label="Back">&larr;</a><div><h1 class="col-h1"><%= u.display_name %></h1><p class="muted small"><%= g.compact(g.postCount) %> posts</p></div></div></div>
+<section class="prof" style="--brand:<%= u.avatar_color %>">
+  <div class="prof-banner" aria-hidden="true"></div>
+  <div class="prof-row">
+    <span class="av av-xl" style="background:<%= u.avatar_color %>" aria-hidden="true"><%= g.initials(u.display_name) %></span>
+    <div class="prof-acts">
+      <% if (g.self) { %><span class="muted small">This is you</span>
+      <% } else if (g.user) { %>
+        <a class="icon-btn icon-btn-outline" href="/messages/compose?to=<%= u.handle %>" aria-label="Message @<%= u.handle %>">&#9993;</a>
+        <form method="post" action="/i/follow" class="follow-form"><%~ g.csrfInput() %><input type="hidden" name="handle" value="<%= u.handle %>"><input type="hidden" name="on" value="<%= g.following ? 0 : 1 %>">
+          <button class="btn <%= g.following ? 'btn-outline' : 'btn-dark' %>" type="submit" aria-pressed="<%= g.following %>" aria-label="<%= g.following ? 'Unfollow' : 'Follow' %> @<%= u.handle %>"><%= g.following ? 'Following' : 'Follow' %></button></form>
+      <% } else { %><a class="btn btn-dark" href="/login?next=<%= encodeURIComponent('/' + u.handle) %>">Follow</a><% } %>
+    </div>
+  </div>
+  <div class="prof-names"><h2><%= u.display_name %></h2><p class="muted">@<%= u.handle %><% if (g.followsYou) { %> <span class="chip">Follows you</span><% } %></p></div>
+  <% if (u.account_bio) { %><p class="prof-bio"><%~ g.M.renderText(u.account_bio) %></p><% } %>
+  <p class="prof-meta muted small"><span>&#128197; Joined <%= g.monthYear(u.joined_at) %></span></p>
+  <p class="prof-counts"><a href="/<%= u.handle %>/following"><strong><%= g.compact(g.counts.following) %></strong> <span class="muted">Following</span></a><a href="/<%= u.handle %>/followers"><strong data-followers><%= g.compact(g.counts.followers) %></strong> <span class="muted">Followers</span></a></p>
+</section>

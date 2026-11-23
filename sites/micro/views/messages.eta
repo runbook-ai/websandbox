@@ -1,0 +1,32 @@
+<% layout('layout') %>
+<div class="dm">
+  <section class="dm-list" aria-label="Conversations">
+    <div class="col-head"><div class="col-head-row"><h1 class="col-h1">Messages</h1><a class="icon-btn" href="/messages/compose" aria-label="New message">&#9998;</a></div></div>
+    <% if (!it.threads.length) { %><div class="empty"><h2>Welcome to your inbox!</h2><p class="muted">Drop a line, share posts and more with private conversations.</p><a class="btn btn-primary" href="/messages/compose">Write a message</a></div><% } %>
+    <% for (const t of it.threads) { %>
+    <a class="dm-row<%= it.t && it.t.id === t.id ? ' on' : '' %><%= t.unread ? ' unread' : '' %>" href="/messages/<%= t.id %>"<%~ it.t && it.t.id === t.id ? ' aria-current="page"' : '' %>>
+      <span class="av av-md" style="background:<%= t.other ? t.other.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(t.other ? t.other.display_name : '?') %></span>
+      <span class="dm-row-main"><span><strong><%= t.other ? t.other.display_name : 'Someone' %></strong> <span class="muted">@<%= t.other ? t.other.handle : '' %> &middot; <%= it.ago(t.last_at) %></span></span><span class="muted dm-last"><%= it.excerpt(t.last_body, 70) %></span></span>
+      <% if (t.unread) { %><b class="nv-badge" aria-label="<%= t.unread %> unread"><%= t.unread %></b><% } %>
+    </a>
+    <% } %>
+  </section>
+  <section class="dm-pane" aria-label="Conversation">
+    <% if (it.compose) { %>
+      <div class="col-head"><h2 class="col-h1">New message</h2></div>
+      <% if (it.error) { %><div class="banner banner-error" role="alert"><%= it.error %></div><% } %>
+      <form method="post" action="/messages" class="dm-new"><%~ it.csrfInput() %>
+        <label for="dm-to">To</label><input id="dm-to" name="to" value="<%= it.compose.to %>" placeholder="@handle" autocomplete="off" required>
+        <label for="dm-text">Message</label><textarea id="dm-text" name="text" rows="4" required><%= it.compose.text %></textarea>
+        <button class="btn btn-primary" type="submit">Send</button></form>
+    <% } else if (it.t) { %>
+      <div class="col-head"><div class="col-head-row"><a href="/<%= it.other.handle %>" class="who-link"><span class="av av-sm" style="background:<%= it.other.avatar_color %>" aria-hidden="true"><%= it.initials(it.other.display_name) %></span><span class="who-names"><strong><%= it.other.display_name %></strong><span class="muted">@<%= it.other.handle %></span></span></a></div></div>
+      <div class="dm-msgs" data-dm-scroll>
+        <% for (const m of it.msgs) { const mine = m.sender_id === it.user.id; %><div class="bubble-row<%= mine ? ' mine' : '' %>" id="m<%= m.id %>"><div class="bubble"><%~ it.M.renderText(m.body) %></div><span class="muted small"><%= it.ago(m.created_at) %></span></div><% } %>
+      </div>
+      <form method="post" action="/messages/<%= it.t.id %>" class="dm-send"><%~ it.csrfInput() %><label class="sr-only" for="dm-reply">Start a new message</label><textarea id="dm-reply" name="text" rows="1" placeholder="Start a new message" required></textarea><button class="btn btn-primary" type="submit">Send</button></form>
+    <% } else { %>
+      <div class="empty"><h2>Select a message</h2><p class="muted">Choose from your existing conversations, or start a new one.</p><a class="btn btn-primary" href="/messages/compose">New message</a></div>
+    <% } %>
+  </section>
+</div>

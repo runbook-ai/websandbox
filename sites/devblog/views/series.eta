@@ -1,0 +1,8 @@
+<% layout('layout') %>
+<div class="narrow">
+  <div class="page-head"><h1>Series: <%= it.s.title %></h1><p class="muted">By <a href="/<%= it.u.handle %>"><%= it.u.display_name || it.u.handle %></a> &middot; <%= it.rows.length %> part<%= it.rows.length === 1 ? '' : 's' %></p></div>
+  <ol class="series-list">
+  <% for (const r of it.rows) { %><li><%~ include('_card', { g: it, r }) %></li><% } %>
+  </ol>
+  <% if (!it.rows.length) { %><p class="box box-pad empty">No published parts yet.</p><% } %>
+</div>

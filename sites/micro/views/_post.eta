@@ -1,0 +1,39 @@
+<%/* include('_post', {g, p, focus, threadUp, threadDown}) one post (a timeline cell or the focused post of a conversation) */%>
+<% const g = it.g; const p = it.p; const focus = !!it.focus; const own = g.user && g.user.id === p.user_id; %>
+<article class="post<%= focus ? ' post-focus' : '' %><%= it.threadUp ? ' has-line-up' : '' %><%= it.threadDown ? ' has-line-down' : '' %>" id="post-<%= p.id %>" data-post="<%= p.id %>" data-url="<%= p.url %>"<%~ focus ? '' : ' data-cell' %> aria-labelledby="post-<%= p.id %>-who">
+  <% if (p.repostedBy) { %><div class="post-social muted small"><span aria-hidden="true">&#8634;</span> <a href="/<%= p.repostedBy.handle %>"><%= g.user && g.me && p.repostedBy.handle === g.me.handle ? 'You' : p.repostedBy.display_name %> reposted</a></div><% } %>
+  <div class="post-grid">
+    <a class="post-av" href="/<%= p.handle %>" tabindex="-1"><span class="av av-md" style="background:<%= p.avatar_color %>" aria-hidden="true"><%= g.initials(p.display_name) %></span></a>
+    <div class="post-main">
+      <div class="post-head" id="post-<%= p.id %>-who">
+        <a class="post-name" href="/<%= p.handle %>"><%= p.display_name %></a> <a class="post-handle muted" href="/<%= p.handle %>">@<%= p.handle %></a>
+        <% if (!focus) { %><span class="muted" aria-hidden="true">&middot;</span> <a class="post-time muted" href="<%= p.url %>"><%~ g.when(p.created_at) %></a><% } %>
+        <% if (own) { %><details class="post-menu"><summary aria-label="More options">&middot;&middot;&middot;</summary><div class="post-menu-pop">
+          <form method="post" action="/i/delete" data-confirm="Delete this post? This can’t be undone."><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= p.id %>"><button type="submit" class="danger">Delete</button></form></div></details><% } %>
+      </div>
+      <% if (p.replyingTo) { %><div class="post-replying muted small">Replying to <a href="/<%= p.replyingTo %>">@<%= p.replyingTo %></a></div><% } %>
+      <div class="post-text<%= focus ? ' post-text-lg' : '' %>"><%~ p.html %></div>
+      <% if (p.quoted) { %><% if (p.quoted.gone) { %><div class="quote muted small">This post is unavailable.</div><% } else { %>
+        <a class="quote" href="<%= p.quoted.url %>"><span class="quote-head"><span class="av av-xs" style="background:<%= p.quoted.avatar_color %>" aria-hidden="true"><%= g.initials(p.quoted.display_name) %></span><strong><%= p.quoted.display_name %></strong> <span class="muted">@<%= p.quoted.handle %> &middot; <%= g.ago(p.quoted.created_at) %></span></span><span class="quote-text"><%~ p.quoted.html %></span></a><% } %><% } %>
+      <% if (focus) { %>
+        <div class="post-when muted"><%~ g.when(p.created_at, 'date') %> &middot; <%= g.E.F.absTime(p.created_at, (g.user && g.user.timezone) || 'America/New_York').replace(/^.* at /, '') %></div>
+        <div class="post-stats"><span><strong><%= p.reposts %></strong> Reposts</span><span><strong><%= p.likes %></strong> Likes</span><span><strong><%= p.comment_count %></strong> Replies</span></div>
+      <% } %>
+      <div class="post-acts" role="group" aria-label="Post actions">
+        <a class="act act-reply" href="/compose?reply_to=<%= p.id %>" data-reply="<%= p.id %>" data-reply-handle="<%= p.handle %>" aria-label="Reply (<%= p.comment_count %> replies)"><span class="act-ico" aria-hidden="true">&#9711;</span><span class="act-n"><%= p.comment_count ? g.compact(p.comment_count) : '' %></span></a>
+        <details class="act-repost">
+          <summary class="act<%= p.reposted ? ' on' : '' %>" aria-label="Repost (<%= p.reposts %> reposts)"><span class="act-ico" aria-hidden="true">&#8634;</span><span class="act-n" data-n="reposts"><%= p.reposts ? g.compact(p.reposts) : '' %></span></summary>
+          <div class="act-pop" role="menu">
+            <form method="post" action="/i/repost" class="repost-form"><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= p.id %>"><input type="hidden" name="on" value="<%= p.reposted ? 0 : 1 %>"><button type="submit" role="menuitem"><%= p.reposted ? 'Undo repost' : 'Repost' %></button></form>
+            <a role="menuitem" href="/compose?quote=<%= p.id %>" data-quote="<%= p.id %>">Quote</a>
+          </div>
+        </details>
+        <form method="post" action="/i/like" class="like-form"><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= p.id %>"><input type="hidden" name="on" value="<%= p.liked ? 0 : 1 %>">
+          <button type="submit" class="act act-like<%= p.liked ? ' on' : '' %>" aria-pressed="<%= p.liked %>" aria-label="<%= p.liked ? 'Unlike' : 'Like' %> (<%= p.likes %> likes)"><span class="act-ico" aria-hidden="true"><%~ p.liked ? '&#9829;' : '&#9825;' %></span><span class="act-n"><%= p.likes ? g.compact(p.likes) : '' %></span></button></form>
+        <form method="post" action="/i/bookmark" class="bookmark-form"><%~ g.csrfInput() %><input type="hidden" name="id" value="<%= p.id %>"><input type="hidden" name="on" value="<%= p.bookmarked ? 0 : 1 %>">
+          <button type="submit" class="act act-mark<%= p.bookmarked ? ' on' : '' %>" aria-pressed="<%= p.bookmarked %>" aria-label="<%= p.bookmarked ? 'Remove bookmark' : 'Bookmark' %>"><span class="act-ico" aria-hidden="true">&#9873;</span></button></form>
+        <button type="button" class="act act-share" data-share="<%= p.url %>" aria-label="Copy link to post"><span class="act-ico" aria-hidden="true">&#8599;</span></button>
+      </div>
+    </div>
+  </div>
+</article>

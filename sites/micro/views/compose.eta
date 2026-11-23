@@ -1,0 +1,17 @@
+<% layout('layout') %>
+<div class="col-head sticky"><h1 class="col-h1"><%= it.replyTo ? 'Reply' : it.quote ? 'Quote post' : 'New post' %></h1></div>
+<% if (it.error) { %><div class="banner banner-error" role="alert"><%= it.error %></div><% } %>
+<% if (it.replyTo) { %><%~ include('_post', { g: it, p: it.replyTo, threadDown: true }) %><% } %>
+<form method="post" action="/compose" class="composer composer-inline composer-page" data-composer><%~ it.csrfInput() %>
+  <% if (it.replyTo) { %><input type="hidden" name="reply_to" value="<%= it.replyTo.id %>"><% } %>
+  <% if (it.quote) { %><input type="hidden" name="quote_of" value="<%= it.quote.id %>"><% } %>
+  <div class="composer-row"><span class="av av-md" style="background:<%= it.me ? it.me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(it.me ? it.me.display_name : it.user.username) %></span>
+    <div class="composer-body">
+      <% if (it.replyTo) { %><p class="muted small composer-replying">Replying to <a href="/<%= it.replyTo.handle %>">@<%= it.replyTo.handle %></a></p><% } %>
+      <label class="sr-only" for="compose-text">Post text</label>
+      <textarea id="compose-text" name="text" rows="5" maxlength="2000" placeholder="<%= it.replyTo ? 'Post your reply' : it.quote ? 'Add a comment' : 'What’s happening?' %>" data-count-chars autofocus><%= it.text %></textarea>
+      <p class="muted small">Up to <%= it.maxChars %> characters.</p>
+    </div></div>
+  <% if (it.quote) { %><div class="composer-quote"><a class="quote" href="<%= it.quote.url %>"><span class="quote-head"><strong><%= it.quote.display_name %></strong> <span class="muted">@<%= it.quote.handle %></span></span><span class="quote-text"><%~ it.quote.html %></span></a></div><% } %>
+  <div class="composer-foot"><span class="char-ring" data-ring aria-live="polite"></span><button type="submit" class="btn btn-primary" data-submit><%= it.replyTo ? 'Reply' : 'Post' %></button></div>
+</form>

@@ -1,0 +1,17 @@
+<% layout('layout') %>
+<% const v = it.values; const e = it.errors || {}; %>
+<div class="narrow">
+  <div class="page-head"><h1>Settings for <a href="/<%= it.acc.handle %>">@<%= it.acc.handle %></a></h1></div>
+  <form method="post" action="/settings" class="box box-pad stack-form"><%~ it.csrfInput() %>
+    <h2 class="box-title">User</h2>
+    <label for="display_name">Name</label>
+    <input id="display_name" name="display_name" value="<%= v.display_name %>" maxlength="50" aria-invalid="<%= !!e.display_name %>"<%~ e.display_name ? ' class="invalid"' : '' %>>
+    <% if (e.display_name) { %><p class="field-error"><%= e.display_name %></p><% } %>
+    <label for="handle">Username</label>
+    <input id="handle" value="<%= it.acc.handle %>" disabled>
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="bio" rows="3" maxlength="200" placeholder="A short bio..." aria-invalid="<%= !!e.bio %>"><%= v.bio %></textarea>
+    <% if (e.bio) { %><p class="field-error"><%= e.bio %></p><% } %>
+    <button type="submit" class="btn btn-primary">Save Profile Information</button>
+  </form>
+</div>

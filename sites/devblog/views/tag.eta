@@ -1,0 +1,30 @@
+<% if (it.fragment) { %><%~ include('_cards', { g: it, rows: it.rows, p: it.p }) %><% } else { %>
+<% layout('layout') %>
+<% const t = it.tag; const tab = (href, label, on) => `<a class="tab${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`; %>
+<section class="tag-hero box" style="--tag:<%= it.D.tagColor(t.name) %>">
+  <div class="tag-hero-in">
+    <h1><span class="tag-hash" aria-hidden="true">#</span><%= t.name %></h1>
+    <% if (t.description) { %><p class="tag-desc"><%= t.description %></p><% } %>
+    <p class="muted small"><%= it.tagStats.posts %> post<%= it.tagStats.posts === 1 ? '' : 's' %> published &middot; <span data-tag-followers><%= it.tagStats.followers %></span> follower<%= it.tagStats.followers === 1 ? '' : 's' %></p>
+  </div>
+  <form method="post" action="/t/<%= t.name %>/follow" class="follow-form" data-follow-tag="<%= t.name %>"><%~ it.csrfInput() %><input type="hidden" name="on" value="<%= it.followingTag ? 0 : 1 %>">
+    <button type="submit" class="btn <%= it.followingTag ? 'btn-outline' : 'btn-primary' %>" aria-pressed="<%= it.followingTag %>"><%= it.followingTag ? 'Following' : 'Follow' %></button></form>
+</section>
+<div class="grid3">
+  <%~ include('_nav', { g: it }) %>
+  <section class="feed-col" aria-label="Articles tagged <%= t.name %>">
+    <div class="tabs" role="navigation" aria-label="Sort articles">
+      <%~ tab(it.base, 'Relevant', it.sort === 'relevant') %><%~ tab(`${it.base}/latest`, 'Latest', it.sort === 'latest') %><%~ tab(`${it.base}/top/week`, 'Top', it.sort === 'top') %>
+      <% if (it.sort === 'top') { %><span class="tabs-sub"><% for (const [k, [l]] of Object.entries(it.D.TOP)) { %><%~ tab(`${it.base}/top/${k}`, l, it.top === k) %><% } %></span><% } %>
+    </div>
+    <div class="feed" data-feed>
+      <% if (!it.rows.length) { %><div class="box box-pad empty"><p><strong>No posts with #<%= t.name %> in this view.</strong></p><% if (it.user) { %><p><a href="/new?tags=<%= t.name %>">Write the first one</a></p><% } %></div><% } %>
+      <% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %>
+      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+    </div>
+  </section>
+  <aside class="bl-right">
+    <section class="box box-pad"><h2 class="box-title">Write about #<%= t.name %></h2><p class="muted small">Tag your post with #<%= t.name %> and it shows up here for everyone following the tag.</p><a class="btn btn-outline btn-block" href="/new?tags=<%= t.name %>">Create Post</a></section>
+  </aside>
+</div>
+<% } %>

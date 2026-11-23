@@ -1,0 +1,23 @@
+<% layout('layout') %>
+<% const tab = (k, label) => `<a class="nav-link${it.filter === k ? ' on' : ''}" href="/search?q=${encodeURIComponent(it.q)}${k === 'posts' ? '' : '&filter=' + k}${it.sort === 'newest' ? '&sort=newest' : ''}"${it.filter === k ? ' aria-current="page"' : ''}>${label}</a>`; %>
+<div class="page-head"><h1><%= it.q ? `Search results for ${it.q}` : 'Search' %></h1>
+  <% if (it.q && it.filter === 'posts') { %><div class="tabs tabs-inline"><a class="tab<%= it.sort === 'relevant' ? ' on' : '' %>" href="/search?q=<%= encodeURIComponent(it.q) %>">Most Relevant</a><a class="tab<%= it.sort === 'newest' ? ' on' : '' %>" href="/search?q=<%= encodeURIComponent(it.q) %>&sort=newest">Newest</a></div><% } %></div>
+<% if (!it.q) { %><form method="get" action="/search" class="box box-pad inline-search" role="search"><input type="search" name="q" placeholder="Search..." aria-label="Search"><button class="btn btn-primary" type="submit">Search</button></form><% } else { %>
+<div class="grid2">
+  <nav class="dash-nav" aria-label="Result types"><%~ tab('posts', 'Posts') %><%~ tab('people', 'People') %><%~ tab('tags', 'Tags') %><%~ tab('comments', 'Comments') %></nav>
+  <section class="feed" data-feed>
+    <% if (!it.rows.length) { %><div class="box box-pad empty">No results match that query.</div><% } %>
+    <% if (it.filter === 'posts') { %><% for (const r of it.rows) { %><%~ include('_card', { g: it, r }) %><% } %>
+    <% } else if (it.filter === 'people') { %><% for (const u of it.rows) { %>
+      <article class="box person person-row"><a href="/<%= u.handle %>" class="person-link"><span class="av av-md" style="background:<%= u.avatar_color %>" aria-hidden="true"><%= it.initials(u.display_name || u.handle) %></span><span><strong><%= u.display_name || u.handle %></strong> <span class="muted small">@<%= u.handle %></span><% if (u.bio) { %><br><span class="small muted"><%= u.bio %></span><% } %></span></a></article>
+    <% } %>
+    <% } else if (it.filter === 'tags') { %><% for (const t of it.rows) { %>
+      <article class="box person-row box-pad"><a href="/t/<%= t.name %>"><strong>#<%= t.name %></strong></a> <span class="muted small"><%= t.posts %> posts</span><% if (t.description) { %><p class="small muted"><%= t.description %></p><% } %></article>
+    <% } %>
+    <% } else { %><% for (const c of it.rows) { %>
+      <article class="box box-pad comment-hit"><p class="small muted"><a href="/<%= c.by_handle %>"><%= c.by_name %></a> commented on <a href="/<%= c.handle %>/<%= c.slug %>-<%= c.post_id %>#comment-<%= c.id %>"><%= c.title %></a> &bull; <%= it.dateShort(c.created_at) %></p><p><%~ it.mark(c.snip) %></p></article>
+    <% } %><% } %>
+    <% if (it.p && (it.p.next || it.p.prev)) { %><p class="pager"><% if (it.p.prev) { %><a href="<%= it.p.prev %>">&larr; Previous</a><% } %> <% if (it.p.next) { %><a href="<%= it.p.next %>">Next &rarr;</a><% } %></p><% } %>
+  </section>
+</div>
+<% } %>

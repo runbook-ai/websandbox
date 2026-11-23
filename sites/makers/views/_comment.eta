@@ -1,0 +1,19 @@
+<%/* include('_comment', {g, c, p}) one comment and its replies */%>
+<% const g = it.g; const c = it.c; const p = it.p; const ups = c.counts.upvote || 0; const on = c.mine.has('upvote'); const own = g.user && g.user.id === c.user_id; %>
+<div class="c<%= c.depth ? ' c-reply' : '' %>" id="comment-<%= c.id %>">
+  <% if (c.visibility !== 'visible') { %><p class="c-gone muted">[deleted]</p><% } else { %>
+  <div class="c-head small"><a class="row-author" href="/<%= c.handle %>"><span class="av av-xs" style="background:<%= c.avatar_color %>" aria-hidden="true"><%= g.initials(c.display_name) %></span><strong><%= c.display_name %></strong></a><% if (c.user_id === p.user_id) { %><span class="op">OP</span><% } %>
+    <a class="muted" href="#comment-<%= c.id %>"><%~ g.when(c.created_at, 'long') %></a><% if (c.edited_at) { %><span class="muted">(edited)</span><% } %></div>
+  <div class="c-body prose prose-sm"><%~ g.md(c.body) %></div>
+  <div class="c-acts small">
+    <form method="post" action="/upvote" class="up-form inline"><%~ g.csrfInput() %><input type="hidden" name="target" value="comment"><input type="hidden" name="id" value="<%= c.id %>"><input type="hidden" name="on" value="<%= on ? 0 : 1 %>">
+      <button type="submit" class="c-up<%= on ? ' on' : '' %>" aria-pressed="<%= on %>" aria-label="<%= on ? 'Remove upvote' : 'Upvote' %> comment (<%= ups %>)"<%= own ? ' disabled' : '' %>>&#9650; <span data-n><%= ups %></span></button></form>
+    <% if (g.user) { %><details class="c-reply-box"<%= g.replyTo === c.id ? ' open' : '' %>><summary>Reply</summary>
+      <form method="post" action="<%= p.url %>/comments" class="c-form"><%~ g.csrfInput() %><input type="hidden" name="parent_id" value="<%= c.id %>"><label class="sr-only" for="r-<%= c.id %>">Reply to <%= c.display_name %></label><textarea id="r-<%= c.id %>" name="body" rows="2" required></textarea><button class="btn btn-accent btn-sm" type="submit">Reply</button></form></details>
+    <% } else { %><a href="/login?next=<%= encodeURIComponent(p.url + '?reply=' + c.id + '#comment-' + c.id) %>">Reply</a><% } %>
+    <% if (own) { %><details class="c-reply-box"><summary>Edit</summary><form method="post" action="/comments/<%= c.id %>/edit" class="c-form"><%~ g.csrfInput() %><label class="sr-only" for="e-<%= c.id %>">Edit comment</label><textarea id="e-<%= c.id %>" name="body" rows="3"><%= c.body %></textarea><button class="btn btn-accent btn-sm" type="submit">Save</button></form></details>
+      <form method="post" action="/comments/<%= c.id %>/delete" class="inline" data-confirm="Delete this comment?"><%~ g.csrfInput() %><button class="linkish danger" type="submit">Delete</button></form><% } %>
+  </div>
+  <% } %>
+  <% if (c.children.length) { %><div class="c-kids"><% for (const k of c.children) { %><%~ include('_comment', { g, c: k, p }) %><% } %></div><% } %>
+</div>

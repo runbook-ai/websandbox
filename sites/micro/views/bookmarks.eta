@@ -1,0 +1,6 @@
+<% layout('layout') %>
+<div class="col-head sticky"><h1 class="col-h1">Bookmarks<span class="muted small">@<%= it.me ? it.me.handle : it.user.username %></span></h1></div>
+<section class="timeline" data-timeline aria-label="Bookmarked posts">
+  <% if (!it.posts.length) { %><div class="empty"><h2>Save posts for later</h2><p class="muted">Bookmark posts to easily find them again in the future.</p></div><% } %>
+  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+</section>

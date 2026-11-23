@@ -1,0 +1,13 @@
+<% layout('layout') %>
+<section class="hero"><h1>Groups</h1><p class="muted">Smaller rooms for specific topics. Join the ones that match what you are building.</p></section>
+<div class="group-grid">
+<% for (const g of it.groups) { %>
+  <article class="card group-card" style="--g:<%= g.icon_color || '#6c757d' %>">
+    <h2><a href="/group/<%= g.slug %>"><%= g.title %></a></h2>
+    <p class="muted small"><%= g.description %></p>
+    <p class="small"><strong><span data-members><%= g.members %></span></strong> members &middot; <strong><%= g.posts %></strong> posts</p>
+    <form method="post" action="/group/<%= g.slug %>/join" class="join-form"><%~ it.csrfInput() %><input type="hidden" name="action" value="<%= g.joined ? 'leave' : 'join' %>">
+      <button type="submit" class="btn btn-sm <%= g.joined ? 'btn-outline' : 'btn-accent' %>" aria-pressed="<%= g.joined %>" aria-label="<%= g.joined ? 'Leave' : 'Join' %> <%= g.title %>"><%= g.joined ? 'Joined' : 'Join' %></button></form>
+  </article>
+<% } %>
+</div>

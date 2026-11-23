@@ -1,0 +1,33 @@
+<% if (it.fragment) { %><%~ include('_cards', { g: it, rows: it.rows, p: it.p }) %><% } else { %>
+<% layout('layout') %>
+<% const tab = (href, label, on) => `<a class="tab${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`; %>
+<div class="grid3">
+  <%~ include('_nav', { g: it }) %>
+  <section class="feed-col" aria-label="Articles">
+    <h1 class="sr-only"><%= it.sort === 'top' ? `Top articles (${it.D.TOP[it.top][0]})` : it.sort === 'latest' ? 'Latest articles' : 'Relevant articles' %></h1>
+    <div class="tabs" role="navigation" aria-label="Sort articles">
+      <%~ tab('/', 'Relevant', it.sort === 'relevant') %><%~ tab('/latest', 'Latest', it.sort === 'latest') %><%~ tab('/top/week', 'Top', it.sort === 'top') %>
+      <% if (it.sort === 'top') { %><span class="tabs-sub"><% for (const [k, [l]] of Object.entries(it.D.TOP)) { %><%~ tab(`/top/${k}`, l, it.top === k) %><% } %></span><% } %>
+    </div>
+    <div class="feed" data-feed>
+      <% if (!it.rows.length) { %><div class="box box-pad empty"><p><strong>No articles here yet.</strong></p><p class="muted">Try another tab, or <a href="/tags">find some tags to follow</a>.</p></div><% } %>
+      <% it.rows.forEach((r, i) => { %><%~ include('_card', { g: it, r, big: i === 0 && it.p.page === 1 }) %><% }) %>
+      <% if (it.p.next) { %><a class="feed-more" href="<%= it.p.next %>" data-more>Load more articles</a><% } %>
+    </div>
+    <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>" rel="prev">&larr; Newer</a></p><% } %>
+  </section>
+  <aside class="bl-right" aria-label="Trending">
+    <section class="box">
+      <h2 class="box-head">Trending this week</h2>
+      <ol class="trend">
+      <% for (const t of it.trending) { %><li><a href="<%= t.url %>"><%= t.title %></a><span class="muted small"><%= t.reactions %> reactions &middot; <%= t.comment_count %> comments</span></li><% } %>
+      </ol>
+    </section>
+    <section class="box">
+      <h2 class="box-head">Popular tags</h2>
+      <div class="tag-cloud"><% for (const t of it.popular) { %><a class="tag" href="/t/<%= t.name %>" style="--tag:<%= it.D.tagColor(t.name) %>">#<%= t.name %> <span class="muted small"><%= t.n %></span></a><% } %></div>
+      <a class="box-more" href="/tags">See all tags</a>
+    </section>
+  </aside>
+</div>
+<% } %>

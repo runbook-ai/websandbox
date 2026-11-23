@@ -1,0 +1,7 @@
+<% layout('layout') %>
+<div class="col-head sticky"><form class="mm-search mm-search-top" action="/search" method="get" role="search"><span aria-hidden="true">&#9906;</span><input type="search" name="q" placeholder="Search" aria-label="Search Murmur"></form></div>
+<h1 class="col-title">Popular now</h1>
+<section class="timeline" data-timeline aria-label="Popular posts">
+  <% if (!it.posts.length) { %><div class="empty"><p class="muted">Nothing is trending right now.</p></div><% } %>
+  <%~ include('_posts', { g: it, posts: it.posts, p: it.p }) %>
+</section>

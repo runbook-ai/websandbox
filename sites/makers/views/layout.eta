@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.title ? it.title + ' | ' : '' %><%= it.L('site.title', it.site.title) %></title>
+<link rel="stylesheet" href="/static/makers.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<% const me = it.me; const n = it.unread || {}; const here = it.req.path;
+   const top = (href, label, on) => `<a class="wb-tab${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`; %>
+<body class="wb theme-<%= it.skin.theme || 'light' %>"<% if (me) { %> data-handle="<%= me.handle %>"<% } %>>
+<header class="wb-bar" role="banner">
+  <div class="wb-bar-in">
+    <a class="wb-brand" href="/" aria-label="<%= it.site.title %> home"><span class="wb-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="wb-name"><%= it.L('site.title', it.site.title) %></span></a>
+    <nav class="wb-tabs" aria-label="Sections">
+      <%~ top('/', 'Posts', here === '/' || here === '/newest' || here.startsWith('/top') || here.startsWith('/post')) %>
+      <%~ top('/groups', 'Groups', here.startsWith('/group')) %>
+      <%~ top('/products', 'Products', here.startsWith('/product')) %>
+    </nav>
+    <form class="wb-search" action="/search" method="get" role="search"><input type="search" name="q" value="<%= it.q || '' %>" placeholder="Search Workbench" aria-label="Search"></form>
+    <div class="wb-user">
+      <% if (it.user) { %>
+        <a class="btn btn-accent btn-sm" href="/new">New post</a>
+        <a class="wb-icon" href="/notifications" aria-label="Notifications<%= n.notes ? ` (${n.notes} unread)` : '' %>"><span aria-hidden="true">&#9993;</span><% if (n.notes) { %><b class="wb-dot"><%= n.notes > 99 ? '99+' : n.notes %></b><% } %></a>
+        <details class="wb-menu"><summary aria-label="Your account"><span class="av av-sm" style="background:<%= me ? me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(me ? me.display_name : it.user.username) %></span></summary>
+          <div class="wb-menu-pop" role="menu">
+            <a role="menuitem" href="/<%= me ? me.handle : it.user.username %>">Your profile</a>
+            <a role="menuitem" href="/new">Write a post</a>
+            <a role="menuitem" href="/notifications">Notifications</a>
+            <form method="post" action="/logout"><%~ it.csrfInput() %><button role="menuitem" type="submit">Sign out</button></form>
+          </div></details>
+      <% } else { %>
+        <a class="btn btn-ghost-light btn-sm" href="/login?next=<%= encodeURIComponent(it.req.url) %>">Sign in</a>
+      <% } %>
+    </div>
+  </div>
+</header>
+<main id="main" class="wb-main">
+  <%~ include('kit/flash', { flashes: it.flashes }) %>
+  <%~ it.body %>
+</main>
+<footer class="wb-foot"><p><%= it.site.title %> &middot; founders building profitable internet businesses in the open</p></footer>
+<script src="/_kit/kit.js" defer></script>
+<script src="/static/makers.js" defer></script>
+</body>
+</html>

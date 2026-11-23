@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% const tab = (k, l) => `<a class="pill${it.type === k ? ' on' : ''}" href="/search?q=${encodeURIComponent(it.q)}${k === 'posts' ? '' : '&type=' + k}"${it.type === k ? ' aria-current="page"' : ''}>${l}</a>`; %>
+<div class="narrow">
+  <h1 class="page-h"><%= it.q ? `Results for “${it.q}”` : 'Search' %></h1>
+  <form method="get" action="/search" class="card card-pad search-box" role="search"><% if (it.type !== 'posts') { %><input type="hidden" name="type" value="<%= it.type %>"><% } %><input type="search" name="q" value="<%= it.q %>" placeholder="Search posts, products and people" aria-label="Search"><button class="btn btn-accent" type="submit">Search</button></form>
+  <% if (it.q) { %>
+  <div class="pills"><%~ tab('posts', 'Posts') %><%~ tab('products', 'Products') %><%~ tab('people', 'People') %></div>
+  <% if (it.type === 'posts') { %><div class="rows"><% if (!it.rows.length) { %><div class="card card-pad empty">No posts match.</div><% } %><%~ include('_rows', { g: it, rows: it.rows, p: it.p }) %></div>
+  <% } else if (it.type === 'products') { %><div class="prod-list card"><% if (!it.products.length) { %><p class="card-pad muted">No products match.</p><% } %>
+    <% for (const x of it.products) { %><a class="prod-row" href="/product/<%= x.slug %>"><span class="prod-logo" style="--p:<%= it.colorFor(x.slug) %>" aria-hidden="true"><%= x.name.slice(0, 1) %></span><span class="prod-main"><strong><%= x.name %></strong><span class="muted small"><%= x.tagline %></span></span><span class="prod-mrr"><%= x.mrr ? it.K.money(x.mrr) + '/mo' : '' %></span></a><% } %></div>
+  <% } else { %><div class="card"><% if (!it.people.length) { %><p class="card-pad muted">Nobody matches.</p><% } %>
+    <% for (const x of it.people) { %><a class="person" href="/<%= x.handle %>"><span class="av av-sm" style="background:<%= x.avatar_color %>" aria-hidden="true"><%= it.initials(x.display_name) %></span><span><strong><%= x.display_name %></strong> <span class="muted small">@<%= x.handle %></span><% if (x.bio) { %><br><span class="small muted"><%= x.bio %></span><% } %></span></a><% } %></div>
+  <% } %>
+  <% } %>
+</div>

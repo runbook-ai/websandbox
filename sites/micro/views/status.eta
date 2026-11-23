@@ -1,0 +1,12 @@
+<% layout('layout') %>
+<% const p = it.main; %>
+<div class="col-head sticky"><div class="col-head-row"><a class="icon-btn" href="/home" data-back aria-label="Back">&larr;</a><h1 class="col-h1">Post</h1></div></div>
+<section class="thread" aria-label="Conversation">
+  <% it.up.forEach((x) => { %><%~ include('_post', { g: it, p: x, threadDown: true }) %><% }) %>
+  <%~ include('_post', { g: it, p, focus: true, threadUp: it.up.length > 0 }) %>
+  <% if (it.likers.length) { %><p class="likers muted small">Liked by <% it.likers.forEach((l, i) => { %><a href="/<%= l.handle %>"><%= l.display_name %></a><%= i < it.likers.length - 1 ? ', ' : '' %><% }) %><%= p.likes > it.likers.length ? ` and ${p.likes - it.likers.length} other${p.likes - it.likers.length === 1 ? '' : 's'}` : '' %><% if (it.quotes) { %> &middot; <%= it.quotes %> quote<%= it.quotes === 1 ? '' : 's' %><% } %></p><% } %>
+  <% if (it.user) { %><%~ include('_composer', { g: it, replyTo: p, placeholder: 'Post your reply' }) %><% } else { %><p class="panel-pad muted"><a href="/login?next=<%= encodeURIComponent(p.url) %>">Log in</a> to reply.</p><% } %>
+  <div class="replies" aria-label="Replies">
+    <% for (const x of it.down) { %><%~ include('_post', { g: it, p: x }) %><% } %>
+  </div>
+</section>

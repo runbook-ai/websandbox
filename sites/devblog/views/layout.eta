@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.title ? it.title + ' - ' : '' %><%= it.L('site.title', it.site.title) %></title>
+<link rel="stylesheet" href="/static/devblog.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<% const me = it.me; const n = it.unread || {}; const av = (name, color, size) => `<span class="av av-${size || 'sm'}" style="background:${color || '#868e96'}" aria-hidden="true">${it.h(it.initials(name))}</span>`; %>
+<body class="bl theme-<%= it.skin.theme || 'light' %>"<% if (me) { %> data-handle="<%= me.handle %>"<% } %>>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bl-top" role="banner">
+  <div class="bl-top-in">
+    <a class="bl-brand" href="/" aria-label="<%= it.site.title %> home"><span class="bl-mark" aria-hidden="true">B/</span><span class="bl-word"><%= it.L('site.title', it.site.title) %></span></a>
+    <form class="bl-search" action="/search" method="get" role="search">
+      <input type="search" name="q" value="<%= it.q || '' %>" placeholder="Search articles, people, tags..." aria-label="Search" autocomplete="off">
+      <button type="submit" class="bl-search-go" aria-label="Search">&#9906;</button>
+    </form>
+    <nav class="bl-top-actions" aria-label="Account">
+      <% if (it.user) { %>
+        <a class="btn btn-outline bl-write" href="/new">Create Post</a>
+        <a class="bl-bell" href="/notifications" aria-label="Notifications<%= n.notes ? ` (${n.notes} unread)` : '' %>"><span aria-hidden="true">&#128276;</span><% if (n.notes) { %><b class="bl-count"><%= n.notes > 99 ? '99+' : n.notes %></b><% } %></a>
+        <details class="bl-menu">
+          <summary aria-label="Open your menu"><%~ av(me ? me.display_name || me.handle : it.user.username, me && me.avatar_color, 'sm') %></summary>
+          <div class="bl-menu-pop" role="menu">
+            <a role="menuitem" class="bl-menu-me" href="/<%= me ? me.handle : '' %>"><strong><%= me ? me.display_name || me.handle : it.user.username %></strong><span class="muted">@<%= me ? me.handle : it.user.username %></span></a>
+            <a role="menuitem" href="/dashboard">Dashboard</a>
+            <a role="menuitem" href="/new">Create Post</a>
+            <a role="menuitem" href="/readinglist">Reading list</a>
+            <a role="menuitem" href="/settings">Settings</a>
+            <form method="post" action="/logout"><%~ it.csrfInput() %><button type="submit" role="menuitem">Sign Out</button></form>
+          </div>
+        </details>
+      <% } else { %>
+        <a class="btn btn-ghost" href="/login?next=<%= encodeURIComponent(it.req.url) %>">Log in</a>
+      <% } %>
+    </nav>
+  </div>
+</header>
+<div class="bl-flash"><%~ include('kit/flash', { flashes: it.flashes }) %></div>
+<main id="main" class="bl-main">
+<%~ it.body %>
+</main>
+<footer class="bl-foot"><p><strong><%= it.site.title %></strong> &mdash; a community of developers writing about what they build and learn.</p></footer>
+<script src="/_kit/kit.js" defer></script>
+<script src="/static/devblog.js" defer></script>
+</body>
+</html>

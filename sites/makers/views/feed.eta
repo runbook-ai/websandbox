@@ -1,0 +1,44 @@
+<% layout('layout') %>
+<% const g = it.group; const tab = (href, label, on) => `<a class="pill${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`; const base = it.base; %>
+<% if (g) { %>
+<section class="group-hero" style="--g:<%= g.icon_color || '#6c757d' %>">
+  <div><p class="eyebrow">Group</p><h1><%= g.title %></h1><p class="muted"><%= g.about || g.description %></p><p class="small muted"><span data-members><%= it.members %></span> members</p></div>
+  <form method="post" action="/group/<%= g.slug %>/join" class="join-form"><%~ it.csrfInput() %><input type="hidden" name="action" value="<%= it.joined ? 'leave' : 'join' %>">
+    <button type="submit" class="btn <%= it.joined ? 'btn-outline' : 'btn-accent' %>" aria-pressed="<%= it.joined %>"><%= it.joined ? 'Joined' : 'Join group' %></button></form>
+</section>
+<% } else { %>
+<section class="hero"><h1>What founders are talking about</h1><p class="muted">Milestones, launches, revenue updates and hard-won lessons from people building their own products.</p></section>
+<% } %>
+<div class="cols">
+  <nav class="col-left" aria-label="Groups">
+    <h2 class="side-h">Groups</h2>
+    <a class="side-link<%= !g ? ' on' : '' %>" href="/">All posts</a>
+    <% for (const x of it.groups) { %><a class="side-link<%= g && g.id === x.id ? ' on' : '' %>" href="/group/<%= x.slug %>"><span class="dot" style="background:<%= x.icon_color || '#6c757d' %>" aria-hidden="true"></span><%= x.title %><% if (x.joined) { %><span class="side-tag">joined</span><% } %></a><% } %>
+    <a class="side-more" href="/groups">Browse groups &rarr;</a>
+  </nav>
+  <section class="col-main" aria-label="Posts">
+    <div class="pills" role="navigation" aria-label="Sort posts">
+      <%~ tab(base || '/', 'Popular', it.sort === 'popular') %><%~ tab(`${base}/newest`, 'Newest', it.sort === 'newest') %><%~ tab(`${base}/top/week`, 'Top', it.sort === 'top') %>
+      <% if (it.sort === 'top') { %><span class="pills-sub"><% for (const [k, [l]] of Object.entries(it.K.TOP)) { %><%~ tab(`${base}/top/${k}`, l, it.top === k) %><% } %></span><% } %>
+      <% if (it.user) { %><a class="btn btn-accent btn-sm pills-new" href="/new<%= g ? '?group=' + g.slug : '' %>">Write a post</a><% } %>
+    </div>
+    <div class="rows" data-feed>
+      <% if (!it.rows.length) { %><div class="card card-pad empty"><p><strong>No posts here yet.</strong></p><% if (it.user) { %><p><a href="/new<%= g ? '?group=' + g.slug : '' %>">Start the conversation</a></p><% } %></div><% } %>
+      <%~ include('_rows', { g: it, rows: it.rows, p: it.p, showGroup: !g }) %>
+    </div>
+    <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>">&larr; Previous page</a></p><% } %>
+  </section>
+  <aside class="col-right" aria-label="Products">
+    <section class="card">
+      <h2 class="card-h">Top products by revenue</h2>
+      <ol class="leader"><% it.leaders.forEach((x, i) => { %><li><span class="leader-n"><%= i + 1 %></span><a href="/product/<%= x.slug %>"><strong><%= x.name %></strong><span class="muted small"><%= x.founder_name %></span></a><span class="mrr"><%= x.mrr ? it.K.money(x.mrr) + '/mo' : '—' %></span></li><% }) %></ol>
+      <a class="card-more" href="/products">All products &rarr;</a>
+    </section>
+    <% if (it.recentMilestones.length) { %>
+    <section class="card">
+      <h2 class="card-h">Recent milestones</h2>
+      <ul class="ms-mini"><% for (const m of it.recentMilestones) { %><li><a href="/product/<%= m.slug %>"><strong><%= m.name %></strong></a><span class="small"><%= m.value || m.title %></span><span class="muted small"><%= it.dateShort(m.at) %></span></li><% } %></ul>
+    </section>
+    <% } %>
+  </aside>
+</div>

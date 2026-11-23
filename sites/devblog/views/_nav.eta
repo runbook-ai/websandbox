@@ -1,0 +1,21 @@
+<%/* include('_nav', {g}) the left column: main links + followed tags */%>
+<% const g = it.g; const here = g.req.path; const link = (href, label, ico) => `<a class="nav-link${here === href ? ' on' : ''}" href="${href}"${here === href ? ' aria-current="page"' : ''}><span class="nav-ico" aria-hidden="true">${ico}</span>${label}</a>`; %>
+<nav class="bl-left" aria-label="Site">
+  <% if (!g.user) { %>
+  <section class="box box-pad intro">
+    <h2 class="box-title">Join the developers writing here</h2>
+    <p class="muted">Share what you build, follow the tags you care about and keep a reading list.</p>
+    <a class="btn btn-primary btn-block" href="/login?next=<%= encodeURIComponent(g.req.url) %>">Log in</a>
+  </section>
+  <% } %>
+  <%~ link('/', 'Home', '&#8962;') %>
+  <% if (g.user) { %><%~ link('/readinglist', 'Reading List', '&#9733;') %><%~ link('/dashboard', 'Dashboard', '&#9638;') %><% } %>
+  <%~ link('/tags', 'Tags', '#') %>
+  <%~ link('/latest', 'Latest', '&#8635;') %>
+  <%~ link('/top/week', 'Top this week', '&#9650;') %>
+  <% if (g.user) { %>
+  <h3 class="nav-head">My Tags <a class="nav-gear" href="/dashboard/tags" aria-label="Customize my tags">&#9881;</a></h3>
+  <% if (!g.myTags.length) { %><p class="muted small nav-empty">Follow tags to see them here.</p><% } %>
+  <div class="nav-tags"><% for (const t of g.myTags) { %><a class="nav-tag" href="/t/<%= t %>">#<%= t %></a><% } %></div>
+  <% } %>
+</nav>

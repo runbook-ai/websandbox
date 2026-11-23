@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="<%= it.csrf() %>">
+<title><%= it.unread && it.unread.notes ? `(${it.unread.notes}) ` : '' %><%= it.title ? it.title + ' / ' : '' %><%= it.L('site.title', it.site.title) %></title>
+<link rel="stylesheet" href="/static/micro.css">
+<% if (it.skin.css) { %><style><%~ it.skin.css %></style><% } %>
+</head>
+<% const me = it.me; const n = it.unread || {}; const here = it.req.path;
+   const nav = (href, label, ico, on, badge) => `<a class="nv${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}><span class="nv-ico" aria-hidden="true">${ico}${badge ? `<b class="nv-badge">${badge > 99 ? '99+' : badge}</b>` : ''}</span><span class="nv-label">${label}</span></a>`; %>
+<body class="mm theme-<%= it.skin.theme || 'light' %>"<% if (me) { %> data-handle="<%= me.handle %>"<% } %>>
+<div class="mm-shell">
+  <header class="mm-left" role="banner">
+    <div class="mm-left-in">
+      <a class="mm-logo" href="<%= it.user ? '/home' : '/explore' %>" aria-label="<%= it.site.title %>"><span aria-hidden="true">&#10047;</span></a>
+      <nav aria-label="Primary">
+        <% if (it.user) { %><%~ nav('/home', 'Home', '&#8962;', here.startsWith('/home')) %><% } %>
+        <%~ nav('/explore', 'Explore', '&#9906;', here === '/explore' || here === '/search') %>
+        <% if (it.user) { %>
+        <%~ nav('/notifications', 'Notifications', '&#9672;', here.startsWith('/notifications'), n.notes) %>
+        <%~ nav('/messages', 'Messages', '&#9993;', here.startsWith('/messages'), n.messages) %>
+        <%~ nav('/i/bookmarks', 'Bookmarks', '&#9873;', here === '/i/bookmarks') %>
+        <%~ nav('/' + (me ? me.handle : it.user.username), 'Profile', '&#9786;', me && here.toLowerCase() === '/' + me.handle.toLowerCase()) %>
+        <% } %>
+      </nav>
+      <% if (it.user) { %>
+      <a class="btn btn-primary btn-post" href="/compose" data-open-composer><span class="nv-label">Post</span><span class="btn-post-ico" aria-hidden="true">+</span></a>
+      <details class="mm-me">
+        <summary aria-label="Account menu"><span class="av av-sm" style="background:<%= me ? me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(me ? me.display_name : it.user.username) %></span>
+          <span class="mm-me-names nv-label"><strong><%= me ? me.display_name : it.user.username %></strong><span class="muted">@<%= me ? me.handle : it.user.username %></span></span></summary>
+        <div class="mm-me-pop" role="menu"><form method="post" action="/logout"><%~ it.csrfInput() %><button type="submit" role="menuitem">Log out @<%= me ? me.handle : it.user.username %></button></form></div>
+      </details>
+      <% } %>
+    </div>
+  </header>
+  <main id="main" class="mm-main">
+    <div class="mm-flash"><%~ include('kit/flash', { flashes: it.flashes }) %></div>
+    <%~ it.body %>
+  </main>
+  <aside class="mm-right" aria-label="Sidebar">
+    <% if (it.req.path !== '/search') { %>
+    <form class="mm-search" action="/search" method="get" role="search"><span aria-hidden="true">&#9906;</span><input type="search" name="q" placeholder="Search" aria-label="Search Murmur" value="<%= it.q || '' %>"></form>
+    <% } %>
+    <% if (!it.user) { %>
+    <section class="panel panel-pad"><h2 class="panel-title">New to <%= it.site.title %>?</h2><p class="muted small">Log in to follow people, post and see your own timeline.</p><a class="btn btn-primary btn-block" href="/login?next=<%= encodeURIComponent(it.req.url) %>">Log in</a></section>
+    <% } %>
+    <% if (it.trends && it.trends.length) { %>
+    <section class="panel"><h2 class="panel-title panel-pad">What’s happening</h2>
+      <% for (const t of it.trends) { %><a class="trend" href="/search?q=%23<%= t.tag %>"><span class="muted small">Trending</span><strong>#<%= t.tag %></strong><span class="muted small"><%= t.n %> posts</span></a><% } %>
+    </section>
+    <% } %>
+    <% if (it.who && it.who.length) { %>
+    <section class="panel"><h2 class="panel-title panel-pad">Who to follow</h2>
+      <% for (const w of it.who) { %>
+      <div class="who"><a href="/<%= w.handle %>" class="who-link"><span class="av av-sm" style="background:<%= w.avatar_color %>" aria-hidden="true"><%= it.initials(w.display_name) %></span><span class="who-names"><strong><%= w.display_name %></strong><span class="muted">@<%= w.handle %></span></span></a>
+        <% if (it.user) { %><form method="post" action="/i/follow" class="follow-form"><%~ it.csrfInput() %><input type="hidden" name="handle" value="<%= w.handle %>"><input type="hidden" name="on" value="1"><button class="btn btn-dark btn-sm" type="submit" aria-pressed="false">Follow</button></form><% } %></div>
+      <% } %>
+    </section>
+    <% } %>
+    <p class="mm-foot muted small"><%= it.site.title %> &middot; short posts, real people</p>
+  </aside>
+</div>
+<% if (it.user) { %>
+<dialog class="composer-dialog" id="composer-dialog" aria-label="Compose post">
+  <form method="post" action="/compose" class="composer" data-composer><%~ it.csrfInput() %><input type="hidden" name="reply_to" value=""><input type="hidden" name="quote_of" value="">
+    <div class="composer-top"><button type="button" class="icon-btn" data-close-dialog aria-label="Close">&times;</button></div>
+    <div class="composer-ctx" data-ctx hidden></div>
+    <div class="composer-row"><span class="av av-md" style="background:<%= me ? me.avatar_color : '#868e96' %>" aria-hidden="true"><%= it.initials(me ? me.display_name : it.user.username) %></span>
+      <label class="sr-only" for="dlg-text">Post text</label><textarea id="dlg-text" name="text" rows="4" maxlength="2000" placeholder="What’s happening?" data-count-chars></textarea></div>
+    <div class="composer-quote" data-quote hidden></div>
+    <div class="composer-foot"><span class="char-ring" data-ring aria-live="polite"></span><button type="submit" class="btn btn-primary" data-submit>Post</button></div>
+  </form>
+</dialog>
+<% } %>
+<script src="/_kit/kit.js" defer></script>
+<script src="/static/micro.js" defer></script>
+</body>
+</html>
