@@ -74,7 +74,20 @@ function buildPersonas(srcRows, opts) {
   const adults = srcRows.filter((s) => s.age >= 18 && s.age <= 85);
   const r = rng(opts.seed, 'persona-sample');
   const chosen = r.sample(adults, Math.min(opts.count, adults.length)).sort((a, b) => (a.uuid < b.uuid ? -1 : 1));
-  return chosen.map((s, i) => buildPersona(s, i, opts));
+  const out = chosen.map((s, i) => buildPersona(s, i, opts));
+  // Handles are unique per network: later duplicates get a deterministic numeric suffix.
+  for (const net of Object.keys(opts.networks)) {
+    const seen = new Set();
+    for (const p of out) {
+      const acc = p.accounts[net];
+      if (!acc) continue;
+      let h = acc.handle;
+      for (let k = 2; seen.has(h); k++) h = `${acc.handle.slice(0, 17)}${k}`;
+      acc.handle = h;
+      seen.add(h);
+    }
+  }
+  return out;
 }
 
 module.exports = { buildPersonas, styleCard };
