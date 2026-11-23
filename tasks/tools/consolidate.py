@@ -30,10 +30,11 @@ FILES = [
     ('generated', 'tasks/wiki/generated.jsonl'), ('generated', 'tasks/map/generated.jsonl'),
     # newer sites (appended last so the earlier sites' seeded draws are unchanged)
     ('generated', 'tasks/mail/generated.jsonl'), ('generated', 'tasks/lab/generated.jsonl'),
+    ('generated', 'tasks/social/generated.jsonl'),
 ]
 GRADER_DIR = {'shopping': 'store', 'shopping_admin': 'store', 'gitlab': 'code', 'forum': 'forum', 'reddit': 'forum',
-              'wiki': 'wiki', 'map': 'map', 'mail': 'mail', 'lab': 'lab'}
-SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map', 'mail', 'lab']
+              'wiki': 'wiki', 'map': 'map', 'mail': 'mail', 'lab': 'lab', 'social': 'social'}
+SITE_ORDER = ['shopping', 'shopping_admin', 'forum', 'gitlab', 'wiki', 'map', 'mail', 'lab', 'social']
 
 
 def jl(path):

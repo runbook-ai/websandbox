@@ -917,6 +917,102 @@
 "split": "heldout",
 "why": "gen-draw"
 },
+"gen-social-can-post-where": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-comments-by-user-on-post": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-social-edit-post-update": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-follow-commenters": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-join-mod-spaces": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-karma-gap": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-social-karma-total": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-link-blocking-rule": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-message-mods": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-social-mod-lock-pin-top": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-mod-remove-title-rule": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-social-moderated-spaces": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-no-self-promo-post": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-oldest-comment-phrase": {
+"split": "heldout",
+"why": "gen-draw"
+},
+"gen-social-post-with-flair": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-release-version": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-replied-to-me-recent": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-reply-and-dm-op": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-reply-newest-unanswered": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-reply-unread-replies": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-save-top-flair": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-top-flair-post-week": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-top-space-of-user": {
+"split": "train",
+"why": "gen-draw"
+},
+"gen-social-upvote-user-comments": {
+"split": "train",
+"why": "gen-draw"
+},
 "gen-wiki-chain-almamater-founded": {
 "split": "train",
 "why": "gen-draw"

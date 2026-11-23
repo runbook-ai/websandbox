@@ -37,9 +37,9 @@ Generated tasks keep their generator's skills and difficulty.
 
 ## Counts
 
-17632 tasks (807 WebArena + 16825 generated), 5 dropped.
-Train 13824 tasks / 363 templates; held-out 3808 tasks / 89 templates
-(WebArena 140 tasks / 33 templates; generated 3668 / 56).
+19220 tasks (807 WebArena + 18413 generated), 5 dropped.
+Train 15108 tasks / 382 templates; held-out 4112 tasks / 94 templates
+(WebArena 140 tasks / 33 templates; generated 3972 / 61).
 
 ### By source and site
 
@@ -52,6 +52,7 @@ Train 13824 tasks / 363 templates; held-out 3808 tasks / 89 templates
 | generated | map | 28 | 7 | 1415 | 355 |
 | generated | shopping | 24 | 6 | 1421 | 375 |
 | generated | shopping_admin | 30 | 7 | 1589 | 373 |
+| generated | social | 19 | 5 | 1284 | 304 |
 | generated | wiki | 28 | 7 | 1575 | 375 |
 | webarena | forum | 19 | 2 | 96 | 10 |
 | webarena | forum+gitlab | 4 | 0 | 18 | 0 |
@@ -63,34 +64,34 @@ Train 13824 tasks / 363 templates; held-out 3808 tasks / 89 templates
 | webarena | map+wiki | 3 | 1 | 13 | 4 |
 | webarena | shopping | 42 | 5 | 170 | 16 |
 | webarena | shopping_admin | 34 | 6 | 151 | 28 |
-| **all** |  | 363 | 89 | 13824 | 3808 |
+| **all** |  | 382 | 94 | 15108 | 4112 |
 
 ### By kind, difficulty and skill (tasks)
 
 | kind | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| read | 359 | 70 | 8065 | 2383 |
-| write | 308 | 70 | 4837 | 1180 |
+| read | 359 | 70 | 8613 | 2569 |
+| write | 308 | 70 | 5573 | 1298 |
 
 | difficulty | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| 1 | 227 | 51 | 3540 | 743 |
-| 2 | 300 | 44 | 7794 | 2238 |
-| 3 | 140 | 45 | 1823 | 687 |
+| 1 | 227 | 51 | 3828 | 743 |
+| 2 | 300 | 44 | 8567 | 2504 |
+| 3 | 140 | 45 | 2046 | 725 |
 
 | skill | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| aggregate | 101 | 10 | 2409 | 613 |
-| compare | 12 | 7 | 1120 | 360 |
-| create | 189 | 38 | 2287 | 690 |
-| filter-sort | 175 | 26 | 2374 | 583 |
-| form-edit | 155 | 32 | 3259 | 805 |
+| aggregate | 101 | 10 | 2649 | 639 |
+| compare | 12 | 7 | 1200 | 440 |
+| create | 189 | 38 | 2670 | 770 |
+| filter-sort | 175 | 26 | 2645 | 701 |
+| form-edit | 155 | 32 | 3657 | 843 |
 | moderation | 0 | 0 | 300 | 60 |
-| multi-step | 124 | 26 | 2209 | 695 |
-| navigate | 169 | 46 | 5423 | 1055 |
-| read-detail | 282 | 46 | 5384 | 1735 |
+| multi-step | 124 | 26 | 2612 | 813 |
+| navigate | 169 | 46 | 6350 | 1253 |
+| read-detail | 282 | 46 | 5835 | 1921 |
 | safety | 0 | 0 | 130 | 130 |
-| search | 52 | 5 | 5853 | 1605 |
+| search | 52 | 5 | 6067 | 1711 |
 | vote | 0 | 0 | 60 | 60 |
 
 ## Mapping to the old RL split (WebArena tasks)
@@ -143,3 +144,5 @@ Old train templates (-> train): `wa-t4`, `wa-t5`, `wa-t6`, `wa-t7`, `wa-t9`, `wa
   - train (18): `gen-mail-campaign-bounced-who`, `gen-mail-campaign-follow-up`, `gen-mail-campaign-personal-replies`, `gen-mail-colleague-request-when`, `gen-mail-create-filter`, `gen-mail-exchanged-count`, `gen-mail-forward-quote`, `gen-mail-friend-plan-day`, `gen-mail-label-conversation`, `gen-mail-label-conversations`, `gen-mail-newsletter-count`, `gen-mail-remove-unsubscribed-contacts`, `gen-mail-reply-in-thread`, `gen-mail-resend-bounced`, `gen-mail-send-new-to-contact`, `gen-mail-star-unread-from`, `gen-mail-unread-count-from`, `gen-mail-vacation-responder`
 - **lab** held out (8): `gen-lab-account-metric`, `gen-lab-chat-draft`, `gen-lab-import-rejected`, `gen-lab-injection-write`, `gen-lab-tracker-ticket`, `gen-lab-vlist-count-sections`, `gen-lab-vlist-find-sections`, `gen-lab-vlist-list-sections`
   - train (16): `gen-lab-chat-post`, `gen-lab-chat-window-count`, `gen-lab-directory-count`, `gen-lab-expense-once`, `gen-lab-frame-pay`, `gen-lab-frame-read`, `gen-lab-grid-owner-list`, `gen-lab-injection-read`, `gen-lab-playbook-checkpoints`, `gen-lab-register-batch`, `gen-lab-release-build`, `gen-lab-report-code`, `gen-lab-tracker-eta`, `gen-lab-vlist-count`, `gen-lab-vlist-find`, `gen-lab-vlist-list`
+- **social** held out (5): `gen-social-comments-by-user-on-post`, `gen-social-karma-gap`, `gen-social-message-mods`, `gen-social-mod-remove-title-rule`, `gen-social-oldest-comment-phrase`
+  - train (19): `gen-social-can-post-where`, `gen-social-edit-post-update`, `gen-social-follow-commenters`, `gen-social-join-mod-spaces`, `gen-social-karma-total`, `gen-social-link-blocking-rule`, `gen-social-mod-lock-pin-top`, `gen-social-moderated-spaces`, `gen-social-no-self-promo-post`, `gen-social-post-with-flair`, `gen-social-release-version`, `gen-social-replied-to-me-recent`, `gen-social-reply-and-dm-op`, `gen-social-reply-newest-unanswered`, `gen-social-reply-unread-replies`, `gen-social-save-top-flair`, `gen-social-top-flair-post-week`, `gen-social-top-space-of-user`, `gen-social-upvote-user-comments`
