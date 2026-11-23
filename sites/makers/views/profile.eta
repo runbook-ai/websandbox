@@ -29,7 +29,7 @@
   <aside class="col-right">
     <section class="card"><h2 class="card-h">Products</h2>
       <% if (!it.products.length) { %><p class="card-pad muted small">No products listed.</p><% } %>
-      <% for (const x of it.products) { %><a class="prod-mini prod-mini-row" href="/product/<%= x.slug %>"><span class="prod-logo" style="--p:<%= it.colorFor(x.slug) %>" aria-hidden="true"><%= x.name.slice(0, 1) %></span><span><strong><%= x.name %></strong><br><span class="muted small"><%= x.mrr ? it.K.money(x.mrr) + '/mo' : x.mrr === 0 ? 'Pre-revenue' : 'Revenue not shared' %></span></span></a><% } %>
+      <% for (const x of it.products) { %><a class="prod-mini prod-mini-row" href="/product/<%= x.slug %>"><span class="prod-logo" style="--p:<%= it.colorFor(x.slug) %>" aria-hidden="true"><%= x.name.slice(0, 1) %></span><span><strong><%= x.name %></strong><br><span class="muted small"><% if (it.revJs) { %><%~ it.rev(`${x.slug}-mini`, x.mrr ? it.K.money(x.mrr) + '/mo' : x.mrr === 0 ? 'Pre-revenue' : 'Revenue not shared') %><% } else { %><%= x.mrr ? it.K.money(x.mrr) + '/mo' : x.mrr === 0 ? 'Pre-revenue' : 'Revenue not shared' %><% } %></span></span></a><% } %>
     </section>
     <% if (it.groups.length) { %><section class="card"><h2 class="card-h">Groups</h2><ul class="more-list"><% for (const g of it.groups) { %><li><a href="/group/<%= g.slug %>"><%= g.title %></a></li><% } %></ul></section><% } %>
   </aside>

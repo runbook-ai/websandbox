@@ -7,13 +7,15 @@
 // ($WSB_DATA_ROOT/makers/base.db may be a symlink to the social base.db). Routes: ROUTES.md.
 const kit = require('../../kit');
 const K = require('./lib/makers');
+const KW = require('./lib/widgets');
 
 module.exports = kit.site(K.E.siteConfig({
   title: 'Workbench',
   siteIndex: 14,
   dir: __dirname,
   skins: { default: {}, dark: { theme: 'dark' } },
-  locals: () => ({ K }),
+  widgets: KW.SLOTS, // lib/widgets.js, docs/WIDGETS.md
+  locals: () => ({ K, ...KW.locals() }),
   routes: require('./routes'),
 }));
 

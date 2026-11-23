@@ -43,6 +43,6 @@
 </main>
 <footer class="wb-foot"><p><%= it.site.title %> &middot; founders building profitable internet businesses in the open</p></footer>
 <script src="/_kit/kit.js" defer></script>
-<script src="/static/makers.js" defer></script>
+<script src="/static/makers.js" defer></script><%~ it.wScripts %>
 </body>
 </html>

@@ -7,11 +7,11 @@
     <p class="prod-tagline"><%= x.tagline %></p>
     <p class="small muted"><%= it.K.topicLabel(x.topic) %> &middot; Launched <%= it.dateLong(x.launched_at) %></p>
   </div>
-  <dl class="prod-facts">
+  <% if (it.prodShadow || it.revJs) { %><%~ it.prodShadow ? it.widgets.shadow(include('_prod_facts', { g: it, x }), { cls: 'prod-facts-host', css: ['/static/makers.css'] }) : include('_prod_facts', { g: it, x }) %><% } else { %><dl class="prod-facts">
     <div><dt>Monthly revenue</dt><dd><%= x.mrr ? it.K.money(x.mrr) : x.mrr === 0 ? '$0' : 'Not shared' %></dd></div>
     <% if (it.rank && x.mrr) { %><div><dt>Revenue rank</dt><dd>#<%= it.rank %></dd></div><% } %>
     <div><dt>Founder</dt><dd><% if (x.founder_account) { %><a href="/<%= x.founder_handle %>"><%= x.founder_name %></a><% } else { %><%= x.founder_name %><% } %></dd></div>
-  </dl>
+  </dl><% } %>
 </section>
 <div class="post-cols">
   <section>

@@ -17,7 +17,7 @@
         <% if (e.product) { %><p class="field-error"><%= e.product %></p><% } %></div>
     </div>
     <label for="w-body">Post <span class="muted small">(Markdown supported)</span></label>
-    <textarea id="w-body" name="body" rows="16" placeholder="Share the details: numbers, what you tried, what you learned, what you need help with." aria-invalid="<%= !!e.body %>"<%~ e.body ? ' class="invalid"' : '' %>><%= v.body %></textarea>
+    <textarea id="w-body" name="body" rows="16" placeholder="Share the details: numbers, what you tried, what you learned, what you need help with." aria-invalid="<%= !!e.body %>"<%~ e.body ? ' class="invalid"' : '' %><%~ it.edAttr %>><%= v.body %></textarea>
     <% if (e.body) { %><p class="field-error"><%= e.body %></p><% } %>
     <p class="muted small" data-wordcount></p>
     <div class="row-btns"><button type="submit" class="btn btn-accent">Publish post</button><a class="btn btn-ghost" href="/">Cancel</a></div>

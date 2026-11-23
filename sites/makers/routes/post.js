@@ -4,6 +4,8 @@
 // The network's posting limits apply: 2 posts a day, 10 comments in 10 minutes (429).
 const K = require('../lib/makers');
 const { E } = K;
+const KW = require('../lib/widgets');
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   function load(req) {
@@ -22,7 +24,14 @@ module.exports = async function (app, kit) {
     const author = E.byHandle(p.handle, { required: false });
     const product = p.product_id ? kit.sql('SELECT * FROM products WHERE id = ?').get(p.product_id) : kit.sql('SELECT * FROM products WHERE founder_id = ? ORDER BY id LIMIT 1').get(p.user_id);
     const more = K.cards(req.user, kit.sql(`SELECT s.id FROM submissions s WHERE s.user_id = ? AND s.id <> ? AND ${E.LIVE} AND s.kind = 'thread-post' ORDER BY s.id DESC LIMIT 4`).pluck().all(p.user_id, p.id, kit.nowSql()));
-    return reply.render('post', { title: p.title, p, tree, sort, author, product, more, own: !!req.user && req.user.id === p.user_id, following: E.isFollowing(req.user, p.user_id), editing: req.query.edit === '1', replyTo: req.query.reply ? +req.query.reply : null });
+    const data = { title: p.title, p, tree, sort, author, product, more, own: !!req.user && req.user.id === p.user_id, following: E.isFollowing(req.user, p.user_id), editing: req.query.edit === '1', replyTo: req.query.reply ? +req.query.reply : null };
+    // ---- widget slots (lib/widgets.js); nothing below changes the page while they are off
+    const plant = KW.plantFor(tree.all, p.id);
+    if (plant) data.plant = plant;
+    const w = NW.commentList(req, reply, { flat: NW.flatten(tree.roots), data, view: '_comment', item: (c) => () => ({ c, p, flat: true }), est: 120, cls: 'c-list' });
+    if (w && w.json) return w.json;
+    if (w && w.html) data.cw = w.html;
+    return reply.render('post', data);
   });
 
   app.post('/post/:slug/comments', { config: { login: true } }, async (req, reply) => {

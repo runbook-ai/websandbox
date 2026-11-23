@@ -24,14 +24,14 @@
     </div>
     <div class="rows" data-feed>
       <% if (!it.rows.length) { %><div class="card card-pad empty"><p><strong>No posts here yet.</strong></p><% if (it.user) { %><p><a href="/new<%= g ? '?group=' + g.slug : '' %>">Start the conversation</a></p><% } %></div><% } %>
-      <%~ include('_rows', { g: it, rows: it.rows, p: it.p, showGroup: !g }) %>
+      <% if (it.fw) { %><%~ it.fw %><% if (it.p.next) { %><a class="more" href="<%= it.p.next %>" rel="next">Next page</a><% } %><% } else { %><%~ include('_rows', { g: it, rows: it.rows, p: it.p, showGroup: !g }) %><% } %>
     </div>
     <% if (it.p.prev) { %><p class="pager"><a href="<%= it.p.prev %>">&larr; Previous page</a></p><% } %>
   </section>
   <aside class="col-right" aria-label="Products">
     <section class="card">
       <h2 class="card-h">Top products by revenue</h2>
-      <ol class="leader"><% it.leaders.forEach((x, i) => { %><li><span class="leader-n"><%= i + 1 %></span><a href="/product/<%= x.slug %>"><strong><%= x.name %></strong><span class="muted small"><%= x.founder_name %></span></a><span class="mrr"><%= x.mrr ? it.K.money(x.mrr) + '/mo' : '—' %></span></li><% }) %></ol>
+      <ol class="leader"><% it.leaders.forEach((x, i) => { %><li><span class="leader-n"><%= i + 1 %></span><a href="/product/<%= x.slug %>"><strong><%= x.name %></strong><span class="muted small"><%= x.founder_name %></span></a><span class="mrr"><% if (it.revJs) { %><%~ it.rev(`${x.slug}-mo`, x.mrr ? it.K.money(x.mrr) + '/mo' : '—') %><% } else { %><%= x.mrr ? it.K.money(x.mrr) + '/mo' : '—' %><% } %></span></li><% }) %></ol>
       <a class="card-more" href="/products">All products &rarr;</a>
     </section>
     <% if (it.recentMilestones.length) { %>

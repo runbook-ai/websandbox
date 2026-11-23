@@ -3,6 +3,8 @@
 // /group/<slug>/newest, POST /group/<slug>/join), /search. ?page=; ?fragment=1 returns the rows only.
 const K = require('../lib/makers');
 const { E } = K;
+const KW = require('../lib/widgets');
+const NW = require('../../social/lib/net-widgets');
 
 module.exports = async function (app, kit) {
   const side = (req) => ({
@@ -17,6 +19,13 @@ module.exports = async function (app, kit) {
     const rows = K.cards(req.user, ids);
     if (req.query.fragment === '1') return reply.render('_rows', { rows, p });
     const data = { title: group ? group.title : null, rows, p, sort, top, group, base, groups: K.groups(req.user), ...side(req) };
+    // ---- `feed` widget slot (lib/widgets.js): the next FEED_WINDOW posts as one list
+    const w = NW.listWindow(req, reply, { slot: 'feed', size: KW.FEED_WINDOW, perPage: E.PER_PAGE, p, view: '_row', est: 110, label: 'Posts', cls: 'feed-list',
+      rows: (n) => K.listPosts({ sort, top, groupId: group && group.id, offset: pg.offset, limit: n }),
+      data: (part) => ({ ...data, byId: new Map(K.cards(req.user, part).map((r) => [r.id, r])) }),
+      item: (id) => (it) => ({ r: it.byId.get(id), showGroup: !group }) });
+    if (w && w.json) return w.json;
+    if (w) { data.p = w.p; if (w.html) data.fw = w.html; }
     if (group) Object.assign(data, { members: kit.sql('SELECT count(*) FROM forum_subscriptions WHERE forum_id = ?').pluck().get(group.id), joined: !!req.user && !!kit.sql('SELECT 1 FROM forum_subscriptions WHERE user_id = ? AND forum_id = ?').get(req.user.id, group.id) });
     return reply.render('feed', data);
   }
