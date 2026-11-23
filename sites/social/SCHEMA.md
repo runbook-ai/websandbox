@@ -137,6 +137,18 @@ likes / reactions / upvotes / reposts of the last 3 days.
 
 Size: 1.28 GB with every network (forum 1.28 GB).
 
+## Rows (world `v1s`: 20,000 personas, 120 days, `--now '2027-01-28 18:00:00'`)
+
+| | Rows |
+|---|---|
+| community | 47,462 posts, 266,709 comments, 2,213 scheduled, 1,227 spaces |
+| devblog | 4,569 articles (35 tags, 207 series), 18,193 comments, 157 scheduled; 52,654 follows, 10,095 tag follows, 84,804 reactions, 11,537 saves, 36,234 notifications; 4,260 accounts |
+| makers | 3,473 posts, 14,194 comments, 117 scheduled; 858 products, 1,219 milestones; 27,786 follows, 56,610 upvotes, 24,207 notifications; 2,312 accounts |
+| micro | 250,215 posts + 250,097 replies, 3,399 scheduled; 319,983 follows, 1,281,951 likes, 136,680 reposts, 381,251 notifications; 9,679 accounts |
+| world_affiliations | 15,325 |
+
+Size: 2.33 GB; build about 7 minutes.
+
 ## Time
 
 The site clock starts at `2026-10-14 18:00:00` UTC (`site_settings.social_now`, the world's last

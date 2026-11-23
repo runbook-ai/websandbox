@@ -167,7 +167,7 @@ module.exports = [
         const tot = by.reduce((a, x) => a + x.n, 0);
         if (by.length < 2 || tot < 5 || by[0].n < 3 || by[0].n - by[1].n < 2) continue;
         yield { slots: { user: u.username }, login_user: r.pick(L.worldUsers()).username,
-          eval: answer(`SELECT f.name FROM submissions x JOIN forums f ON f.id = x.forum_id WHERE x.user_id = ${uid(u.username)} AND x.visibility = 'visible' AND x.created_at <= ${lit(L.NOW())} GROUP BY f.id ORDER BY count(*) DESC LIMIT 1`, by[0].name) };
+          eval: answer(`SELECT f.name FROM submissions x JOIN forums f ON f.id = x.forum_id WHERE x.user_id = ${uid(u.username)} AND x.network_id = 1 AND x.visibility = 'visible' AND x.created_at <= ${lit(L.NOW())} GROUP BY f.id ORDER BY count(*) DESC LIMIT 1`, by[0].name) };
       }
     },
   },
