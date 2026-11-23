@@ -5,6 +5,7 @@
 // Routes: ROUTES.md. Schema: build/schema.sql.
 const kit = require('../../kit');
 const M = require('./lib/mail');
+const MW = require('./lib/widgets');
 
 module.exports = kit.site({
   name: 'mail',
@@ -14,6 +15,8 @@ module.exports = kit.site({
   db: { file: 'base.db', cacheMB: 32 },
   // "today" comes with the data (world_meta, written by build.js); older builds: the dev world's
   clock: { start: (db) => process.env.WSB_MAIL_CLOCK || M.dataClock(db) || '2026-10-15T15:00:00Z' },
+  // scenario widget slots (off unless POST /__rl/reset {scenario: {widgets}}; lib/widgets.js, docs/WIDGETS.md)
+  widgets: MW.SLOTS,
   auth: {
     loginPath: '/login',
     findUser: (db, login) => db.prepare(`SELECT u.* FROM users u WHERE u.username = lower(?) OR u.email = lower(?)
@@ -37,6 +40,7 @@ module.exports = kit.site({
       labels: u ? req.tenant.db.prepare('SELECT * FROM labels WHERE owner_id = ? ORDER BY name COLLATE NOCASE').all(u.id) : [],
       listDate: (s) => M.listDate(s, now, (u && u.timezone) || 'America/New_York'),
       fullDate: (s) => M.fullDate(s, (u && u.timezone) || 'America/New_York'),
+      ...MW.locals(),
     };
   },
   jobs: M.jobs,

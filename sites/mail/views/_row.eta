@@ -1,0 +1,13 @@
+<%/* include('_row', {...it, r}) one conversation row of a list */%><% const r = it.r; %>
+      <tr class="row<%= r.unread ? ' unread' : '' %>" data-href="/thread/<%= r.id %>?from=<%= encodeURIComponent(it.returnTo) %>">
+        <td class="c-sel"><input type="checkbox" name="ids" value="<%= r.id %>" aria-label="Select conversation"></td>
+        <td class="c-star"><span class="star<%= r.starred ? ' on' : '' %>" title="<%= r.starred ? 'Starred' : 'Not starred' %>"><%= r.starred ? '★' : '☆' %></span></td>
+        <td class="c-from"><%= r.people || '(no sender)' %><% if (r.n > 1) { %> <span class="n"><%= r.n %></span><% } %><% if (r.has_draft) { %> <span class="draft-tag">Draft</span><% } %></td>
+        <td class="c-subj">
+          <% for (const l of r.labels) { %><span class="chip" style="border-color:<%= l.color %>"><%= l.name %></span><% } %>
+          <a href="/thread/<%= r.id %>?from=<%= encodeURIComponent(it.returnTo) %>"><span class="subj"><%= r.subject || '(no subject)' %></span></a>
+          <span class="snip"> &ndash; <%= r.snippet %></span>
+        </td>
+        <td class="c-att"><%= r.has_att ? '\u{1F4CE}' : '' %></td>
+        <td class="c-date" title="<%= it.fullDate(r.last_at) %>"><%= it.listDate(r.last_at) %></td>
+      </tr>

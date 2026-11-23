@@ -21,7 +21,7 @@
       <div class="cf-row"><label for="cf-bcc">Bcc</label><input id="cf-bcc" name="bcc" value="<%= v.bcc %>" autocomplete="off" data-autocomplete="/api/contacts"></div>
     </div>
     <div class="cf-row"><label for="cf-subject">Subject</label><input id="cf-subject" name="subject" value="<%= v.subject %>"></div>
-    <textarea name="body" aria-label="Message body" rows="18"><%= v.body %></textarea>
+    <textarea name="body" aria-label="Message body" rows="18"<%~ it.edAttr %>><%= v.body %></textarea>
     <div class="cf-actions">
       <button type="submit" name="action" value="send" class="primary">Send</button>
       <button type="submit" name="action" value="draft">Save draft</button>

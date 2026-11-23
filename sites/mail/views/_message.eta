@@ -1,0 +1,32 @@
+<%/* include('_message', {...it, m, open}) one message of a conversation */%><% const m = it.m; const open = it.open; %>
+  <details class="msg<%= m.is_draft ? ' is-draft' : '' %>" id="m<%= m.id %>"<%= open ? ' open' : '' %>>
+    <summary>
+      <span class="m-from"><strong><%= m.is_draft ? 'Draft' : (m.from_name || m.from_email) %></strong> <span class="m-addr">&lt;<%= m.from_email %>&gt;</span></span>
+      <span class="m-date"><%= it.fullDate(m.sent_at) %></span>
+      <span class="m-snip"><%= m.body.replace(/\s+/g, ' ').slice(0, 100) %></span>
+    </summary>
+    <div class="m-head">
+      <div>to <%= m.to.map((a) => a.name || a.email).join(', ') || '(no recipients)' %><% if (m.cc.length) { %>, cc <%= m.cc.map((a) => a.name || a.email).join(', ') %><% } %><% if (m.bcc.length && m.is_sent) { %>, bcc <%= m.bcc.map((a) => a.name || a.email).join(', ') %><% } %></div>
+      <details class="m-details"><summary>details</summary>
+        <dl>
+          <dt>from:</dt><dd><%= m.from_name %> &lt;<%= m.from_email %>&gt;</dd>
+          <dt>to:</dt><dd><%= it.M.fmtAddrs(m.to) %></dd>
+          <% if (m.cc.length) { %><dt>cc:</dt><dd><%= it.M.fmtAddrs(m.cc) %></dd><% } %>
+          <dt>date:</dt><dd><%= it.fullDate(m.sent_at) %></dd>
+          <dt>subject:</dt><dd><%= m.subject %></dd>
+        </dl>
+      </details>
+      <form method="post" action="/message/<%= m.id %>/star" class="inline star-form"><%~ it.csrfInput() %><input type="hidden" name="return" value="/thread/<%= it.t.id %>"><button class="link star<%= m.is_starred ? ' on' : '' %>" title="<%= m.is_starred ? 'Unstar' : 'Star' %>"><%= m.is_starred ? '★' : '☆' %></button></form>
+    </div>
+    <div class="m-body"><%= m.body %><%= it.plant ? it.plant(m) : '' %></div>
+    <% if (m.atts.length) { %><ul class="atts"><% for (const a of m.atts) { %><li>&#128206; <%= a.filename %> (<%= Math.max(1, Math.round(a.size / 1024)) %> KB)</li><% } %></ul><% } %>
+    <div class="m-actions">
+      <% if (m.is_draft) { %>
+        <a class="btn" href="/compose?draft=<%= m.id %>">Edit draft</a>
+      <% } else { %>
+        <a class="btn" href="/compose?reply=<%= m.id %>">Reply</a>
+        <% if (m.to.length + m.cc.length > 1) { %><a class="btn" href="/compose?reply=<%= m.id %>&amp;all=1">Reply all</a><% } %>
+        <a class="btn" href="/compose?forward=<%= m.id %>">Forward</a>
+      <% } %>
+    </div>
+  </details>

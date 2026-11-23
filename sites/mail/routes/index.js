@@ -1,6 +1,8 @@
 'use strict';
 // Mail routes (ROUTES.md). All mailbox pages need a login; every query is scoped to req.user.id.
 const M = require('../lib/mail');
+const MW = require('../lib/widgets');
+const { buildLocals } = require('../../../kit/lib/site');
 
 module.exports = async function routes(app, kit) {
   kit.authRoutes(app, { loginPath: '/login', logoutPath: '/logout', after: '/mail/inbox', title: 'Sign in to Inboxmail' });
@@ -19,7 +21,21 @@ module.exports = async function routes(app, kit) {
     const total0 = db.prepare(`SELECT count(DISTINCT m.thread_id) FROM messages m WHERE m.owner_id = ? AND ${where}`).pluck().get(req.user.id, ...params);
     const pager = kit.paginate(req, total0, { perPage: per, cap: 100000 });
     const { total, rows } = M.listThreads(db, req.user.id, where, params, { limit: pager.limit, offset: pager.offset });
-    return reply.render('list', { title, rows, total, pager, folder, label, q, category, returnTo: req.url });
+    const data = { title, rows, total, pager, folder, label, q, category, returnTo: req.url };
+    // ---- inbox widget slot (lib/widgets.js): the next LIST_WINDOW conversations as one list
+    const lw = kit.widget('inbox');
+    const n = Math.max(0, Math.min(MW.LIST_WINDOW, total - pager.offset));
+    if (lw && n) {
+      const returnTo = kit.urlWith(req, { _w: null, offset: null, limit: null });
+      if (req.query._w === 'rows') {
+        const { offset, limit } = kit.widgets.range(req, { max: 100, dflt: 50 });
+        const part = M.listThreads(db, req.user.id, where, params, { limit: Math.max(0, Math.min(limit, n - offset)), offset: pager.offset + offset }).rows;
+        const it = buildLocals(req.tenant.site, req, reply, { ...data, returnTo }, { noFlash: true });
+        return { total: n, items: part.map((r) => `<table class="threads wsb-row-line"><tbody>${req.tenant.site.views.render('_row', { ...it, r })}</tbody></table>`) };
+      }
+      data.lw = kit.widgets.vlist({ src: kit.urlWith(req, { _w: 'rows' }), total: n, kind: lw, est: 42, chunk: 50, label: 'Conversations', cls: 'thread-list' });
+    }
+    return reply.render('list', data);
   };
 
   app.get('/mail/:folder', auth, async (req, reply) => {
@@ -80,10 +96,29 @@ module.exports = async function routes(app, kit) {
       m.atts = JSON.parse(m.atts || '[]').filter((a) => a.id);
     }
     const unreadIds = msgs.filter((m) => !m.is_read).map((m) => m.id);
+    // ---- widget slots (lib/widgets.js): plant in one message; older messages load on scroll up
+    const plant = MW.plantFn(t, msgs);
+    const older = kit.widget('thread') === 'older' && msgs.length > MW.THREAD_STEP;
+    const renderMsgs = (list, data) => {
+      const it = buildLocals(req.tenant.site, req, reply, data, { noFlash: true });
+      return list.map(([m, open]) => req.tenant.site.views.render('_message', { ...it, m, open }));
+    };
+    if (older && req.query._w === 'older') { // a chunk: the THREAD_STEP messages before ?before=<index>; marks nothing read
+      const before = Math.max(0, Math.min(msgs.length, parseInt(req.query.before, 10) || 0));
+      const from = Math.max(0, before - MW.THREAD_STEP);
+      return { items: renderMsgs(msgs.slice(from, before).map((m) => [m, !!m.is_draft]), { t, plant, returnTo: String(req.query.from || '/mail/inbox') }), cursor: from, more: from > 0 };
+    }
     db.prepare('UPDATE messages SET is_read = 1 WHERE thread_id = ? AND owner_id = ? AND is_read = 0').run(t.id, req.user.id);
     const tl = db.prepare('SELECT DISTINCT l.* FROM labels l JOIN message_labels ml ON ml.label_id = l.id JOIN messages m ON m.id = ml.message_id WHERE m.thread_id = ? ORDER BY l.name').all(t.id);
     const state = db.prepare('SELECT max(in_inbox) inbox, max(is_spam) spam, max(is_trash) trash, max(is_starred) starred, max(is_important) important FROM messages WHERE thread_id = ?').get(t.id);
-    return reply.render('thread', { title: t.subject, t, msgs, unreadIds, threadLabels: tl, state, returnTo: String(req.query.from || '/mail/inbox') });
+    const data = { title: t.subject, t, msgs, unreadIds, threadLabels: tl, state, returnTo: String(req.query.from || '/mail/inbox') };
+    if (plant) data.plant = plant;
+    if (older) {
+      const from = msgs.length - MW.THREAD_STEP;
+      const shown = msgs.slice(from).map((m, k) => [m, from + k === msgs.length - 1 || unreadIds.includes(m.id) || !!m.is_draft]);
+      data.older = kit.widgets.older({ src: kit.urlWith(req, { _w: 'older' }), cursor: from, more: true, items: renderMsgs(shown, data).join(''), label: 'Messages', cls: 'conversation-box', begin: 'This is the first message of the conversation.' });
+    }
+    return reply.render('thread', data);
   });
 
   app.post('/message/:id/star', auth, async (req, reply) => {
