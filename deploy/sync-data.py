@@ -50,6 +50,7 @@ def sums(data, site):
 def download(args, only=None):
     from huggingface_hub import snapshot_download
     kw = dict(repo_id=args.repo, repo_type='dataset', revision=args.revision, local_dir=args.data, max_workers=4)
+    kw['ignore_patterns'] = ['world/*']  # the world model's build inputs: not needed to serve the sites
     if only:
         kw['allow_patterns'] = only
     snapshot_download(**kw)
