@@ -8,6 +8,11 @@
 const kit = require('../../kit');
 const S = require('./lib/social');
 
+// "today" comes with the data (site_settings.social_now, written by build/migrate.js)
+function dataClock(db) {
+  try { const v = db.prepare("SELECT value FROM site_settings WHERE key = 'social_now'").pluck().get(); return v ? v.replace(' ', 'T') + 'Z' : null; } catch { return null; }
+}
+
 module.exports = kit.site({
   name: 'social',
   title: 'Commonroom',
@@ -16,7 +21,7 @@ module.exports = kit.site({
   db: { file: 'base.db', cacheMB: 48 },
   // base "now" = site_settings.social_now of the build (the world's last day); scheduled world
   // replies land as the tenant clock moves past it.
-  clock: { start: process.env.WSB_SOCIAL_CLOCK || '2026-10-14T18:00:00Z' },
+  clock: { start: (db) => process.env.WSB_SOCIAL_CLOCK || dataClock(db) || '2026-10-14T18:00:00Z' },
   auth: {
     loginPath: '/login',
     findUser: (db, login) => db.prepare('SELECT * FROM users WHERE normalized_username = lower(?)').get(String(login).replace(/^\/?u\//i, '')),

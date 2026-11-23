@@ -63,7 +63,9 @@ function simulate(personas, world, { seed, topics, networks }) {
     for (const { p, net, r, ts } of actions) {
       const cfg = networks[net];
       const [rootKind, replyKind] = Object.keys(cfg.kinds);
-      const pool = recent[net].filter((it) => ts - Date.parse(it.ts) < 3 * DAY && it.author !== p.id);
+      // recent: [{ it, t }] in time order (t = Date.parse(it.ts), parsed once)
+      const pool = [];
+      for (const x of recent[net]) if (ts - x.t < 3 * DAY && x.it.author !== p.id) pool.push(x.it);
       const isReply = pool.length && r.chance(cfg.reply_share);
       let spec;
       if (isReply) {
@@ -129,7 +131,7 @@ function simulate(personas, world, { seed, topics, networks }) {
       if (!isReply) {
         spec.root = null;
         threads.set(spec.id, { root: spec, replies: [] });
-        recent[net].push(spec);
+        recent[net].push({ it: spec, t: Date.parse(spec.ts) });
       } else {
         const th = threads.get(spec.root);
         th.replies[th.replies.length - 1].id = spec.id;
@@ -138,7 +140,7 @@ function simulate(personas, world, { seed, topics, networks }) {
       items.push(spec);
       byItem.set(spec.id, spec);
     }
-    for (const net of Object.keys(recent)) recent[net] = recent[net].filter((it) => t0 + (day + 1) * DAY - Date.parse(it.ts) < 3 * DAY);
+    for (const net of Object.keys(recent)) recent[net] = recent[net].filter((x) => t0 + (day + 1) * DAY - x.t < 3 * DAY);
   }
   return items;
 }
