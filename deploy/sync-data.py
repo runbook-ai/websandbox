@@ -15,8 +15,9 @@
 """
 import argparse, hashlib, json, os, shutil, subprocess, sys, time
 
-SITES = ['store', 'forum', 'code', 'wiki', 'map', 'mail']
-OPTIONAL = {'mail'}  # newer sites: skipped (not an error) while the dataset revision has no data for them
+SITES = ['store', 'forum', 'code', 'wiki', 'map', 'mail', 'social', 'lab']
+OPTIONAL = {'mail', 'social', 'lab'}  # newer sites: skipped (not an error) while the dataset revision has no data for them
+SHARED = {'social': ('media', '../forum/media')}  # social shows the forum's images: a symlink, not a copy
 ARCHIVES = {'store': ('media.tar', 'media'), 'forum': ('media.tar', 'media'), 'code': ('media.tar', 'media'),
             'wiki': ('media.tar', 'media'), 'map': ('static.tar.zst', 'static')}
 
@@ -165,6 +166,11 @@ def main():
     for site in SITES:
         if site in ARCHIVES:
             extract(args, site)
+    for site, (name, target) in SHARED.items():
+        link = os.path.join(args.data, site, name)
+        if os.path.isdir(os.path.join(args.data, site)) and not os.path.lexists(link):
+            os.symlink(target, link)
+            log('linked', site + '/' + name, '->', target)
     log('data ok (%.0fs)' % (time.time() - t0))
 
 

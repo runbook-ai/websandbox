@@ -2,7 +2,7 @@
 # Container start (run by the image's bootstrap after the repo checkout):
 #   1. npm install where the lockfiles changed (node_modules live in the volume)
 #   2. sync the data from Hugging Face (deploy/sync-data.py: changed files only, SHA256SUMS, tars)
-#   3. start all five sites on 127.0.0.1 (tasks/tools/sites.sh, 1 tenant, control token)
+#   3. start every site with data on 127.0.0.1 (tasks/tools/sites.sh, 1 tenant, control token)
 #   4. exec the front router (deploy/router.js) on :8080 -- landing page + Host routing + hourly reset
 set -euo pipefail
 ROOT=${WSB_ROOT:-/srv}
@@ -46,6 +46,6 @@ bash "$REPO/tasks/tools/sites.sh" up --bind ports --base "$BASE" --tenants 1 --w
   --data-root "$DATA" --control-token "$(cat "$TOKEN_FILE")" --timeout 1200
 
 log "starting router on :${WSB_PORT:-8080}"
-export WSB_CONTROL_TOKEN_FILE=$TOKEN_FILE WSB_BASE_PORT=$BASE WSB_SITES_STATE
+export WSB_CONTROL_TOKEN_FILE=$TOKEN_FILE WSB_BASE_PORT=$BASE WSB_SITES_STATE WSB_DATA_ROOT=$DATA
 export WSB_COMMIT=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo unknown)
 exec node "$REPO/deploy/router.js"

@@ -34,9 +34,9 @@
 <main>
   <h1>websandbox</h1>
   <p class="lede">Lightweight, self-hostable websites for training and evaluating web agents: a store with its
-  back office, a forum, a code-hosting site, a Wikipedia and a map. They are rebuilt from the
+  back office, a forum, a code-hosting site, a Wikipedia and a map, rebuilt from the
   <a href="https://webarena.dev">WebArena</a> environments with the same kinds of features and the same
-  underlying data. Each site is one SQLite database plus one small Node server that resets in milliseconds.
+  underlying data, plus new sites (webmail) whose content is generated from a simulated world of people. Each site is one SQLite database plus one small Node server that resets in milliseconds.
   This is a public demo instance (one copy of each site).</p>
 
   <div class="note">Everything you change here is shared with other visitors and is <strong>undone every
@@ -75,8 +75,18 @@
       <p>OpenStreetMap-like map of the WebArena region: vector tiles, place search, car/bike/foot directions.</p>
       <div class="login"><div><span>Login</span>none needed</div></div>
     </div>
+    <div class="card">
+      <h3><span class="dot {{ST_MAIL}}" title="{{ST_MAIL}}"></span><a href="{{URL_MAIL}}/">Mail</a></h3>
+      <p>Webmail: folders, labels, filters, search operators, contacts, vacation replies; 300 mailboxes of synthetic mail.</p>
+      <div class="login"><div><span>User</span><code>alex.waggoner</code><code>Password.123</code></div></div>
+    </div>
+    <div class="card">
+      <h3><span class="dot {{ST_LAB}}" title="{{ST_LAB}}"></span><a href="{{URL_LAB}}/">Lab</a></h3>
+      <p>Workspace app built from hard UI patterns: virtualized lists, shadow DOM, frames, controlled editors, slow jobs, planted instructions.</p>
+      <div class="login"><div><span>User</span><code>aldo.lowrie</code><code>Password.123</code></div></div>
+    </div>
   </div>
-  <p style="margin-top:14px;color:var(--muted);font-size:.9rem">The logins are WebArena's public test accounts.</p>
+  <p style="margin-top:14px;color:var(--muted);font-size:.9rem">The logins are WebArena's public test accounts (mail: any synthetic mailbox, same password).</p>
 
   <h2>Code and data</h2>
   <p>Code (Apache-2.0): <a href="https://github.com/runbook-ai/websandbox">github.com/runbook-ai/websandbox</a> &mdash;

@@ -3,7 +3,7 @@
 // Front router of the public websandbox demo (deploy/README.md). One host, one port:
 //   /                 landing page (deploy/landing.html);  /__status  JSON health (no secrets)
 //   /shop/            store (storefront; back office /shop/admin)
-//   /forum/ /code/ /wiki/ /map/   those sites
+//   /forum/ /code/ /wiki/ /map/ /lab/   those sites;  /email/ mail (its paths start with /mail/);  /community/ social
 // The sites run at their root on 127.0.0.1 (tasks/tools/sites.sh --bind ports, unchanged code);
 // the prefix is added by rewriting their responses (deploy/prefix.js). They trust loopback for
 // their control API and every proxied request comes from loopback -- so any path containing
@@ -40,7 +40,11 @@ const SITES = [
   { key: 'code', prefix: '/code', idx: 2, name: 'Code' },
   { key: 'wiki', prefix: '/wiki', idx: 3, name: 'Wiki', ownsPrefix: true },
   { key: 'map', prefix: '/map', idx: 4, name: 'Map' },
-].map((s) => ({ ...s, port: BASE + s.idx * 10, health: null, fails: 0 }));
+  { key: 'mail', prefix: '/email', idx: 5, name: 'Mail' },
+  { key: 'social', prefix: '/community', idx: 6, name: 'Community' },
+  { key: 'lab', prefix: '/lab', idx: 7, name: 'Lab' },
+].filter((s) => !env.WSB_DATA_ROOT || fs.existsSync(path.join(env.WSB_DATA_ROOT, s.key)))   // sites.sh skips sites without data
+  .map((s) => ({ ...s, port: BASE + s.idx * 10, health: null, fails: 0 }));
 const siteOf = (p) => SITES.find((s) => X.under(p, s.prefix)) || null;
 
 const log = (...a) => console.log(`[router ${new Date().toISOString().slice(11, 19)}]`, ...a);
