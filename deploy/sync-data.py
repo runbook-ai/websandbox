@@ -15,7 +15,8 @@
 """
 import argparse, hashlib, json, os, shutil, subprocess, sys, time
 
-SITES = ['store', 'forum', 'code', 'wiki', 'map']
+SITES = ['store', 'forum', 'code', 'wiki', 'map', 'mail']
+OPTIONAL = {'mail'}  # newer sites: skipped (not an error) while the dataset revision has no data for them
 ARCHIVES = {'store': ('media.tar', 'media'), 'forum': ('media.tar', 'media'), 'code': ('media.tar', 'media'),
             'wiki': ('media.tar', 'media'), 'map': ('static.tar.zst', 'static')}
 
@@ -59,6 +60,9 @@ def verify(args, cache):
     for site in SITES:
         s = sums(args.data, site)
         if s is None:
+            if site in OPTIONAL:
+                log('no %s/SHA256SUMS in this revision; skipping %s' % (site, site))
+                continue
             bad.append(site + '/SHA256SUMS')
             continue
         for name, want in s.items():
@@ -159,7 +163,8 @@ def main():
     if bad:
         sys.exit('sync-data: bad or missing files: ' + ' '.join(bad))
     for site in SITES:
-        extract(args, site)
+        if site in ARCHIVES:
+            extract(args, site)
     log('data ok (%.0fs)' % (time.time() - t0))
 
 
