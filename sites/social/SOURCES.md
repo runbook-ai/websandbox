@@ -10,6 +10,11 @@
   comments; micro posts and replies): written per item spec by an open-weight LLM under MIT or
   Apache-2.0 (the render model is recorded in `world/render/models.json`; the published DB was
   rendered by DeepSeek-V4.1-Flash, MIT, and the rendered text ships with the dataset under `world/v1/`).
+- **Direct messages** (community private messages, micro direct messages): conversations between world
+  personas with a tie (replies, follows, same employer or group) from `world/sim/dms.js`, rendered by
+  the same model (`world/render-dms.js`; the text ships under `world/v1/` as `rendered-dms.jsonl.zst`).
+  Read state is drawn with the world's seeded RNG in `build/dms.js`. All synthetic; domains end in
+  `.example`.
 - **Engagement the specs don't carry** (devblog reactions and saves, makers upvotes, micro likes and
   reposts) and makers product taglines: drawn deterministically from the world's follow graph and
   reply threads in `build/migrate.js` (see `SCHEMA.md`).
