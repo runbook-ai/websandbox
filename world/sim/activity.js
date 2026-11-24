@@ -286,4 +286,4 @@ function simulateMail(personas, world, { seed, networks, owners, rate = 3, campa
   return items;
 }
 
-module.exports = { simulate, simulateMail, typo };
+module.exports = { simulate, simulateMail, typo, GIST };

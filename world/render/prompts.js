@@ -42,8 +42,49 @@ function personaText(p, net) {
 
 const clip = (s, n) => (s && s.length > n ? s.slice(0, n) + ' [...]' : s || '');
 
+// Direct messages (sim/dms.js): one message of a private conversation between two personas.
+// ctx: { persona (sender), other: {first, about}, relation, ref: {title, text} (their post this is about), parents: [{who, title, text}] }
+const DM_RULES = {
+  community: 'Private message on a Reddit-style forum. Plain text, casual, like a real DM between two members (no markdown headings, no hashtags). The first message of a conversation has a subject line.',
+  micro: 'Direct message on a microblog. Short and chatty, at most 280 characters, no hashtags.',
+};
+const DM_HINT = {
+  'about-post': 'writes to them privately about their post (the one they replied to publicly): a follow-up question or a thought too personal for the public thread',
+  'work-ask': 'asks a colleague for something work-related, privately', 'group-plan': 'plans something with a fellow group member',
+  'meet-up': 'suggests meeting up in person', borrow: 'asks to borrow something', recommend: 'asks for a recommendation', 'catch-up': 'a friendly check-in',
+  'dm-reply': 'replies to the last message(s) in the conversation: answers what was asked, or reacts naturally', 'dm-followup': 'you sent the last message and they have not answered yet: a short follow-up to your own message (an extra detail, a correction, or a nudge); do not answer your own question or speak for them',
+};
+function buildDM(spec, ctx) {
+  const first = spec.seq === 0;
+  const lines = [`Network: ${DM_RULES[spec.net]}`, `\nYou are writing as:\n${personaText(ctx.persona, spec.net)}`,
+    `\nWriting to: ${ctx.other.first} (${ctx.other.about}). Address them by first name if at all.`];
+  if (ctx.relation) lines.push(`How you know each other: ${ctx.relation}.`);
+  lines.push(`Topic area: ${ctx.topicLabel || spec.topic}`);
+  if (ctx.ref) lines.push(`\nTheir post you are writing about:${ctx.ref.title ? ` "${ctx.ref.title}"` : ''}\n${clip(ctx.ref.text, 600)}`);
+  if (ctx.parents?.length) {
+    if (ctx.parents[0].title) lines.push(`\nSubject of the conversation: "${ctx.parents[0].title}"`);
+    lines.push('\nConversation so far (oldest first):');
+    for (const pa of ctx.parents) lines.push(`--- ${pa.who}\n${clip(pa.text, 700)}`);
+    lines.push('--- (your message goes here)');
+  }
+  lines.push(`What this message does: ${DM_HINT[spec.intent] || spec.intent}.`);
+  if (spec.gist) lines.push(`What it's about: ${spec.gist}.`);
+  if (spec.facts?.length) lines.push(`\nMust include, verbatim: ${spec.facts.map((f) => `"${f}"`).join('; ')}.`);
+  lines.push(spec.net === 'micro' ? `Length: about ${spec.words} words, at most 280 characters.` : `Length: about ${spec.words} words.`);
+  const format = first && spec.subject ? 'SUBJECT: <subject>\n\n<message>' : '<message only> (no subject line, no "Re:" line)';
+  const system = [
+    'You write one realistic private message for a synthetic website dataset. Write it exactly as this person would, in character, as if sending it for real.',
+    'Rules: no preamble or explanation; output only the content in the given format. Never mention AI, prompts or datasets.',
+    'Avoid generic AI phrasing (no "delve", "game-changer", "I hope this message finds you well"). Prefer plain words. Use em dashes sparingly or not at all.',
+    'Only name people who are given here; invent nothing about real private individuals. Never include links, email addresses, phone numbers, street addresses or other contact details; if they would meet, name only the place given.',
+    `Format:\n${format}`,
+  ].join('\n');
+  return [{ role: 'system', content: system }, { role: 'user', content: lines.filter((l) => l != null).join('\n') }];
+}
+
 // ctx: { persona, parents: [{who, title, text}] (root first), from, to, relation, eventText, spaceLabel }
 function buildMessages(spec, ctx) {
+  if (spec.kind === 'dm') return buildDM(spec, ctx);
   const titled = ['post', 'article'].includes(spec.kind);
   const lines = [];
   lines.push(`Network: ${NETWORK_RULES[spec.net]}`);
