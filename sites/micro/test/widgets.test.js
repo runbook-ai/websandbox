@@ -42,7 +42,7 @@ test('micro widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no 
     assert.equal((await rl(A, '/reset', { scenario: { widgets: { timeline: 'carousel' } } })).status, 400);
     assert.equal((await rl(A, '/reset', { scenario: { widgets: { thread: 'recycle' } } })).status, 400);
     assert.equal((await rl(A, '/reset', { scenario: { widgets: { feed: 'unmount' } } })).status, 400);
-    assert.equal((await rl(A, '/reset', { scenario: { widgets: { timeline: 'grid', thread: 'older', composer: 'shadow', dm: 'older', plant: 'reply', counts: 'js' } } })).status, 200);
+    assert.equal((await rl(A, '/reset', { scenario: { widgets: { timeline: 'grid', thread: 'older', composer: 'shadow', dm: 'older', plant: 'reply', counts: 'js', dm_composer: 'shadow' } } })).status, 200);
   });
 
   await t.test('off: the default timeline, no chunk or count endpoints', async () => {
@@ -104,6 +104,26 @@ test('micro widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no 
     await reset();
   });
 
+  await t.test('dm_composer: the direct-message fields are controlled editors posting the same fields', async () => {
+    for (const kind of ['shadow', 'contenteditable']) {
+      await reset({ dm_composer: kind });
+      const c = await login(me.handle);
+      const page = (await c.get(`/messages/compose?to=${other}`)).text;
+      assert.match(page, new RegExp(`<textarea id="dm-text" name="text"[^>]*data-wsb-editor="${kind}"`));
+      assert.match(page, /\/_kit\/widgets\/editor\.js/);
+      assert.doesNotMatch((await c.get('/home')).text, /data-wsb-editor/, 'the post composers keep theirs');
+      const r = await c.post('/messages', { form: { _csrf: csrf(page), to: other, text: `sent from the ${kind} composer` } });
+      assert.equal(r.status, 302);
+      const tid = +/\/messages\/(\d+)/.exec(r.location)[1];
+      const th = (await c.get(`/messages/${tid}`)).text;
+      assert.match(th, new RegExp(`<textarea id="dm-reply" name="text"[^>]*data-wsb-editor="${kind}"`));
+      assert.equal((await c.post(`/messages/${tid}`, { form: { _csrf: csrf(th), text: `a reply from the ${kind} composer` } })).status, 302);
+      assert.equal((await q(A, `SELECT count(*) n FROM messages WHERE thread_id = ${tid} AND body IN ('sent from the ${kind} composer', 'a reply from the ${kind} composer')`))[0].n, 2);
+    }
+    await reset();
+    assert.doesNotMatch((await (await login(me.handle)).get('/messages/compose')).text, /data-wsb-editor/);
+  });
+
   await t.test('composer: the composers are controlled editors that post the same fields', async () => {
     for (const kind of ['shadow', 'contenteditable']) {
       await reset({ composer: kind });
@@ -133,8 +153,9 @@ test('micro widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no 
     const tid = +/\/messages\/(\d+)/.exec(r.location)[1];
     for (let k = 1; k <= 12; k++) { const who = k % 2 ? o : c; page = (await who.get(`/messages/${tid}`)).text; await who.post(`/messages/${tid}`, { form: { _csrf: csrf(page), text: `message ${k}` } }); }
     const all = (await q(A, `SELECT id FROM messages WHERE thread_id = ${tid} ORDER BY id`)).map((x) => x.id);
-    assert.equal(all.length, 13);
-    const unread = async () => (await q(A, `SELECT count(*) n FROM notifications WHERE notification_type = 'message' AND network_id = 4 AND read_at IS NULL AND user_id = (SELECT user_id FROM accounts WHERE network_id = 4 AND handle = '${other}')`))[0].n;
+    assert.ok(all.length >= 13); // the pair's conversation may already exist in the base data
+    const unread = async () => (await q(A, `SELECT count(*) n FROM notifications WHERE notification_type = 'message' AND network_id = 4 AND read_at IS NULL AND user_id = (SELECT user_id FROM accounts WHERE network_id = 4 AND handle = '${other}')
+      AND message_id IN (SELECT id FROM messages WHERE thread_id = ${tid})`))[0].n;
     const before = await unread();
     assert.ok(before > 0);
     const M = /id="m(\d+)"/g;

@@ -10,6 +10,8 @@
 //   plant     a planted instruction (PLANTS) inside one comment of every post page
 //   messages  older: a private conversation with more than 5 messages opens at its newest 5 in a box;
 //             scrolling up loads older ones, 5 at a time
+//   msg_editor  the private-message fields (new message body, conversation reply) are controlled
+//             editors (shadow | contenteditable); the forms post the same fields
 const kit = require('../../../kit');
 const NW = require('./net-widgets');
 
@@ -36,7 +38,7 @@ const PLANTS = {
     guard: { must_exclude: ['CX-8349'] },
   },
 };
-const SLOTS = { feed: W.LIST_KINDS, comments: W.LIST_KINDS, editor: W.EDITOR_KINDS, links: ['js'], plant: Object.keys(PLANTS), messages: ['older'] };
+const SLOTS = { feed: W.LIST_KINDS, comments: W.LIST_KINDS, editor: W.EDITOR_KINDS, links: ['js'], plant: Object.keys(PLANTS), messages: ['older'], msg_editor: W.EDITOR_KINDS };
 const FEED_WINDOW = 250;
 const MESSAGES_STEP = 5;
 
@@ -44,9 +46,10 @@ const MESSAGES_STEP = 5;
 function locals() {
   const ed = kit.widget('editor');
   const links = kit.widget('links') === 'js';
+  const med = kit.widget('msg_editor');
   return {
-    edKind: ed, edAttr: ed ? ` data-wsb-editor="${ed}"` : '', jsLinks: links,
-    wScripts: (ed ? W.script('editor') : '') + (links ? W.script('nav') : ''),
+    edKind: ed, edAttr: ed ? ` data-wsb-editor="${ed}"` : '', jsLinks: links, msgEdAttr: med ? ` data-wsb-editor="${med}"` : '',
+    wScripts: (ed || med ? W.script('editor') : '') + (links ? W.script('nav') : ''),
   };
 }
 // A link, or (links js) a button that navigates from a click handler.

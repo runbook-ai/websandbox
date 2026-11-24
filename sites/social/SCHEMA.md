@@ -40,13 +40,15 @@ the 2026-dated world rows, because the forum clock is 2023-07-11.
 ```
 node sites/social/build/migrate.js --forum $WSB_DATA_ROOT/forum/base.db --world $WSB_WORK/world/w1 \
   [--rendered <world>/rendered-community.jsonl] --out $WSB_DATA_ROOT/social [--now '2026-10-14 18:00:00'] \
-  [--nets community,devblog,makers,micro]
+  [--nets community,devblog,makers,micro] [--no-dms]
 ```
 
 Needs a rendered world (`world/build-world.js`, then `world/render-world.js --net <net>` per
 network). A network whose `<world>/rendered-<net>.jsonl` is missing is skipped with a warning (a
 build without micro still works); `--nets` picks networks explicitly (community is always loaded:
-it creates the users and accounts of every network).
+it creates the users and accounts of every network). Direct messages (below) are loaded when the world
+has `dms.jsonl` and `rendered-dms.jsonl` (`world/build-dms.js`, `world/render-dms.js`); `--no-dms`
+builds without them (the same DB as before they existed).
 Copies the forum DB to `<out>/base.db.tmp` (never writes the source), migrates, checks, finalizes
 (ANALYZE, VACUUM, integrity check) and renames it to `<out>/base.db`; `<out>/media` is a symlink to
 the forum's media. Deterministic: the same forum DB + world + rendered text give the same rows.
@@ -60,7 +62,7 @@ About 1 minute and ~1.3 GB of free disk.
 | `forums.network_id` | default 1; also `about` (sidebar text), `icon_color` |
 | `submissions.network_id` | default 1 (every forum row is `community`); also `kind` (NULL = classic link/text/image; `article` devblog, `thread-post` makers, `short` / `reply` micro), `status` (`published` default, `draft`, `scheduled`), `published_at`, `reading_time`, `cover_image_id`, `series_id`, `quote_of`, `repost_of`, `flair_id`, `reply_to` + `root_id` (micro replies: the post replied to and the conversation's first post), `product_id` (makers: a founder's post about their product). Rows of the other networks keep `net_score` 0 (their likes / upvotes are `reactions`), so community karma (`user_stats`) is unchanged |
 | `forums` of other networks | `net_devblog`, `net_makers`, `net_micro` (containers, `submissions.forum_id` is NOT NULL) and the makers groups `makers_<slug>` (network 3; members in `forum_subscriptions`) |
-| `message_threads.network_id` | default 1; micro direct messages are 4 |
+| `message_threads.network_id` | default 1 (community private messages); micro direct messages are 4 |
 | `users.persona_id` | world persona id (`p000123`) of world users; never shown, for generators and graders |
 | `notifications.actor_id`, `.network_id` | who caused it; network (default 1). New types besides the forum's `comment` / `comment_mention` / `submission_mention` / `message`: `follow`, `reaction` (devblog reactions, makers upvotes), `mention`, and on micro `reply`, `like`, `repost`, `quote` |
 
@@ -79,7 +81,8 @@ About 1 minute and ~1.3 GB of free disk.
 | `flairs` | per forum: `name`, `color`, `mod_only`; posts point at one by `submissions.flair_id` |
 | `posting_limits` | per network (or per forum): `action` (`submission`/`comment`), `max_count` per `window_seconds`, optionally only for accounts younger than `account_age_below_days` |
 | `scheduled_events` | `network_id`, `fire_at`, `kind` (community `world.post`, `world.comment`, `notification`, `vote`; `devblog.article`, `devblog.comment`, `makers.post`, `makers.comment`, `micro.post`, `micro.reply`), JSON `payload`, `fired_at`, `result_id`. Each frontend fires its own network's events only |
-| `world_items` | world item spec -> row (`row_table`, `row_id`), persona, topic, intent, required facts, event; hidden |
+| `world_items` | world item spec -> row (`row_table`, `row_id`), persona, topic, intent, required facts, event; hidden. Direct messages: kind `dm`, `row_table` `messages`, item id `<conversation>.<seq>` |
+| `world_dm_threads` | hidden, per world conversation: `thread_id`, `item_id` (`dc000123` community / `dx000123` micro), `network_id`, `intent` (`about-post`, `work-ask`, `group-plan`, `meet-up`, `borrow`, `recommend`, `catch-up`), `starter_id`, `other_id`, `tie` (JSON: `reply`, `follow`, `employer`, `group`, `city`, `topic`, `post`), `ref_table` + `ref_id` (`about-post`: the recipient's post), `facts` (JSON, verbatim in the first message); for generators and graders |
 | FTS5 `accounts_fts`, `tags_fts`, `space_rules_fts` | external content, kept current by triggers (the forum's `submissions_fts` / `comments_fts` / `forums_fts` cover the new rows too) |
 | `site_settings` `social_now`, `social_world`, `social_world_seed` | the build's base "now" and world |
 
@@ -110,6 +113,19 @@ graph and the reply threads (`rng(seed, ...)`), so counts are real rows a grader
 Follows are dated between the later of the two accounts' joins and the build's "now";
 notifications: replies and comments (older ones mostly read), follows inside the world window,
 likes / reactions / upvotes / reposts of the last 3 days.
+
+## Direct messages (build/dms.js)
+
+The world's conversations (`world/sim/dms.js`) between personas with a tie on a network: community
+private messages (`message_threads.network_id` 1, the first message's subject line as `subject`) and
+micro direct messages (4, no subject). Two participants each (`message_thread_participants`), messages
+in time order, all before the site clock. Read / unread state is the frontends' own: one `message`
+notification per message for its recipient (`message_id`, `actor_id` = sender, `network_id`), unread
+while `read_at` is NULL. A message is read once its recipient answered after it; the trailing
+messages the recipient has not answered are unread together with a seeded chance by their age (60%
+under 3 days, 40% under 2 weeks, 25% under 45 days, 12% older), otherwise read some minutes after the last one. A
+conversation keeps its messages up to the first one that did not render and needs two. Devblog and
+makers have no message UI and get none.
 
 ## Rows (dev world `w1`: 3,000 personas, 14 days)
 
@@ -146,8 +162,9 @@ Size: 1.28 GB with every network (forum 1.28 GB).
 | makers | 3,473 posts, 14,194 comments, 117 scheduled; 858 products, 1,219 milestones; 27,786 follows, 56,610 upvotes, 24,207 notifications; 2,312 accounts |
 | micro | 250,215 posts + 250,097 replies, 3,399 scheduled; 319,983 follows, 1,281,951 likes, 136,680 reposts, 381,251 notifications; 9,679 accounts |
 | world_affiliations | 15,325 |
+| direct messages | community 4,573 conversations, 17,542 messages (1,073 unread), 5,572 accounts; micro 2,977 conversations, 11,377 messages (726 unread), 3,819 accounts; world_dm_threads 7,550 |
 
-Size: 2.33 GB; build about 7 minutes.
+Size: 2.34 GB (2.33 GB with `--no-dms`); build about 8 minutes.
 
 ## Time
 

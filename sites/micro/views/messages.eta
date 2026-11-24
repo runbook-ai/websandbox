@@ -17,14 +17,14 @@
       <% if (it.error) { %><div class="banner banner-error" role="alert"><%= it.error %></div><% } %>
       <form method="post" action="/messages" class="dm-new"><%~ it.csrfInput() %>
         <label for="dm-to">To</label><input id="dm-to" name="to" value="<%= it.compose.to %>" placeholder="@handle" autocomplete="off" required>
-        <label for="dm-text">Message</label><textarea id="dm-text" name="text" rows="4" required><%= it.compose.text %></textarea>
+        <label for="dm-text">Message</label><textarea id="dm-text" name="text" rows="4" required<%~ it.dmEdAttr %>><%= it.compose.text %></textarea>
         <button class="btn btn-primary" type="submit">Send</button></form>
     <% } else if (it.t) { %>
       <div class="col-head"><div class="col-head-row"><a href="/<%= it.other.handle %>" class="who-link"><span class="av av-sm" style="background:<%= it.other.avatar_color %>" aria-hidden="true"><%= it.initials(it.other.display_name) %></span><span class="who-names"><strong><%= it.other.display_name %></strong><span class="muted">@<%= it.other.handle %></span></span></a></div></div>
       <% if (it.older) { %><%~ it.older %><% } else { %><div class="dm-msgs" data-dm-scroll>
         <% for (const m of it.msgs) { %><%~ include('_bubble', { g: it, m }) %><% } %>
       </div><% } %>
-      <form method="post" action="/messages/<%= it.t.id %>" class="dm-send"><%~ it.csrfInput() %><label class="sr-only" for="dm-reply">Start a new message</label><textarea id="dm-reply" name="text" rows="1" placeholder="Start a new message" required></textarea><button class="btn btn-primary" type="submit">Send</button></form>
+      <form method="post" action="/messages/<%= it.t.id %>" class="dm-send"><%~ it.csrfInput() %><label class="sr-only" for="dm-reply">Start a new message</label><textarea id="dm-reply" name="text" rows="1" placeholder="Start a new message" required<%~ it.dmEdAttr %>></textarea><button class="btn btn-primary" type="submit">Send</button></form>
     <% } else { %>
       <div class="empty"><h2>Select a message</h2><p class="muted">Choose from your existing conversations, or start a new one.</p><a class="btn btn-primary" href="/messages/compose">New message</a></div>
     <% } %>

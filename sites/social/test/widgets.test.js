@@ -42,7 +42,7 @@ test('social widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no
     assert.equal((await rl(A, '/reset', { scenario: { widgets: { listing: 'recycle' } } })).status, 400);
     assert.equal((await rl(A, '/reset', { scenario: { widgets: { plant: 'nope' } } })).status, 400);
     assert.equal((await rl(A, '/reset', { scenario: { other: 1 } })).status, 400);
-    assert.equal((await rl(A, '/reset', { scenario: { widgets: { feed: 'grid', comments: 'recycle', editor: 'shadow', links: 'js', plant: 'reply', messages: 'older' } } })).status, 200);
+    assert.equal((await rl(A, '/reset', { scenario: { widgets: { feed: 'grid', comments: 'recycle', editor: 'shadow', links: 'js', plant: 'reply', messages: 'older', msg_editor: 'shadow' } } })).status, 200);
   });
 
   await t.test('chunk endpoints exist only while their slot is on', async () => {
@@ -170,7 +170,8 @@ test('social widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no
     for (let k = 1; k <= 12; k++) { const who = k % 2 ? o : c; page = (await who.get(`/inbox/${tid}`)).text; await who.post(`/inbox/${tid}/reply`, { form: { body: `message ${k}`, _csrf: csrf(page) } }); }
     const all = (await q(A, `SELECT id FROM messages WHERE thread_id = ${tid} ORDER BY id`)).map((x) => x.id);
     assert.equal(all.length, 13);
-    const unread = async () => (await q(A, `SELECT count(*) n FROM notifications WHERE notification_type = 'message' AND read_at IS NULL AND user_id = (SELECT id FROM users WHERE username = '${other}')`))[0].n;
+    const unread = async () => (await q(A, `SELECT count(*) n FROM notifications WHERE notification_type = 'message' AND read_at IS NULL AND user_id = (SELECT id FROM users WHERE username = '${other}')
+      AND message_id IN (SELECT id FROM messages WHERE thread_id = ${tid})`))[0].n;
     const before = await unread();
     assert.ok(before > 0);
     const src = `/inbox/${tid}?_w=messages`;
@@ -189,6 +190,26 @@ test('social widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no
     assert.deepEqual([...got, ...shown], all);
     assert.equal(await unread(), 0, 'the page itself still marks the conversation read');
     await reset();
+  });
+
+  await t.test('msg_editor: the new-message and reply fields are controlled editors posting the same fields', async () => {
+    for (const kind of ['shadow', 'contenteditable']) {
+      await reset({ msg_editor: kind });
+      const c = await login(me);
+      const page = (await c.get(`/message/compose?to=${other}`)).text;
+      assert.match(page, new RegExp(`<textarea id="msg-body" name="body"[^>]*data-wsb-editor="${kind}"`));
+      assert.match(page, /\/_kit\/widgets\/editor\.js/);
+      const r = await c.post('/message/compose', { form: { to: other, subject: `Editor ${kind}`, body: `sent through the ${kind} editor`, _csrf: csrf(page) } });
+      assert.equal(r.status, 302);
+      const tid = +/\/inbox\/(\d+)/.exec(r.location)[1];
+      const th = (await c.get(`/inbox/${tid}`)).text;
+      assert.match(th, new RegExp(`<textarea id="reply-msg" name="body"[^>]*data-wsb-editor="${kind}"`));
+      assert.doesNotMatch((await c.get(POST)).text, /data-wsb-editor/, 'other fields keep their editors');
+      assert.equal((await c.post(`/inbox/${tid}/reply`, { form: { body: `a reply through the ${kind} editor`, _csrf: csrf(th) } })).status, 302);
+      assert.equal((await q(A, `SELECT count(*) n FROM messages WHERE thread_id = ${tid} AND body IN ('sent through the ${kind} editor', 'a reply through the ${kind} editor')`))[0].n, 2);
+    }
+    await reset();
+    assert.doesNotMatch((await (await login(me)).get('/message/compose')).text, /data-wsb-editor/);
   });
   await reset();
 });

@@ -8,7 +8,9 @@
 //
 //   node sites/social/build/migrate.js [--forum $WSB_DATA_ROOT/forum/base.db] [--world $WSB_WORK/world/w1]
 //        [--rendered <world>/rendered-community.jsonl] [--out $WSB_DATA_ROOT/social] [--now '2026-10-14 18:00:00']
-//        [--nets community,devblog,makers,micro]
+//        [--nets community,devblog,makers,micro] [--no-dms]
+// Direct messages (community and micro, build/dms.js) come from <world>/dms.jsonl + rendered-dms.jsonl
+// when both exist (--no-dms: none).
 //
 // Never touches the forum base.db (read-only source; copied to <out>/base.db.tmp, renamed at the end).
 // Additive only: existing ids, columns and rows stay as they are -- checked at the end against the
@@ -25,6 +27,7 @@ const { localPart, PERSONAL_DOMAIN } = require('../../../world/lib/mail-addr');
 const { slugify } = require('../../forum/lib/forum');
 const SPACES = require('./spaces');
 const NETS = require('./networks');
+const DMS = require('./dms');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..');
 const DATA_ROOT = process.env.WSB_DATA_ROOT || path.join(ROOT, 'data');
@@ -60,9 +63,13 @@ function fingerprint(db, schema, max) {
   out.submissions = hashRows('submissions', `id <= ${max.submissions}`);
   out.comments = q(`SELECT count(*), sum(net_score), sum(coalesce(parent_id, 0)), sum(submission_id), sum(user_id), sum(length(body)), sum(visibility = 'visible'), max(created_at), max(edited_at) FROM ${s}comments WHERE id <= ${max.comments}`);
   out.user_stats = q(`SELECT count(*), sum(submissions), sum(comments), sum(submission_karma), sum(comment_karma) FROM ${s}user_stats WHERE user_id <= ${max.users}`);
-  for (const t of ['submission_votes', 'comment_votes', 'images', 'forum_tags', 'forums_tags', 'forum_bans', 'user_bans', 'user_blocks', 'hidden_forums', 'message_threads', 'messages', 'message_thread_participants', 'wiki_pages', 'wiki_revisions']) {
+  for (const t of ['submission_votes', 'comment_votes', 'images', 'forum_tags', 'forums_tags', 'forum_bans', 'user_bans', 'user_blocks', 'hidden_forums', 'wiki_pages', 'wiki_revisions']) {
     out[t] = hashRows(t, '1');
   }
+  // private messages: the world's direct messages are appended (build/dms.js); the pre-existing ones stay
+  out.message_threads = hashRows('message_threads', `id <= ${max.threads}`);
+  out.messages = hashRows('messages', `id <= ${max.messages}`);
+  out.message_thread_participants = hashRows('message_thread_participants', `thread_id <= ${max.threads}`);
   // tables the migration fills: nothing may reference a pre-existing forum or user
   out.moderators_old = q(`SELECT count(*) FROM ${s}moderators WHERE forum_id <= ${max.forums} OR user_id <= ${max.users}`);
   out.subs_old = q(`SELECT count(*) FROM ${s}forum_subscriptions WHERE forum_id <= ${max.forums} OR user_id <= ${max.users}`);
@@ -84,6 +91,7 @@ function main() {
     out: { type: 'string', default: path.join(DATA_ROOT, 'social') },
     now: { type: 'string', default: '2026-10-14 18:00:00' },
     nets: { type: 'string', default: 'community,devblog,makers,micro' },
+    'no-dms': { type: 'boolean' },
   } });
   const nets = a.nets.split(',').map((x) => x.trim()).filter(Boolean);
   if (!nets.includes('community')) throw new Error('--nets must include community (it creates the users and accounts)');
@@ -105,7 +113,8 @@ function main() {
   const db = new Database(tmp);
   db.pragma('journal_mode = OFF'); db.pragma('synchronous = OFF'); db.pragma('cache_size = -524288'); db.pragma('temp_store = MEMORY');
   const one = (sql, ...p) => db.prepare(sql).pluck().get(...p);
-  const max = { users: one('SELECT max(id) FROM users'), forums: one('SELECT max(id) FROM forums'), submissions: one('SELECT max(id) FROM submissions'), comments: one('SELECT max(id) FROM comments') };
+  const max = { users: one('SELECT max(id) FROM users'), forums: one('SELECT max(id) FROM forums'), submissions: one('SELECT max(id) FROM submissions'), comments: one('SELECT max(id) FROM comments'),
+    threads: one('SELECT coalesce(max(id), 0) FROM message_threads'), messages: one('SELECT coalesce(max(id), 0) FROM messages') };
 
   // ---- world
   const W = path.resolve(a.world);
@@ -324,6 +333,8 @@ function main() {
     // ---------------------------------------------------------------- devblog, makers, micro; affiliations
     stats.affiliations = NETS.loadAffiliations(db, world);
     Object.assign(stats, NETS.loadNetworks(db, { world, personas, userOf, seed, NOW, nowMs, worldStart, topicById, worldDir: W, insW, notifyRead, nets, items: allItems }));
+    // ---------------------------------------------------------------- direct messages (community, micro)
+    if (!a['no-dms']) Object.assign(stats, DMS.loadDMs(db, { worldDir: W, userOf, seed, NOW, nowMs, insW, nets }) || {});
   })();
 
   // ---- FTS on the new tables (external content, kept current by triggers)

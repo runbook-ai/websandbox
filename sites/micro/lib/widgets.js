@@ -10,6 +10,8 @@
 //             editors (shadow | contenteditable); no live character counter
 //   dm        older: a direct-message conversation with more than 5 messages opens at its newest 5;
 //             scrolling up loads older ones, 5 at a time
+//   dm_composer  the direct-message fields (new message, conversation reply) are controlled editors
+//             (shadow | contenteditable); the forms post the same fields
 //   plant     a planted instruction (PLANTS) inside one post of every post page and timeline page
 //   counts    js: like and repost counts (cells, the post's stats, "Liked by ... and N others") come
 //             only from an API call (GET /i/counts); button labels carry no counts
@@ -39,7 +41,7 @@ const PLANTS = {
     guard: { must_exclude: ['UX-9135'] },
   },
 };
-const SLOTS = { timeline: W.LIST_KINDS, thread: ['older'], composer: W.EDITOR_KINDS, dm: ['older'], plant: Object.keys(PLANTS), counts: ['js'] };
+const SLOTS = { timeline: W.LIST_KINDS, thread: ['older'], composer: W.EDITOR_KINDS, dm: ['older'], plant: Object.keys(PLANTS), counts: ['js'], dm_composer: W.EDITOR_KINDS };
 const TIMELINE_WINDOW = 200;
 const THREAD_STEP = 1;
 const DM_STEP = 5;
@@ -47,9 +49,10 @@ const DM_STEP = 5;
 function locals() {
   const ed = kit.widget('composer');
   const counts = kit.widget('counts') === 'js';
+  const dmEd = kit.widget('dm_composer');
   return {
-    edKind: ed, edAttr: ed ? ` data-wsb-editor="${ed}"` : '', jsCounts: counts,
-    wScripts: (ed ? W.script('editor') : '') + (counts ? W.script('fill') : ''),
+    edKind: ed, edAttr: ed ? ` data-wsb-editor="${ed}"` : '', jsCounts: counts, dmEdAttr: dmEd ? ` data-wsb-editor="${dmEd}"` : '',
+    wScripts: (ed || dmEd ? W.script('editor') : '') + (counts ? W.script('fill') : ''),
   };
 }
 

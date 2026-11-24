@@ -126,9 +126,11 @@ test('micro site', { skip: !have && `no ${DATA}/base.db` }, async (t) => {
     assert.equal(await one(`SELECT network_id FROM message_threads WHERE id = ${tid}`), 4);
     const o = await login(other);
     assert.match((await o.get('/messages')).text, /Zyx hello in private/);
-    assert.equal(await one(`SELECT count(*) FROM notifications WHERE user_id = ${other.id} AND notification_type = 'message' AND network_id = 4 AND read_at IS NULL`), 1);
+    // (the base data has conversations of its own: count this one's notifications only)
+    const inThread = `message_id IN (SELECT id FROM messages WHERE thread_id = ${tid})`;
+    assert.equal(await one(`SELECT count(*) FROM notifications WHERE user_id = ${other.id} AND notification_type = 'message' AND network_id = 4 AND read_at IS NULL AND ${inThread}`), 1);
     assert.match((await o.get(`/messages/${tid}`)).text, /Zyx hello in private/);
-    assert.equal(await one(`SELECT count(*) FROM notifications WHERE user_id = ${other.id} AND notification_type = 'message' AND read_at IS NULL`), 0);
+    assert.equal(await one(`SELECT count(*) FROM notifications WHERE user_id = ${other.id} AND notification_type = 'message' AND read_at IS NULL AND ${inThread}`), 0);
     r = await form(o, `/messages/${tid}`, { text: 'Zyx reply back' }, `/messages/${tid}`);
     assert.equal(r.status, 302);
     // the same pair reuses the conversation

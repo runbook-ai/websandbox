@@ -29,6 +29,7 @@ test('social pages are unchanged without a scenario', { skip: !fs.existsSync(pat
       const other = (await q(`SELECT username FROM users WHERE persona_id IS NOT NULL AND id <> ${me.id} AND allow_private_messages = 1 ORDER BY id LIMIT 1`))[0].username;
       const mod = (await q(`SELECT u.username, f.name FROM moderators m JOIN users u ON u.id = m.user_id JOIN forums f ON f.id = m.forum_id WHERE u.persona_id IS NOT NULL ORDER BY m.user_id, f.id LIMIT 1`))[0];
       const modPost = (await q(`${POST} WHERE f.name = '${mod.name}' AND s.visibility = 'visible' AND s.network_id = 1 ORDER BY s.comment_count DESC, s.id LIMIT 1`))[0];
+      const next = (await q('SELECT coalesce(max(id), 0) + 1 AS n FROM message_threads'))[0].n;
       const sp = big[0].name;
       const flair = (await q(`SELECT fl.id FROM flairs fl JOIN forums f ON f.id = fl.forum_id WHERE f.name = '${sp}' ORDER BY fl.id LIMIT 1`))[0];
       const common = ['/', '/new', '/top?t=week', '/rising', '/all', '/all/new', '/all/top?t=all', '/?page=2', '/?page=2&fragment=1', '/all?page=3',
@@ -40,10 +41,10 @@ test('social pages are unchanged without a scenario', { skip: !fs.existsSync(pat
         { user: null, pages: [...common, '/login'] },
         { user: me.username, pages: [...common, '/submit', `/submit?space=${sp}`, `/c/${sp}/submit`, '/submit?type=link', `${url(mine)}?edit=1`, `${url(big[0])}?reply=${reply}`,
           '/notifications', '/notifications?filter=unread', `/u/${me.username}/saved`, '/inbox', '/message/compose', `/message/compose?to=${other}`] },
-        // a conversation (the base data has none): one new message and five replies
+        // a new conversation (the next thread id after the base data's): one new message and five replies
         { user: me.username, steps: [{ path: '/message/compose', from: '/message/compose', form: { to: other, subject: 'Hello there', body: 'First message' } },
-          ...[1, 2, 3, 4, 5].map((k) => ({ path: '/inbox/1/reply', from: '/inbox/1', form: { body: `Reply number ${k}` } }))],
-        pages: ['/inbox', '/inbox/1'] },
+          ...[1, 2, 3, 4, 5].map((k) => ({ path: `/inbox/${next}/reply`, from: `/inbox/${next}`, form: { body: `Reply number ${k}` } }))],
+        pages: ['/inbox', `/inbox/${next}`] },
         { user: mod.username, pages: [`/c/${mod.name}`, url(modPost), `/c/${mod.name}/new`] },
       ];
     },

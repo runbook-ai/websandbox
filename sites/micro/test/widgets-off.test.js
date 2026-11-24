@@ -24,7 +24,9 @@ test('micro pages are unchanged without a scenario', { skip: !fs.existsSync(path
       // the account that follows the most people; another account to message
       const me = (await q('SELECT a.user_id AS id, a.handle FROM accounts a WHERE a.network_id = 4 ORDER BY (SELECT count(*) FROM follows f WHERE f.network_id = 4 AND f.follower_id = a.user_id) DESC, a.user_id LIMIT 1'))[0];
       const mine = (await q(`${POST} WHERE s.user_id = ${me.id} AND s.network_id = 4 AND s.visibility = 'visible' ORDER BY s.comment_count DESC, s.id LIMIT 1`))[0];
-      const other = (await q(`SELECT handle FROM accounts WHERE network_id = 4 AND user_id <> ${me.id} ORDER BY user_id LIMIT 1`))[0].handle;
+      const other = (await q(`SELECT handle FROM accounts WHERE network_id = 4 AND user_id <> ${me.id} AND user_id NOT IN (SELECT p.user_id FROM message_thread_participants p
+        JOIN message_thread_participants x ON x.thread_id = p.thread_id AND x.user_id = ${me.id}) ORDER BY user_id LIMIT 1`))[0].handle;
+      const next = (await q('SELECT coalesce(max(id), 0) + 1 AS n FROM message_threads'))[0].n;
       const common = ['/explore', '/explore?page=2', '/explore?page=2&fragment=1', url(busy), url(deep), url(one), url(mine),
         `/${busy.handle}`, `/${busy.handle}/with_replies`, `/${busy.handle}/likes`, `/${busy.handle}?page=2&fragment=1`, `/${busy.handle}/followers`, `/${me.handle}`,
         '/search?q=coffee', '/search?q=coffee&f=live', '/search?q=coffee&page=2&fragment=1', `/search?q=from:${busy.handle}`, '/search?q=a&f=user'];
@@ -33,10 +35,10 @@ test('micro pages are unchanged without a scenario', { skip: !fs.existsSync(path
         { user: me.handle, pages: [...common, '/', '/home', '/home/following', '/home?page=2', '/home?page=2&fragment=1', '/home/following?page=3&fragment=1', '/home?text=Hello',
           '/compose', `/compose?reply_to=${busy.id}`, `/compose?quote=${busy.id}`, '/i/bookmarks', '/notifications', '/notifications/mentions', '/notifications?page=2&fragment=1',
           '/messages', '/messages/compose', `/messages/compose?to=${other}`] },
-        // a conversation (the base data has none): one new message and seven more
+        // a new conversation (the next thread id after the base data's; the pair has none yet): one new message and seven more
         { user: me.handle, steps: [{ path: '/messages', from: '/messages/compose', form: { to: other, text: 'First message' } },
-          ...[1, 2, 3, 4, 5, 6, 7].map((k) => ({ path: '/messages/1', from: '/messages/1', form: { text: `Message number ${k}` } }))],
-        pages: ['/messages', '/messages/1'] },
+          ...[1, 2, 3, 4, 5, 6, 7].map((k) => ({ path: `/messages/${next}`, from: `/messages/${next}`, form: { text: `Message number ${k}` } }))],
+        pages: ['/messages', `/messages/${next}`] },
       ];
     },
   });

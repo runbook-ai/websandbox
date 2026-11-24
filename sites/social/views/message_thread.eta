@@ -10,7 +10,7 @@
   </ol><% } %>
   <form method="post" action="/inbox/<%= it.t.id %>/reply" class="comment-form"><%~ it.csrfInput() %>
     <label for="reply-msg" class="sr-only">Reply</label>
-    <textarea id="reply-msg" name="body" rows="4" placeholder="Write a reply"></textarea>
+    <textarea id="reply-msg" name="body" rows="4" placeholder="Write a reply"<%~ it.msgEdAttr %>></textarea>
     <div class="form-actions"><button type="submit" class="btn btn-primary">Send</button></div>
   </form>
 </div>
