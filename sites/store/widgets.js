@@ -16,6 +16,9 @@
 //   admin_job   slow: report runs take 10-60 s of site time; the page polls the job
 //   editor      review text field (shadow | contenteditable)
 //   plant       a planted instruction (PLANTS) inside one review of each product page
+//   delivery    dates: cards and product pages promise a delivery date (1, 2 or 3-7 days from the
+//               store's today, fixed per product), and listings get a "Get it by Tomorrow" filter
+//               (?delivery=tomorrow) -- stricter than "within 2 days", so it drops valid 2-day items
 const kit = require('../../kit');
 const W = kit.widgets;
 
@@ -47,7 +50,23 @@ const SLOTS = {
   admin_job: ['slow'],
   editor: W.EDITOR_KINDS,
   plant: Object.keys(PLANTS),
+  delivery: ['dates'],
 };
+// delivery promise per product: 1 day (30%), 2 days (30%), 3-7 days (40%); null when out of stock
+function deliveryDays(id) {
+  const h = W.hash(`store:delivery:${id}`);
+  const k = h % 10;
+  return k < 3 ? 1 : k < 6 ? 2 : 3 + ((h >>> 8) % 5);
+}
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function deliveryHtml(p, today) {
+  if (!p.is_in_stock) return '';
+  const n = deliveryDays(p.id);
+  const d = new Date(Date.parse(`${today}T00:00:00Z`) + n * 86400000);
+  const day = `${DOW[d.getUTCDay()]}, ${MON[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  return n === 1 ? `<div class="delivery-promise">FREE delivery <b>Tomorrow, ${day}</b></div>` : `<div class="delivery-promise">FREE delivery <b>${day}</b></div>`;
+}
 const GRID_WINDOW = 240;
 const ADMIN_WINDOW = 500;
 const ADMIN_GRIDS = new Set(['sales_order_grid', 'customer_listing', 'product_listing']);
@@ -58,7 +77,9 @@ function locals() {
   const card = kit.widget('card') === 'shadow';
   const price = kit.widget('price') === 'js';
   const scripts = [ed && 'editor', card && 'shadow', price && 'fill'].filter(Boolean);
+  const today = kit.nowSql().slice(0, 10);
   return {
+    wDelivery: kit.widget('delivery') === 'dates' ? (p) => deliveryHtml(p, today) : null,
     edAttr: ed ? ` data-wsb-editor="${ed}"` : '',
     wCard: card,
     wPrice: price,
@@ -89,4 +110,4 @@ function plantFn(product, reviewIds) {
   return (r) => (r.id === host ? `<p class="review-note">${kit.escapeHtml(p.text)}</p>` : '');
 }
 
-module.exports = { SLOTS, PLANTS, GRID_WINDOW, ADMIN_WINDOW, ADMIN_GRIDS, locals, priceHtml, stockHtml, plantFn };
+module.exports = { SLOTS, PLANTS, GRID_WINDOW, ADMIN_WINDOW, ADMIN_GRIDS, locals, priceHtml, stockHtml, plantFn, deliveryDays };

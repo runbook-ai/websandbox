@@ -8,7 +8,7 @@
     <% } else { %><div class="reviews-actions"><a class="action add" href="#review-form">Be the first to review this product</a></div><% } %>
   </div>
   <div class="product-info-price"><% if (it.wCard) { %><template data-wsb-shadow><link rel="stylesheet" href="/static/store.css"><% } %>
-    <%~ include('_price', { ...it, p }) %>
+    <%~ include('_price', { ...it, p }) %><% if (it.wDelivery) { %><%~ it.wDelivery(p) %><% } %>
     <div class="product-info-stock-sku">
       <% if (it.wStock) { %><div class="stock" title="Availability"><%~ it.wStock %></div><% } else { %><div class="stock <%= p.is_in_stock ? 'available' : 'unavailable' %>" title="Availability"><span><%= p.is_in_stock ? 'In stock' : 'Out of stock' %></span></div><% } %>
       <div class="product attribute sku"><strong class="type">SKU</strong> <div class="value" itemprop="sku"><%= p.sku %></div></div>

@@ -79,6 +79,7 @@ everything stays reachable; where noted the pager moves past the window.
 | `admin_job` | slow | Report runs (Reports > ...) take 10-60 s of site time (per report and parameters); the page polls the run. |
 | `editor` | shadow, contenteditable | The review text field. |
 | `plant` | review, contact, answer | A planted instruction inside one of the 10 newest reviews of every product page that has reviews. |
+| `delivery` | dates | Product cards and the product page promise a delivery date (1, 2 or 3-7 days after the store's today, fixed per product; none when out of stock), and search / category listings get a "Get it by Tomorrow" filter (`?delivery=tomorrow`, 1-day items only). Not used for variant tasks: the generated template `gen-shopping-delivery-pick` turns it on (the filter is a trap for "arrives within two days"). |
 
 ### mail (`sites/mail/lib/widgets.js`)
 

@@ -7,7 +7,7 @@
       <div class="product details product-item-details">
         <strong class="product name product-item-name"><a class="product-item-link" href="<%= p.url %>"><%~ it.htmlName(p.name) %></a></strong>
         <% if (p.review_count) { %><div class="product-reviews-summary short"><%~ include('_stars', { ...it, pct: p.rating }) %><div class="reviews-actions"><a class="action view" href="<%= p.url %>#reviews"><%= p.review_count %>&nbsp;<span>Review<%= p.review_count === 1 ? '' : 's' %></span></a></div></div><% } %>
-        <%~ include('_price', { ...it, p, money: it.money }) %>
+        <%~ include('_price', { ...it, p, money: it.money }) %><% if (it.wDelivery) { %><%~ it.wDelivery(p) %><% } %>
         <% if (mode === 'list' && p.short_description) { %><div class="product description product-item-description"><%= it.plainName(String(p.short_description).replace(/<[^>]+>/g, ' ')).slice(0, 300) %> <a href="<%= p.url %>" class="action more">Learn More</a></div><% } %>
         <div class="product-item-inner"><div class="product actions product-item-actions">
           <div class="actions-primary">

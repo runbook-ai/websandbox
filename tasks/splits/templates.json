@@ -561,6 +561,14 @@
 "split": "train",
 "why": "gen-hint"
 },
+"gen-lab-flight-book": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-flight-cheapest": {
+"split": "train",
+"why": "gen-hint"
+},
 "gen-lab-frame-pay": {
 "split": "train",
 "why": "gen-hint"
@@ -585,11 +593,43 @@
 "split": "heldout",
 "why": "gen-hint"
 },
+"gen-lab-option-liquid": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-option-mid": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-option-strike": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-part-photo-holes": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-part-photo-spec": {
+"split": "heldout",
+"why": "gen-hint"
+},
 "gen-lab-playbook-checkpoints": {
 "split": "train",
 "why": "gen-hint"
 },
+"gen-lab-policy-claim": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-policy-lookup": {
+"split": "heldout",
+"why": "gen-hint"
+},
 "gen-lab-register-batch": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-register-csv": {
 "split": "train",
 "why": "gen-hint"
 },
@@ -601,12 +641,28 @@
 "split": "train",
 "why": "gen-hint"
 },
+"gen-lab-statement-claims": {
+"split": "train",
+"why": "gen-hint"
+},
 "gen-lab-tracker-eta": {
 "split": "train",
 "why": "gen-hint"
 },
 "gen-lab-tracker-ticket": {
 "split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-vendor-expiring": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-vendor-export": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-vendor-spend": {
+"split": "train",
 "why": "gen-hint"
 },
 "gen-lab-vlist-count": {
@@ -1056,6 +1112,10 @@
 "gen-shopping-compare-pair": {
 "split": "train",
 "why": "gen-draw"
+},
+"gen-shopping-delivery-pick": {
+"split": "train",
+"why": "gen-draw-added"
 },
 "gen-shopping-guest-order-lookup": {
 "split": "heldout",

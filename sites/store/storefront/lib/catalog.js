@@ -5,6 +5,7 @@
 const kit = require('../../../../kit');
 const S = require('../../shared');
 const pindex = require('./pindex');
+const SW = () => require('../../widgets'); // lazy: widgets.js requires the kit too
 
 const ROOT_CATEGORY = 2; // Default Category
 const VIS_CATALOG = '(2,4)';
@@ -164,6 +165,13 @@ function listing(req, { category = null, search = null, base }) {
     active.push({ name: 'price', label: 'Price', value: priceLabel(pr), removeHref: removeHref('price') });
   }
 
+  // delivery filter (widget slot delivery=dates): "Get it by Tomorrow" keeps 1-day items only
+  const delivery = kit.widget('delivery') === 'dates';
+  if (delivery && q.delivery === 'tomorrow') {
+    rows = rows.filter((r) => SW().deliveryDays(r.id) === 1 && v.get(r.id).is_in_stock);
+    active.push({ name: 'delivery', label: 'Delivery', value: 'Get it by Tomorrow', removeHref: removeHref('delivery') });
+  }
+
   mark('filters');
   // ---- facets over the filtered rows (an applied facet is hidden, as in Magento)
   const memo = active.length ? null : src.memo;
@@ -216,6 +224,10 @@ function listing(req, { category = null, search = null, base }) {
   return facets;
   }
   const facetsOut = facets.map((f) => ({ ...f, items: f.items.map((x) => ({ ...x, href: kit.urlWith(req, { ...x.hq, p: null }, x.hp || undefined) })) }));
+  if (delivery && q.delivery !== 'tomorrow') {
+    const n = rows.filter((r) => SW().deliveryDays(r.id) === 1 && v.get(r.id).is_in_stock).length;
+    if (n) facetsOut.unshift({ code: 'delivery', label: 'Delivery', items: [{ label: 'Get it by Tomorrow', count: n, href: kit.urlWith(req, { delivery: 'tomorrow', p: null }) }] });
+  }
   mark('facets');
   // ---- sort (product_list_order=position|name|price|relevance, product_list_dir=asc|desc)
   const sorts = search ? SORTS_SEARCH : SORTS_CATEGORY;
@@ -257,7 +269,7 @@ function listing(req, { category = null, search = null, base }) {
   return {
     products, pager, facets: facetsOut, active, mode, limit, limits, order, dir, sorts,
     windowIds: (n) => rows.slice((page - 1) * limit, (page - 1) * limit + n).map((r) => r.id), // the grid widget's window (../../widgets.js)
-    clearAll: kit.urlWith(req, Object.fromEntries(['cat', 'brand', 'price', 'p', ...defs.map((d) => d.code)].map((k) => [k, null]))),
+    clearAll: kit.urlWith(req, Object.fromEntries(['cat', 'brand', 'price', 'delivery', 'p', ...defs.map((d) => d.code)].map((k) => [k, null]))),
     sortHref: (o) => kit.urlWith(req, { product_list_order: o, product_list_dir: o === 'relevance' ? 'desc' : 'asc', p: null }),
     dirHref: kit.urlWith(req, { product_list_dir: dir === 'asc' ? 'desc' : 'asc', product_list_order: order, p: null }),
     modeHref: (m) => kit.urlWith(req, { product_list_mode: m === 'grid' ? null : m, product_list_limit: null, p: null }),

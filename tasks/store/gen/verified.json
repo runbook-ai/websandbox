@@ -65,5 +65,6 @@
  "gen-shopping-rating-summary",
  "gen-shopping-product-spec",
  "gen-shopping-variant-options",
- "gen-shopping-compare-pair"
+ "gen-shopping-compare-pair",
+ "gen-shopping-delivery-pick"
 ]

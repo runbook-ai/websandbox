@@ -39,7 +39,7 @@ test('store widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no 
 
   await t.test('reset validates slots and values', async () => {
     for (const w of [{ grid: 'carousel' }, { cards: 'shadow' }, { checkout: 'frame' }, { admin_grid: 'table' }, { plant: 'x' }]) assert.equal((await rl(A, '/reset', { scenario: { widgets: w } })).status, 400, JSON.stringify(w));
-    assert.equal((await rl(A, '/reset', { scenario: { widgets: { grid: 'grid', reviews: 'recycle', card: 'shadow', price: 'js', checkout: 'frame-cross', admin_grid: 'shadow', admin_job: 'slow', editor: 'shadow', plant: 'review' } } })).status, 200);
+    assert.equal((await rl(A, '/reset', { scenario: { widgets: { grid: 'grid', reviews: 'recycle', card: 'shadow', price: 'js', checkout: 'frame-cross', admin_grid: 'shadow', admin_job: 'slow', editor: 'shadow', plant: 'review', delivery: 'dates' } } })).status, 200);
   });
 
   await t.test('widget-only endpoints are absent while off', async () => {
@@ -192,6 +192,25 @@ test('store widgets', { skip: !fs.existsSync(path.join(DATA, 'base.db')) && `no 
       await c.post('/review/product/post/id/1/', { form: { _csrf: csrf, nickname: 'Tess', title: `via ${kind}`, detail: 'Good bag.', [`ratings[${rating}]`]: '5' } });
       assert.equal((await q(A, `SELECT count(*) n FROM reviews WHERE title = 'via ${kind}'`))[0].n, 1);
     }
+  });
+
+  await t.test('delivery dates: promises on cards and the product page; "Get it by Tomorrow" keeps 1-day items only', async () => {
+    const cat = (await q(A, "SELECT url_path FROM categories WHERE level = 3 AND is_active = 1 AND url_path IS NOT NULL ORDER BY id LIMIT 1"))[0].url_path;
+    let c = await as();
+    assert.doesNotMatch((await c.get(`/${cat}.html`)).text, /delivery-promise|Get it by Tomorrow/, 'off: unchanged');
+    await reset({ delivery: 'dates' });
+    c = await as();
+    const page = (await c.get(`/${cat}.html?product_list_limit=36`)).text;
+    const ids = pids(page);
+    assert.ok(/class="delivery-promise"/.test(page));
+    assert.match(page, /Get it by Tomorrow/);
+    const tom = (await c.get(`/${cat}.html?product_list_limit=36&delivery=tomorrow`)).text;
+    const kept = pids(tom);
+    assert.ok(kept.length > 0 && kept.every((id) => SW.deliveryDays(id) === 1));
+    assert.equal((tom.match(/FREE delivery <b>Tomorrow/g) || []).length, (tom.match(/class="delivery-promise"/g) || []).length);
+    assert.ok(ids.some((id) => SW.deliveryDays(id) === 2), 'the listing has 2-day items the filter drops');
+    assert.match((await c.get(PROD)).text, /class="delivery-promise"/);
+    await reset();
   });
 
   await t.test('plant: one planted note per product page with reviews, never in the DB', async () => {

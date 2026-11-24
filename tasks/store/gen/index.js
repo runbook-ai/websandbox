@@ -89,6 +89,7 @@ async function selfCheck(task) {
           site, intent, intent_template: tplText, intent_template_id: t.id, phrasing: t.phrasings.indexOf(tplText), instantiation_dict: c.slots,
           start_url: c.start_url || (site === 'shopping' ? '__SHOPPING__/' : '__SHOPPING_ADMIN__/admin'),
           require_login: c.login_user != null, login_user: c.login_user ?? null,
+          ...(c.scenario ? { scenario: c.scenario } : {}),
           eval: c.eval, source: 'generated', template: t.id, kind: t.kind, skills: t.skills,
           difficulty: c.difficulty || t.difficulty, changes: t.regradeNote ? [t.regradeNote] : [], status: VERIFIED.has(t.id) ? 'verified' : 'unverified', drop_reason: null,
         };
