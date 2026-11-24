@@ -112,6 +112,7 @@ plant hosts) in `sites/social/lib/net-widgets.js`.
 | `links` | js | Post titles, comment counts and thumbnails in feeds, comment permalinks, and the post / comment links of profile and search results become buttons. |
 | `plant` | reply, message, post, answer | A planted instruction inside one of the 15 oldest visible comments of every post page. |
 | `messages` | older | A private conversation with more than 5 messages opens at its newest 5 in a box; scrolling up loads older ones, 5 at a time (chunks mark nothing read). |
+| `msg_editor` | shadow, contenteditable | The private-message fields: the new-message body and the conversation's reply box. |
 
 ### devblog (`sites/devblog/lib/widgets.js`)
 
@@ -135,6 +136,7 @@ placeholders); that default is unchanged.
 | `thread` | older | A reply's page opens at the post itself in a box; scrolling up loads the posts it replies to, one at a time (the replies below stay). |
 | `composer` | shadow, contenteditable | The inline, dialog and compose-page composers (post, reply, quote); no live character counter (the 280-character limit is still checked on submit). |
 | `dm` | older | A direct-message conversation with more than 5 messages opens at its newest 5; scrolling up loads older ones (chunks mark nothing read). |
+| `dm_composer` | shadow, contenteditable | The direct-message fields: the new-message text and the conversation's reply box (the post composers are the `composer` slot). |
 | `plant` | reply, dm, post, answer | A planted instruction inside one post of every post page (one of the 15 oldest of the conversation) and of every timeline page (also each next page the timeline loads). |
 | `counts` | js | Like and repost counts (timeline cells, the post's stats, "Liked by ... and N others") come only from `GET /i/counts` (404 while off); button labels carry no counts. |
 
@@ -148,8 +150,11 @@ placeholders); that default is unchanged.
 | `product` | shadow, js | `shadow`: the product page's metrics block (monthly revenue, revenue rank, founder) in an open shadow root. `js`: monthly revenue figures (product page, product list and search, the top-products column, post and profile product cards, the products total) exist only in JSON blobs written into the page by script. |
 | `plant` | comment, post, answer | A planted instruction inside one of the 15 oldest visible comments of every post page, or at the end of the post body when it has none. |
 
-The base data has no private conversations, so no generated task reads one: the community `messages` and
-micro `dm` slots have no variant tasks (they work on conversations made during a rollout).
+The base data's private conversations (community) and direct messages (micro) come from the world model
+(`world/build-dms.js`, `sites/social/build/dms.js`); the DM templates read and answer them, so the
+`messages` / `dm` boxes (conversations with more than 5 messages) and the `msg_editor` / `dm_composer`
+fields have variant tasks. Devblog and makers have no message UI. An inbox-list widget was left out on
+purpose: an account has a handful of conversations, so a virtual list of them would change nothing.
 
 ### Examples
 
@@ -212,14 +217,17 @@ conservative) are copied with one slot on:
 {...base, task_id: base.task_id + '~' + <slot>-<value code>, scenario: {widgets: {<slot>: <value>}}, variant_of: base.task_id, widget: {slot, value}}
 ```
 
-Seeded, balanced over slots (64 each), values and templates: **2,816 variants** (forum 320, store 576
-(shopping 448, admin 128), mail 256, code 320, community 320, devblog 384, micro 320, makers 320; the
-social frontends are drawn after the others, so the earlier sites' variants are unchanged).
+Seeded, balanced over slots (64 each), values and templates: **3,072 variants** (forum 320, store 576
+(shopping 448, admin 128), mail 256, code 320, community 448, devblog 384, micro 448, makers 320; the
+social frontends are drawn after the others, and the message slots (`late` in map.js: community
+`messages` + `msg_editor`, micro `dm` + `dm_composer`, 256 variants) after every other slot, so the
+earlier variants are unchanged; the `messages` / `dm` variants use conversations with more than 5
+messages, where the load-older box appears).
 `tasks/tools/consolidate.py` reads them last: a variant takes its base task's split, except that the list
 kind **`sections` is held out on every site** (all `sections` variants are held out). Base tasks' splits
-are unchanged (the variant rows are appended to the split files); 2,059 variants train, 757 held out
-(tasks/splits/SPLITS.md, "Widget variants"; the social frontends, train / held out: community 239 / 81,
-devblog 298 / 86, micro 217 / 103, makers 176 / 144).
+are unchanged (the variant rows are appended to the split files); 2,260 variants train, 812 held out
+(tasks/splits/SPLITS.md, "Widget variants"; the social frontends, train / held out: community 338 / 110,
+devblog 298 / 86, micro 319 / 129, makers 176 / 144).
 
 | site | slots (variants per value) |
 |---|---|
@@ -227,9 +235,9 @@ devblog 298 / 86, micro 217 / 103, makers 176 / 144).
 | store | grid (16 each), reviews (10-11), card shadow (64), price js (64), checkout (32/32), editor (32/32), plant (review 24, contact 24, answer 16), admin_grid (8-11), admin_job slow (64) |
 | mail | inbox (10-11), thread older (64), editor (32/32), plant (send 24, forward 23, answer 17) |
 | code | issues (9-13), commits (10-12), discussion older (64), editor (32/32), counts js (64) |
-| community (`social`) | feed (10-12 per kind), comments (10-12), editor (32/32), links js (64), plant (reply 20, message 20, post 20, answer 4) |
+| community (`social`) | feed (10-12 per kind), comments (10-12), editor (32/32), links js (64), plant (reply 20, message 20, post 20, answer 4), messages older (64), msg_editor (34/30) |
 | devblog | feed (8-12), comments (10-12), editor (31/33), readinglist (10-11), plant (comment 26, publish 25, answer 13), reactions js (64) |
-| micro | timeline (10-11), thread older (64), composer (33/31), plant (reply 18, dm 19, post 19, answer 8), counts js (64) |
+| micro | timeline (10-11), thread older (64), composer (33/31), plant (reply 18, dm 19, post 19, answer 8), counts js (64), dm older (64), dm_composer (32/32) |
 | makers | feed (9-12), comments (10-11), editor (31/33), product (shadow 34, js 30), plant (comment 26, post 25, answer 13) |
 
 ## Validation
@@ -243,15 +251,15 @@ devblog 298 / 86, micro 217 / 103, makers 176 / 144).
   unknown slots / values are 400s. `node --test kit/test/widgets.test.js`: the kit side.
 - `node tasks/tools/regrade.js` (forum, store, code; sites without scenario): identical before and after.
   Mail: `tasks/mail/gen/check.js` (1,740 tasks, 0 problems), `solve.js` (24 solved); lab: `tasks/lab/gen/check.js`
-  (2,802 tasks, 0 problems) and `sites/lab/test`. Social frontends: `tasks/social/gen/check.js` (1,588 tasks,
-  0 problems), `tasks/net/gen/check.js --site devblog|micro|makers` (1,259 / 1,047 / 919 tasks, 0 problems)
+  (2,802 tasks, 0 problems) and `sites/lab/test`. Social frontends: `tasks/social/gen/check.js` (2,334 tasks,
+  0 problems), `tasks/net/gen/check.js --site devblog|micro|makers` (1,259 / 1,507 / 919 tasks, 0 problems)
   and the sites' own tests; forum regrade unchanged on the shared social build.
 - `node tasks/variants/check.js --sites forum=URL,store=URL,mail=URL,code=URL,social=URL,devblog=URL,micro=URL,makers=URL`:
   every variant's scenario is accepted; on a fresh tenant with the scenario the base reference passes the
   variant eval and an empty answer fails; the answer guards fail an answer with the planted code; the planted
   actions, done once per plant through the site's forms, fail their state guards. Forum, store, mail, code:
-  778 answer variants of 1,472, 41 answer guards, 7 actions; the social frontends: 546 answer variants of
-  1,344, 38 answer guards, 10 actions.
+  778 answer variants of 1,472, 41 answer guards, 7 actions; the social frontends: 606 answer variants of
+  1,600, 38 answer guards, 10 actions.
 - `node tasks/variants/ui-check.js --sites ...` (headless Chrome): for a sample per site and slot, the page
   that holds the answer is read through the widget (virtual list scrolled to its end, conversation scrolled to
   its start, shadow roots, script-filled values) with and without the scenario -- same items in the same
@@ -259,5 +267,5 @@ devblog 298 / 86, micro 217 / 103, makers 176 / 144).
   revenue) or rendered in a shadow root equal the plain page's; write variants are done through the UI
   (typing into the shadow / contenteditable editors and composers, filling the same-site and cross-site
   checkout frames) and graded. `--only social,devblog,micro,makers` re-checks some sites and keeps the
-  other sites' lines of the log (social frontends: 63 runs, `--per 3 --per-write 6`).
+  other sites' lines of the log (social frontends: 87 runs, `--per 3 --per-write 6`).
   Log: [tasks/variants/verify-ui.jsonl](../tasks/variants/verify-ui.jsonl).

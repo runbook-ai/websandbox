@@ -380,3 +380,6 @@ module.exports = [
     },
   },
 ];
+
+// direct-message templates (micro-dm.js), after the others so their seeded draws are unchanged
+module.exports.push(...require('./micro-dm'));

@@ -131,7 +131,50 @@ const SOLVERS = {
     const body = unesc(/<textarea[^>]*name="body"[^>]*>([\s\S]*?)<\/textarea>/.exec(page)[1]);
     await c.form(`${url}/edit`, { body: `${body.trim()}\n\nUpdate: ${msg}` }, url);
   },
+  // ---- private messages (dm.js): the conversation is found in the inbox list by the other user
+  async 'dm-reply-unread'(t, c) {
+    const tid = await inboxThread(c, t.instantiation_dict.user, { unread: true });
+    await c.form(`/inbox/${tid}/reply`, { body: 'Thanks for the message! Sounds good to me, talk soon.' }, `/inbox/${tid}`);
+  },
+  async 'dm-send-post-link'(t, c, q) {
+    const { user } = t.instantiation_dict;
+    const tid = await inboxThread(c, user);
+    // the post of mine they commented on (my posts page, then the post's comments)
+    const ids = postIds((await c.get(`/u/${t.login_user}/posts`)).text);
+    const mine = (await q(`SELECT DISTINCT s.id FROM submissions s JOIN comments k ON k.submission_id = s.id WHERE s.user_id = ${me(t)} AND k.user_id = (SELECT id FROM users WHERE username = ${L.lit(user)}) ORDER BY s.id DESC`)).map((x) => x.id);
+    const hit = mine.find((id) => ids.includes(id)) || mine[0];
+    if (!hit) throw new Error('no post of mine that they commented on');
+    await c.form(`/inbox/${tid}/reply`, { body: `Here it is: ${await postUrl(q, hit)}` }, `/inbox/${tid}`);
+  },
+  async 'dm-notify-meet'(t, c, q) {
+    const { user, friend } = t.instantiation_dict;
+    const tid = await inboxThread(c, user);
+    const page = unesc((await c.get(`/inbox/${tid}`)).text.replace(/<[^>]+>/g, ' '));
+    const [when, where] = JSON.parse((await q(`SELECT facts FROM world_dm_threads WHERE thread_id = ${tid}`))[0].facts);
+    if (!require('../../../kit/lib/grader').mustInclude(page, require('./dm-facts').meetRefs([when, where]))) throw new Error('the suggestion is not on the conversation page');
+    await c.form('/message/compose', { to: friend, subject: `Meeting up with ${user}`, body: `Heads up: ${user} suggested meeting ${when} at ${where}.` }, '/message/compose');
+  },
+  async 'dm-answer-topic'(t, c, q) {
+    // which conversation asked for it: the hidden world metadata (the page text says it in words)
+    const rows = await q(`SELECT d.thread_id, w.topic FROM world_dm_threads d JOIN world_items w ON w.item_id = d.item_id || '.0' WHERE d.other_id = ${me(t)} AND d.network_id = 1 AND d.intent = 'recommend' ORDER BY d.thread_id`);
+    const ok = rows.filter((x) => LABEL[x.topic] === t.instantiation_dict.topic).map((x) => x.thread_id);
+    if (ok.length !== 1) throw new Error(`${ok.length} matching conversations`);
+    await c.form(`/inbox/${ok[0]}/reply`, { body: 'Great question! My suggestion: start with the simplest option and see how you like it.' }, `/inbox/${ok[0]}`);
+  },
 };
+const { topics: TOPICS } = require('../../../world/spec/topics.json');
+const LABEL = Object.fromEntries(TOPICS.map((x) => [x.id, x.label]));
+// the inbox row of the conversation with `user` (pages followed until found)
+async function inboxThread(c, user, { unread = false } = {}) {
+  for (let pg = 1; pg <= 10; pg++) {
+    const html = (await c.get(`/inbox${pg > 1 ? `?page=${pg}` : ''}`)).text;
+    for (const m of html.matchAll(/<li class="([^"]*)"><a href="\/inbox\/(\d+)" class="thread-row">[\s\S]*?<span class="thread-who">u\/([^<]+)<\/span>/g)) {
+      if (m[3] === user && (!unread || /unread/.test(m[1]))) return +m[2];
+    }
+    if (!/Older &rarr;/.test(html)) break;
+  }
+  throw new Error(`no ${unread ? 'unread ' : ''}conversation with ${user} in the inbox`);
+}
 
 class SocialClient extends Client {
   async form(p, fields, from = '/') {

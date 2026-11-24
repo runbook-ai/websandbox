@@ -31,7 +31,7 @@ async function main() {
       const refs = ev.answer.exact != null ? [ev.answer.exact] : ev.answer.must_include;
       const rows = await query(ev.answer_sql);
       const cells = rows.flatMap((r) => Object.values(r).map((v) => String(v).toLowerCase()));
-      for (const ref of refs) if (!cells.some((c) => c === String(ref).toLowerCase())) problems.push(`drift: ref ${ref} vs sql ${JSON.stringify(rows.slice(0, 3))}`);
+      for (const ref of refs) if (!String(ref).split(' |OR| ').some((alt) => cells.includes(alt.toLowerCase()))) problems.push(`drift: ref ${ref} vs sql ${JSON.stringify(rows.slice(0, 3))}`);
       if (rows.length && rows.length !== refs.length && Object.keys(rows[0]).length === 1) problems.push(`sql gives ${rows.length} rows for ${refs.length} refs`);
       const ok = await grade(t, { answer: refs.join(', '), query });
       if (ok.pass !== true) problems.push(`reference does not pass: ${JSON.stringify(ok.checks).slice(0, 200)}`);

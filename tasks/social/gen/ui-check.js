@@ -129,12 +129,63 @@ const S = {
     await clickText(page, 'a.card-title-link', title);
     return String((await page.$$eval('comment-node', (ns) => ns.map((n) => n.getAttribute('author')))).filter((x) => x === user).length);
   },
+  // ---- private messages: the header badge, the inbox list (unread rows), a conversation's messages
+  async 'dm-unread-count'(page) {
+    await go(page, '/');
+    return page.$eval('a.cr-icon-btn[href="/inbox"] .cr-badge', (b) => b.textContent.trim());
+  },
+  async 'dm-unread-from'(page) {
+    await go(page, '/inbox');
+    const who = await eachPage(page, (pg) => pg.$$eval('.thread-list li.unread .thread-who', (xs) => xs.map((x) => x.textContent.replace(/^u\//, '').trim())), 10);
+    return [...new Set(who)].join(', ');
+  },
+  async 'dm-meet-when'(page, t) {
+    const first = await dmFirst(page, t.instantiation_dict.user);
+    const day = DM.DAYS.find((d) => new RegExp(`\\b${d}\\b`).test(first));
+    const time = (/\b(\d{1,2}(?::\d\d)?\s?(?:am|pm)|noon)\b/i.exec(first) || [])[1];
+    const venue = (/\bThe [A-Z][a-z]+ (?:Taproom|Commons|Library Annex|Coworking|Hall|Cafe|Brewing)\b/.exec(first) || [])[0];
+    if (!day || !time || !venue) throw new Error(`no day/time/place in "${first.slice(0, 120)}"`);
+    return `${day} at ${time}, ${venue}`;
+  },
+  async 'dm-borrow-item'(page, t) {
+    const first = (await dmFirst(page, t.instantiation_dict.user)).toLowerCase();
+    const thing = BORROW.find((x) => first.includes(x));
+    if (!thing) throw new Error('nothing to borrow in the first message');
+    return thing;
+  },
+  async 'dm-work-deadline'(page, t) {
+    const first = await dmFirst(page, t.instantiation_dict.user);
+    const d = ['Thursday 2pm', 'end of day Friday', 'Monday morning', 'next Wednesday', 'Tuesday at noon'].find((x) => first.toLowerCase().includes(x.toLowerCase()));
+    if (!d) throw new Error('no deadline in the first message');
+    return d;
+  },
+  async 'dm-thread-length'(page, t) {
+    await dmOpen(page, t.instantiation_dict.user);
+    return String(await page.$$eval('ol.messages li.msg', (xs) => xs.length));
+  },
 };
+const DM = require('./dm-facts');
+const { BORROW } = require('../../../world/sim/dms');
+// open the conversation with `user` from the inbox list (following "Older" pages)
+async function dmOpen(page, user) {
+  await go(page, '/inbox');
+  for (let k = 0; k < 10; k++) {
+    const ok = await page.evaluate((u) => { const x = [...document.querySelectorAll('.thread-list a.thread-row')].find((a) => a.querySelector('.thread-who').textContent.trim() === `u/${u}`); if (!x) return false; x.setAttribute('data-ui-target', '1'); return true; }, user);
+    if (ok) return nav(page, () => page.click('[data-ui-target="1"]'));
+    const next = await page.evaluate(() => { const x = [...document.querySelectorAll('.pager a')].find((e) => /Older/.test(e.textContent)); return x ? x.href : null; });
+    if (!next) break;
+    await page.goto(next, { waitUntil: 'domcontentloaded' });
+  }
+  throw new Error(`no conversation with u/${user}`);
+}
+const dmFirst = async (page, user) => { await dmOpen(page, user); return page.$eval('ol.messages li.msg .md', (x) => x.textContent); };
 // a wrong answer per template (must fail)
 const WRONG = {
   'can-post-where': (t) => ['a', 'b', 'c', 'd'].map((k) => t.instantiation_dict[k]).join(', '),
   'karma-gap': (t, ans) => String(+ans + 1), 'karma-total': (t, ans) => String(+ans + 1), 'link-blocking-rule': (t, ans) => String(+ans + 1),
   'comments-by-user-on-post': (t, ans) => String(+ans + 1), 'release-version': () => '1.0',
+  'dm-unread-count': (t, ans) => String(+ans + 1), 'dm-thread-length': (t, ans) => String(+ans + 1), 'dm-borrow-item': () => 'a lawn mower',
+  'dm-meet-when': () => 'Friday at 8pm, The Corner Diner', 'dm-work-deadline': () => 'Sunday night',
 };
 
 async function main() {

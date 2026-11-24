@@ -143,6 +143,26 @@ const micro = {
     const replies = page.split('<div class="replies"')[1] || '';
     for (const h of new Set(cells(replies).map((x) => x.handle).filter((x) => x && x.toLowerCase() !== me.toLowerCase()))) await c.form('/i/follow', { handle: h, on: '1' }, `/${h}`);
   },
+  // ---- direct messages (micro-dm.js): the conversation is found in the messages list by the other account
+  async 'dm-reply-unread'(t, c) {
+    const tid = await dmThread(c, t.instantiation_dict.handle, { unread: true });
+    await c.form(`/messages/${tid}`, { text: 'Thanks! Sounds good to me.' }, `/messages/${tid}`);
+  },
+  async 'dm-send-post-link'(t, c, q) {
+    const { handle } = t.instantiation_dict;
+    const tid = await dmThread(c, handle);
+    // my post they replied to
+    const p = await one(q, `SELECT p.id FROM submissions p JOIN submissions s ON s.reply_to = p.id WHERE p.user_id = ${L.uidOf(4, t.login_user)} AND s.user_id = ${L.uidOf(4, handle)}
+      AND p.network_id = 4 AND p.visibility = 'visible' ORDER BY s.id LIMIT 1`);
+    if (!p) throw new Error('no post of mine they replied to');
+    await c.form(`/messages/${tid}`, { text: `Here it is: /${t.login_user}/status/${p.id}` }, `/messages/${tid}`);
+  },
+  async 'dm-answer-topic'(t, c, q) {
+    const rows = await q(`SELECT d.thread_id, w.topic FROM world_dm_threads d JOIN world_items w ON w.item_id = d.item_id || '.0' WHERE d.other_id = ${L.uidOf(4, t.login_user)} AND d.network_id = 4 AND d.intent = 'recommend' ORDER BY d.thread_id`);
+    const ok = rows.filter((x) => LABEL[x.topic] === t.instantiation_dict.topic).map((x) => x.thread_id);
+    if (ok.length !== 1) throw new Error(`${ok.length} matching conversations`);
+    await c.form(`/messages/${ok[0]}`, { text: 'Great question! Start with the simplest option and see how it goes.' }, `/messages/${ok[0]}`);
+  },
   async 'dm-user'(t, c) {
     const { handle, ask } = t.instantiation_dict;
     await c.form('/messages', { to: handle, text: `Hi! I wanted to ask ${ask}.` }, `/messages/compose?to=${handle}`);
@@ -225,6 +245,15 @@ const makers = {
 };
 
 const SOLVERS = { devblog, micro, makers };
+const LABEL = Object.fromEntries(require('../../../world/spec/topics.json').topics.map((x) => [x.id, x.label]));
+// the conversation with @handle in the micro messages list
+async function dmThread(c, handle, { unread = false } = {}) {
+  const html = (await c.get('/messages')).text;
+  for (const m of html.matchAll(/<a class="dm-row([^"]*)" href="\/messages\/(\d+)"[\s\S]*?<span class="muted">@([^ <]+) &middot;/g)) {
+    if (m[3].toLowerCase() === handle.toLowerCase() && (!unread || /unread/.test(m[1]))) return +m[2];
+  }
+  throw new Error(`no ${unread ? 'unread ' : ''}conversation with @${handle}`);
+}
 
 async function main() {
   const { values: a } = parseArgs({ options: { site: { type: 'string' }, tasks: { type: 'string' }, per: { type: 'string', default: '2' }, only: { type: 'string' } } });

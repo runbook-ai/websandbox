@@ -210,6 +210,10 @@ def main():
     gen = collections.defaultdict(lambda: collections.defaultdict(list))
     for r in rows:
         if r['source'] == 'generated' and not r.get('variant_of'): gen[r['site']][r['template']].append(r)
+    # Templates added to a site after its draw (not in the previous templates.json) do not join it,
+    # so the existing assignment stays as it was: they get a draw of their own per site ('gen-draw-added').
+    prev_file = os.path.join(ROOT, 'tasks/splits/templates.json')
+    prev = json.load(open(prev_file))['templates'] if os.path.exists(prev_file) else {}
     for site in SITE_ORDER:
         if site not in gen: continue
         hints = {tp: rs[0].get('split_hint') for tp, rs in gen[site].items()}
@@ -217,9 +221,16 @@ def main():
             for tp in gen[site]:
                 split[tp], why[tp] = hints[tp], 'gen-hint'
             continue
-        h = pick_holdout(gen[site], GEN_FRAC, rnd, cover=True)
-        for tp in gen[site]:
+        known = {tp: rs for tp, rs in gen[site].items() if not prev or (tp in prev and prev[tp]['why'] == 'gen-draw')}
+        h = pick_holdout(known, GEN_FRAC, rnd, cover=True)
+        for tp in known:
             split[tp], why[tp] = ('heldout' if tp in h else 'train'), 'gen-draw'
+            assert not prev or prev[tp]['split'] == split[tp], f'{tp}: split changed'
+        added = {tp: rs for tp, rs in gen[site].items() if tp not in known}
+        if added:
+            h = pick_holdout(added, GEN_FRAC, random.Random(f'{SEED}/{site}/added'), cover=True)
+            for tp in added:
+                split[tp], why[tp] = ('heldout' if tp in h else 'train'), 'gen-draw-added'
     by_id = {}
     for r in rows:
         if r.get('variant_of'): continue
@@ -346,7 +357,9 @@ copy that held-out file to their eval set, which the checkpoint eval evaluates
 
 **Generated tasks:** per site, ~{int(GEN_FRAC*100)}% of the templates held out by a seeded greedy draw that makes the
 held-out set cover read and write tasks and every skill that at least two of the site's templates have, without
-taking the last template of a skill or kind away from train.
+taking the last template of a skill or kind away from train. Templates added to a site later (not in the
+previous templates.json, e.g. the direct-message templates of social and micro) keep the existing assignment
+as it is and get a draw of their own per site, the same way (`why`: `gen-draw-added`).
 
 **Skills / difficulty of WebArena tasks** are heuristic (WebArena has none): skills from the eval types (state ->
 form-edit/create, answer -> read-detail, url/map checks -> navigate, cross-site or several check types ->

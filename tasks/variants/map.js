@@ -3,7 +3,8 @@
 // template is listed under a slot only when the pages its tasks are solved on contain that slot's
 // widget (the list / box / editor / frame / grid the slot changes). Used by gen.js (variant tasks)
 // and ui-check.js.
-//   slot -> { values, abbr, templates: [...] }   (template names without the gen-<site>- prefix)
+//   slot -> { values, templates: [...], late?, filter? }   (template names without the gen-<site>- prefix;
+//   late: drawn after every site's other slots; filter(task): which base tasks fit)
 const FORUM_LIST = ['unmount', 'recycle', 'pinned', 'sections', 'grid', 'infinite'];
 
 const COMMENT_PAGES = ['top-comment-author', 'top-level-count', 'parent-comment-author', 'thread-user-comment-count', 'search-comment-phrase',
@@ -14,6 +15,12 @@ const LISTING_PAGES = ['top-post-author', 'most-commented-title', 'nth-top-score
 // community (social): space feeds, and post pages with comment threads
 const SOCIAL_FEED = ['top-flair-post-week', 'save-top-flair', 'mod-lock-pin-top', 'mod-remove-title-rule', 'reply-newest-unanswered'];
 const SOCIAL_COMMENTS = ['comments-by-user-on-post', 'upvote-user-comments', 'reply-unread-replies', 'follow-commenters', 'reply-and-dm-op'];
+// private messages (community) / direct messages (micro): templates whose pages are a conversation
+const SOCIAL_DM_WRITE = ['dm-reply-unread', 'dm-send-post-link', 'dm-notify-meet', 'dm-answer-topic'];
+const SOCIAL_DM_THREAD = ['dm-meet-when', 'dm-borrow-item', 'dm-work-deadline', 'dm-thread-length', ...SOCIAL_DM_WRITE];
+const MICRO_DM_WRITE = ['dm-reply-unread', 'dm-send-post-link', 'dm-answer-topic'];
+// a load-older box only appears on conversations with more than 5 messages (the task's `changes` say how many)
+const longThread = (t) => (t.changes || []).some((c) => { const m = /^thread \d+ \((\d+) messages\)/.exec(c); return m && +m[1] > 5; });
 
 const SITES = {
   forum: {
@@ -70,7 +77,9 @@ const SITES = {
       editor: { values: ['shadow', 'contenteditable'], templates: ['reply-newest-unanswered', 'post-with-flair', 'no-self-promo-post', 'reply-unread-replies', 'reply-and-dm-op', 'edit-post-update'] },
       links: { values: ['js'], templates: [...SOCIAL_FEED.filter((x) => x !== 'reply-newest-unanswered'), 'comments-by-user-on-post', 'upvote-user-comments', 'top-space-of-user', 'oldest-comment-phrase'] },
       plant: { values: ['reply', 'message', 'post', 'answer'], templates: SOCIAL_COMMENTS },
-      // messages (older): no generated task reads a private conversation (the base data has none)
+      // private conversations (late: drawn after every site's other slots, so those stay as they were)
+      messages: { values: ['older'], templates: SOCIAL_DM_THREAD, late: true, filter: longThread },
+      msg_editor: { values: ['shadow', 'contenteditable'], templates: [...SOCIAL_DM_WRITE, 'message-mods', 'reply-and-dm-op'], late: true },
     },
   },
   devblog: {
@@ -90,9 +99,11 @@ const SITES = {
       timeline: { values: FORUM_LIST, templates: ['hashtag-count-by', 'like-recent-posts', 'bookmark-newest', 'delete-post-containing', 'follow-repliers'] },
       thread: { values: ['older'], templates: ['reply-newest-mention', 'thread-reply-count'] },
       composer: { values: ['shadow', 'contenteditable'], templates: ['post-hashtag', 'reply-newest-mention', 'quote-post'] },
-      // dm (older): no generated task reads a direct-message conversation (the base data has none)
       plant: { values: ['reply', 'dm', 'post', 'answer'], templates: ['who-liked', 'thread-reply-count', 'reply-newest-mention', 'quote-post', 'like-recent-posts', 'bookmark-newest', 'follow-repliers', 'hashtag-count-by', 'delete-post-containing', 'reposters-of-mine'] },
       counts: { values: ['js'], templates: ['who-liked', 'reposters-of-mine', 'like-recent-posts'] },
+      // direct-message conversations (late, like the community's)
+      dm: { values: ['older'], templates: ['dm-thread-length', 'dm-meet-when', ...MICRO_DM_WRITE], late: true, filter: longThread },
+      dm_composer: { values: ['shadow', 'contenteditable'], templates: [...MICRO_DM_WRITE, 'dm-user'], late: true },
     },
   },
   makers: {
@@ -110,7 +121,7 @@ const SITES = {
 // short codes for variant ids: <slot>-<value>
 const SLOT_ABBR = { comments: 'cm', listing: 'ls', editor: 'ed', links: 'lk', plant: 'pl', grid: 'gr', reviews: 'rv', card: 'cd', price: 'pr', checkout: 'co',
   admin_grid: 'ag', admin_job: 'aj', inbox: 'ib', thread: 'th', issues: 'is', commits: 'cs', discussion: 'ds', counts: 'ct',
-  feed: 'fd', messages: 'mg', readinglist: 'rl', reactions: 'rx', timeline: 'tl', composer: 'cp', dm: 'dm', product: 'pd' };
+  feed: 'fd', messages: 'mg', readinglist: 'rl', reactions: 'rx', timeline: 'tl', composer: 'cp', dm: 'dm', product: 'pd', msg_editor: 'me', dm_composer: 'dc' };
 const VALUE_ABBR = { unmount: 'un', recycle: 'rc', pinned: 'pn', sections: 'sc', grid: 'gd', infinite: 'in', shadow: 'sh', contenteditable: 'ce', js: 'js',
   'frame-same': 'fs', 'frame-cross': 'fx', slow: 'sl', older: 'ol', reply: 'rp', message: 'ms', post: 'po', answer: 'an', review: 'rw', contact: 'ct', send: 'sd', forward: 'fw',
   comment: 'cm', publish: 'pb', dm: 'dm' };

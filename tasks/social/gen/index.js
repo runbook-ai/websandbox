@@ -11,7 +11,7 @@ const path = require('path');
 const { parseArgs } = require('util');
 const L = require('./lib');
 
-const FAMILIES = ['read', 'write'];
+const FAMILIES = ['read', 'write', 'dm'];
 const TEMPLATES = FAMILIES.flatMap((f) => require(`./${f}`).map((t) => ({ ...t, family: f })));
 const DEFAULT_MAX = 80;
 

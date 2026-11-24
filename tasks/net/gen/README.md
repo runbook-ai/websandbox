@@ -4,7 +4,7 @@ Generated tasks for the three network sites that share the social database with 
 (`sites/social`): devblog ("Byteline", long-form articles, network 2), makers ("Workbench", builders
 and their products, network 3) and micro ("Murmur", short posts, network 4). One generator covers all
 three: templates per site in `<site>.js`, shared helpers in `lib.js`. Output: `tasks/<site>/generated.jsonl`
-(1,259 / 1,047 / 919 tasks, 46 templates). The row format is the generated-task format of the other
+(1,259 / 1,507 / 919 tasks, 53 templates). The row format is the generated-task format of the other
 sites (docs/GENERATOR.md), with `start_url` placeholders `__DEVBLOG__`, `__MICRO__`, `__MAKERS__` and
 `login_user` = the account's network handle.
 
@@ -72,7 +72,7 @@ Kind: `read` tasks are graded on the answer, `write` tasks on database state. Di
 | `edit-add-tag` | write | navigate, form-edit | 2 | 80 |
 | `publish-limit` | write | create, multi-step, read-detail | 3 | 60 |
 
-### micro (Murmur, network 4): 14 templates, 407 read + 640 write tasks
+### micro (Murmur, network 4): 21 templates, 627 read + 880 write tasks
 
 | Template | Kind | Skills | Difficulty | Tasks |
 |---|---|---|---|---|
@@ -90,6 +90,19 @@ Kind: `read` tasks are graded on the answer, `write` tasks on database state. Di
 | `follow-repliers` | write | navigate, multi-step, form-edit | 2 | 80 |
 | `dm-user` | write | navigate, create | 1 | 80 |
 | `delete-post-containing` | write | search, form-edit | 2 | 80 |
+| `dm-unread-count` | read | navigate, aggregate | 1 | 80 |
+| `dm-unread-from` | read | navigate, filter-sort | 2 | 15 |
+| `dm-thread-length` | read | navigate, aggregate | 1 | 80 |
+| `dm-meet-when` | read | navigate, read-detail | 2 | 45 |
+| `dm-reply-unread` | write | navigate, create | 1 | 80 |
+| `dm-send-post-link` | write | navigate, search, create | 2 | 80 |
+| `dm-answer-topic` | write | navigate, search, create | 2 | 80 |
+
+The `dm-*` templates (`micro-dm.js`, appended after the others so their seeded draws are unchanged)
+read the world's direct messages (`sites/social/build/dms.js`): unread state from the `message`
+notifications, the opening message's facts and the post a conversation is about from the hidden
+`world_dm_threads`. No scheduled event touches a conversation; opening one marks it read, but answers
+are fixed at generation. Fact answers accept other spellings of a time ("6:30pm" / "6:30 pm").
 
 ### makers (Workbench, network 3): 15 templates, 319 read + 600 write tasks
 

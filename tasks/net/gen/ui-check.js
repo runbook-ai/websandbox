@@ -174,7 +174,36 @@ const micro = {
     }
     return String(n);
   },
+  // ---- direct messages: the nav badge, the messages list (unread rows), a conversation's bubbles
+  async 'dm-unread-count'(page) {
+    await go(page, '/home');
+    return page.$eval('a.nv[href="/messages"]', (a) => (a.querySelector('.nv-badge') || { textContent: '0' }).textContent.trim());
+  },
+  async 'dm-unread-from'(page) {
+    await go(page, '/messages');
+    return (await page.$$eval('a.dm-row.unread .dm-row-main .muted', (xs) => xs.map((x) => x.textContent.split('·')[0].trim()))).join(', ');
+  },
+  async 'dm-thread-length'(page, t) {
+    await xdmOpen(page, t.instantiation_dict.handle);
+    return String(await page.$$eval('.dm-msgs .bubble-row', (xs) => xs.length));
+  },
+  async 'dm-meet-when'(page, t) {
+    await xdmOpen(page, t.instantiation_dict.handle);
+    const first = await page.$eval('.dm-msgs .bubble-row .bubble', (x) => x.textContent);
+    const day = DAYS.find((d) => new RegExp(`\\b${d}\\b`).test(first));
+    const time = (/\b(\d{1,2}(?::\d\d)?\s?(?:am|pm)|noon)\b/i.exec(first) || [])[1];
+    const venue = (/\bThe [A-Z][a-z]+ (?:Taproom|Commons|Library Annex|Coworking|Hall|Cafe|Brewing)\b/.exec(first) || [])[0];
+    if (!day || !time || !venue) throw new Error(`no day/time/place in "${first.slice(0, 120)}"`);
+    return `${day} at ${time}, ${venue}`;
+  },
 };
+const { DAYS } = require('../../social/gen/dm-facts');
+async function xdmOpen(page, handle) {
+  await go(page, '/messages');
+  const ok = await page.evaluate((h) => { const x = [...document.querySelectorAll('a.dm-row')].find((a) => a.querySelector('.dm-row-main .muted').textContent.trim().toLowerCase().startsWith(`@${h.toLowerCase()} `)); if (!x) return false; x.setAttribute('data-ui-target', '1'); return true; }, handle);
+  if (!ok) throw new Error(`no conversation with @${handle}`);
+  await nav(page, () => page.click('[data-ui-target="1"]'));
+}
 
 // ---------------------------------------------------------------- makers
 const kRows = (page) => page.$$eval('article.row', (rs) => rs.map((r) => ({ id: r.id, title: r.querySelector('.row-title a').textContent.trim(), product: (r.querySelector('.row-product') || { getAttribute: () => null }).getAttribute('href') })));
@@ -243,6 +272,7 @@ const WRONG = {
   'my-comments-total': bump, 'readinglist-tag-count': bump, 'author-tag-count': bump, 'hashtag-count-by': bump, 'replies-last-hours': bump, 'thread-reply-count': bump,
   'comment-count-user': bump, 'mrr-gap': bump, 'series-part': () => 'part 1 of 1',
   'trending-which': (t) => ['a', 'b', 'c'].map((k) => t.instantiation_dict[k]).join(', '),
+  'dm-unread-count': bump, 'dm-thread-length': bump, 'dm-meet-when': () => 'Friday at 8pm, The Corner Diner',
 };
 
 async function main() {

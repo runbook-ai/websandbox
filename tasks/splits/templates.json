@@ -933,6 +933,34 @@
 "split": "train",
 "why": "gen-draw"
 },
+"gen-micro-dm-answer-topic": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-meet-when": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-reply-unread": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-send-post-link": {
+"split": "heldout",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-thread-length": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-unread-count": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-micro-dm-unread-from": {
+"split": "train",
+"why": "gen-draw-added"
+},
 "gen-micro-dm-user": {
 "split": "train",
 "why": "gen-draw"
@@ -1108,6 +1136,46 @@
 "gen-social-comments-by-user-on-post": {
 "split": "heldout",
 "why": "gen-draw"
+},
+"gen-social-dm-answer-topic": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-borrow-item": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-meet-when": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-notify-meet": {
+"split": "heldout",
+"why": "gen-draw-added"
+},
+"gen-social-dm-reply-unread": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-send-post-link": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-thread-length": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-unread-count": {
+"split": "heldout",
+"why": "gen-draw-added"
+},
+"gen-social-dm-unread-from": {
+"split": "train",
+"why": "gen-draw-added"
+},
+"gen-social-dm-work-deadline": {
+"split": "train",
+"why": "gen-draw-added"
 },
 "gen-social-edit-post-update": {
 "split": "train",

@@ -76,6 +76,7 @@ async function microPost(t, handle, start) {
 async function makersGroup(t, title) { return String(await one(t, `SELECT substr(name, 8) FROM forums WHERE network_id = 3 AND title = ${lit(title)} LIMIT 1`)).replace(/_/g, '-'); }
 async function makersPost(t, title) { const r = (await qOf(t)(`SELECT id, slug FROM submissions WHERE network_id = 3 AND kind = 'thread-post' AND title = ${lit(title)} ORDER BY id LIMIT 1`))[0]; return `/post/${r.slug}-${r.id}`; }
 const makersProduct = async (t, name) => `/product/${await one(t, `SELECT slug FROM products WHERE name = ${lit(name)} LIMIT 1`)}`;
+const threadOf = (t) => +/^thread (\d+)/.exec(t.changes.find((c) => /^thread \d+/.test(c)))[1];
 // the deepest reply of a conversation (its page has the longest parent chain)
 async function microDeepest(t, root) {
   const r = (await qOf(t)(`WITH RECURSIVE ch(id, d) AS (SELECT ${+root}, 0 UNION ALL SELECT s.id, ch.d + 1 FROM submissions s JOIN ch ON s.reply_to = ch.id WHERE s.visibility = 'visible')
@@ -99,6 +100,13 @@ const LOCATE = {
   'gen-micro-hashtag-count-by': async (t) => ({ path: `/${t.instantiation_dict.handle}`, widget: 'vlist', itemSel: 'article.post' }),
   'gen-micro-thread-reply-count': async (t) => ({ path: await microDeepest(t, (await microPost(t, t.instantiation_dict.handle, t.instantiation_dict.start)).id), widget: 'older', itemSel: 'article.post' }),
   'gen-micro-who-liked': async (t) => { const p = await microPost(t, t.instantiation_dict.handle, t.instantiation_dict.start); return { path: `/${p.handle}/status/${p.id}`, widget: null, itemSel: 'article.post', fillSel: '.post-stats strong, .likers, .act-like .act-n' }; },
+  // private / direct messages: the conversation page (the task's `changes` name the thread)
+  'gen-social-dm-meet-when': async (t) => ({ path: `/inbox/${threadOf(t)}`, widget: 'older', itemSel: 'li.msg' }),
+  'gen-social-dm-borrow-item': async (t) => ({ path: `/inbox/${threadOf(t)}`, widget: 'older', itemSel: 'li.msg' }),
+  'gen-social-dm-work-deadline': async (t) => ({ path: `/inbox/${threadOf(t)}`, widget: 'older', itemSel: 'li.msg' }),
+  'gen-social-dm-thread-length': async (t) => ({ path: `/inbox/${threadOf(t)}`, widget: 'older', itemSel: 'li.msg', count: true }),
+  'gen-micro-dm-meet-when': async (t) => ({ path: `/messages/${threadOf(t)}`, widget: 'older', itemSel: '.bubble-row' }),
+  'gen-micro-dm-thread-length': async (t) => ({ path: `/messages/${threadOf(t)}`, widget: 'older', itemSel: '.bubble-row', count: true }),
   // makers
   'gen-makers-top-upvoted-post': async (t) => { const d = t.instantiation_dict; const g = /^in the (.+) group$/.exec(d.scope); return { path: `${g ? `/group/${await makersGroup(t, g[1])}` : ''}/top/${WIN[d.win]}`, widget: 'vlist', itemSel: 'article.row' }; },
   'gen-makers-top-mrr-in-group': async (t) => ({ path: `/group/${await makersGroup(t, t.instantiation_dict.group)}/top/${WIN[t.instantiation_dict.win]}`, widget: 'vlist', itemSel: 'article.row', fillSel: '.leader .mrr' }),
@@ -188,7 +196,7 @@ async function readTask(t) {
   let items = null; let text; let how;
   const listSlot = ['comments', 'listing', 'grid', 'reviews', 'admin_grid', 'inbox', 'issues', 'commits', 'feed', 'timeline', 'readinglist'].includes(slot) && loc.widget === 'vlist';
   if (listSlot && await p1.$('.wsb-vlist')) { items = await B.readVlist(p1, { itemSel: loc.itemSel }); how = `scrolled the ${slot} list (${items.length} items)`; }
-  else if (slot === 'thread' && loc.widget === 'older' && await p1.$('.wsb-older')) { items = await B.readOlder(p1, { itemSel: loc.itemSel }); how = `scrolled the conversation up (${items.length} messages)`; }
+  else if (['thread', 'messages', 'dm'].includes(slot) && loc.widget === 'older' && await p1.$('.wsb-older')) { items = await B.readOlder(p1, { itemSel: loc.itemSel }); how = `scrolled the conversation up (${items.length} messages)`; }
   else if (slot === 'admin_job') {
     await p1.waitForSelector('#wsb-job');
     await rl(baseOf(t), '/clock', { advance: 61 });
@@ -310,6 +318,38 @@ const WRITES = {
     await page.close();
     return { how: `reply typed into the ${kind} composer` };
   },
+  // private messages (community) and direct messages (micro): the conversation's reply box, the compose form
+  async 'gen-social-dm-reply-unread'(t) { return socialDmReply(t, 'Thanks for the message! Sounds good to me, talk soon.'); },
+  async 'gen-social-dm-answer-topic'(t) { return socialDmReply(t, 'Great question! My suggestion: start with the simplest option and see how you like it.'); },
+  async 'gen-social-dm-send-post-link'(t) {
+    const pid = +/\/comments\/(\d+)/.exec(t.eval.state_sql)[1];
+    const r = (await qOf(t)(`SELECT s.id, f.name, s.slug FROM submissions s JOIN forums f ON f.id = s.forum_id WHERE s.id = ${pid}`))[0];
+    return socialDmReply(t, `Here it is: /c/${r.name}/comments/${r.id}/${r.slug}`);
+  },
+  async 'gen-social-dm-notify-meet'(t) {
+    const d = t.instantiation_dict;
+    const [when, where] = JSON.parse(await one(t, `SELECT facts FROM world_dm_threads WHERE thread_id = ${threadOf(t)}`));
+    const page = await open(t, t.scenario, `/message/compose?to=${encodeURIComponent(d.friend)}`);
+    await page.type('#subject', `Meeting up with ${d.user}`);
+    const kind = await B.typeEditor(page, 'body', `Heads up: ${d.user} suggested meeting ${when} at ${where}.`, { form: 'form.stack-form' });
+    await nav(page, () => page.click('form.stack-form button[type=submit]'));
+    await page.close();
+    return { how: `new message typed into the ${kind} editor` };
+  },
+  async 'gen-micro-dm-reply-unread'(t) { return microDmReply(t, 'Thanks! Sounds good to me.'); },
+  async 'gen-micro-dm-answer-topic'(t) { return microDmReply(t, 'Great question! Start with the simplest option and see how it goes.'); },
+  async 'gen-micro-dm-send-post-link'(t) {
+    const pid = +/\/status\/(\d+)/.exec(t.eval.state_sql)[1];
+    return microDmReply(t, `Here it is: /${t.login_user}/status/${pid}`);
+  },
+  async 'gen-micro-dm-user'(t) {
+    const d = t.instantiation_dict;
+    const page = await open(t, t.scenario, `/messages/compose?to=${encodeURIComponent(d.handle)}`);
+    const kind = await B.typeEditor(page, 'text', `Hi! I wanted to ask ${d.ask}.`, { form: 'form.dm-new' });
+    await nav(page, () => page.click('form.dm-new button[type=submit]'));
+    await page.close();
+    return { how: `message typed into the ${kind} editor` };
+  },
   async 'gen-makers-answer-question-post'(t) {
     const page = await open(t, t.scenario, await makersPost(t, t.instantiation_dict.title));
     const kind = await B.typeEditor(page, 'body', 'Worth it for us: we started small, tracked the hours saved and kept it after a month.', { form: 'form.c-form:not(:has(input[name=parent_id]))' });
@@ -388,6 +428,24 @@ const WRITES = {
   },
 };
 
+// reply in a conversation: older messages loaded first when the conversation box is on
+async function socialDmReply(t, text) {
+  const page = await open(t, t.scenario, `/inbox/${threadOf(t)}`);
+  const older = t.widget.slot === 'messages' && await page.$('.wsb-older') ? await B.readOlder(page, { itemSel: 'li.msg' }) : null;
+  const kind = await B.typeEditor(page, 'body', text, { form: 'form.comment-form' });
+  await nav(page, () => page.click('form.comment-form button[type=submit]'));
+  await page.close();
+  return { how: `${older ? `conversation scrolled up (${older.length} messages), ` : ''}reply typed into the ${kind} editor` };
+}
+async function microDmReply(t, text) {
+  const page = await open(t, t.scenario, `/messages/${threadOf(t)}`);
+  const older = t.widget.slot === 'dm' && await page.$('.wsb-older') ? await B.readOlder(page, { itemSel: '.bubble-row' }) : null;
+  const kind = await B.typeEditor(page, 'text', text, { form: 'form.dm-send' });
+  await nav(page, () => page.click('form.dm-send button[type=submit]'));
+  await page.close();
+  return { how: `${older ? `conversation scrolled up (${older.length} messages), ` : ''}message typed into the ${kind} editor` };
+}
+
 async function main() {
   let tasks = fs.readFileSync(a.tasks, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((t) => baseOf(t));
   if (a.only) tasks = tasks.filter((t) => a.only.split(',').includes(DIR[t.site]));
@@ -396,7 +454,7 @@ async function main() {
   const groups = new Map();
   for (const t of tasks) {
     const isRead = [].concat(t.eval.type).includes('answer') && LOCATE[t.template];
-    const isWrite = WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread'].includes(t.widget.slot);
+    const isWrite = WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread', 'messages', 'dm', 'msg_editor', 'dm_composer'].includes(t.widget.slot);
     if (!isRead && !isWrite) continue;
     const k = `${DIR[t.site]}|${t.widget.slot}|${isRead ? 'read' : 'write'}`;
     if (!groups.has(k)) groups.set(k, []);
@@ -418,7 +476,7 @@ async function main() {
       const t0 = Date.now();
       let rec;
       try {
-        if (WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread'].includes(t.widget.slot)) {
+        if (WRITES[t.template] && ['editor', 'checkout', 'discussion', 'composer', 'thread', 'messages', 'dm', 'msg_editor', 'dm_composer'].includes(t.widget.slot)) {
           const r = await WRITES[t.template](t);
           const g = await graderOf(t)(t, { answer: '', url: '', query: qOf(t) });
           rec = { how: r.how, ok: g.pass === true, notes: g.pass === true ? '' : JSON.stringify(g.checks.filter((c) => c.pass !== true)).slice(0, 300) };

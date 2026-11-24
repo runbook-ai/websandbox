@@ -71,7 +71,9 @@ function main() {
   const r = rng(+a.seed);
   const out = [];
   const stats = {};
-  for (const [site, S] of Object.entries(SITES)) {
+  // late slots (map.js) are drawn after every site's other slots, so adding them leaves the others as they were
+  for (const late of [false, true]) for (const [site, S] of Object.entries(SITES)) {
+    if (!Object.values(S.slots).some((d) => !!d.late === late)) continue;
     const byTpl = new Map();
     for (const f of S.files) for (const t of readJsonl(f)) {
       if (t.status === 'dropped' || t.scenario) continue;
@@ -80,10 +82,11 @@ function main() {
       byTpl.get(short).push(t);
     }
     for (const [slot, def] of Object.entries(S.slots)) {
+      if (!!def.late !== late) continue;
       for (const v of def.values) if (!SLOTS[site][slot] || !SLOTS[site][slot].includes(v)) throw new Error(`${site}: ${slot}=${v} is not a declared widget value`);
       const tpls = def.templates.filter((x) => { if (!byTpl.has(x)) throw new Error(`${site}: no template ${x}`); return true; });
       // seeded task order per template; pairs (template, value) taken round-robin until the budget is spent
-      const queues = new Map(tpls.map((x) => [x, shuffle(byTpl.get(x), r)]));
+      const queues = new Map(tpls.map((x) => [x, shuffle(def.filter ? byTpl.get(x).filter(def.filter) : byTpl.get(x), r)]));
       const used = new Set();
       const combos = [];
       for (const v of def.values) for (const x of tpls) combos.push([x, v]);
