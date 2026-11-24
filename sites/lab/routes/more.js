@@ -1,10 +1,11 @@
 'use strict';
-// Travel (airport autocomplete, calendar date picker, nonstop filter, results that load 6 at a time,
+// Usage trends (a bar chart image of monthly sessions per team), travel (airport autocomplete, calendar date picker, nonstop filter, results that load 6 at a time,
 // bookings), the spare-parts catalog (photos drawn by lib/photo.js, spec sheets as CSV downloads),
 // the vendor registry (20 rows a page, details one vendor at a time, a JSON API) and the treasury
 // desk (option chains around the money, "show all strikes", one page per contract).
 const T = require('../lib/travel');
 const photo = require('../lib/photo');
+const textimg = require('../lib/textimg');
 const { COST_CENTERS } = require('../build/more');
 
 const PAGE = 6;               // flights per results batch
@@ -78,6 +79,26 @@ module.exports = async function more(app, kit, A) {
   app.get('/travel/trips', A, async (req, reply) => {
     const rows = kit.db().prepare(`SELECT b.*, f.origin, f.dest, f.dep FROM bookings b JOIN flights f ON f.number = b.flight_number WHERE b.user_id = ? ORDER BY b.created_at DESC, b.id DESC`).all(req.user.id);
     return reply.render('travel-trips', { title: 'My trips', rows });
+  });
+
+  // ---------------------------------------------------------------- usage trends (a chart image)
+  const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const trendPoints = (team) => kit.sql("SELECT period, sessions FROM reports WHERE team = ? AND period NOT LIKE 'Q%' ORDER BY id").all(team)
+    .map((r) => { const [m, y] = r.period.split(' '); return [`${m.slice(0, 3).toUpperCase()} ${y.slice(2)}`, r.sessions]; });
+  const teamSlug = (t) => t.toLowerCase();
+  app.get('/reports/trends', A, async (req, reply) => {
+    const teams = kit.db().prepare('SELECT DISTINCT team FROM reports ORDER BY team').pluck().all();
+    const team = teams.includes(req.query.team) ? req.query.team : teams[0];
+    return reply.render('trends', { title: 'Usage trends', teams, team, src: `/reports/trends/${teamSlug(team)}.png`, mon3: MON3 });
+  });
+  const charts = new Map();
+  app.get('/reports/trends/:file', A, async (req, reply) => {
+    const m = /^([a-z]+)\.png$/.exec(req.params.file);
+    const team = m && kit.db().prepare('SELECT DISTINCT team FROM reports').pluck().all().find((t) => teamSlug(t) === m[1]);
+    if (!team) throw kit.httpError(404, 'Not found');
+    if (!charts.has(team)) charts.set(team, textimg.chart({ team, metric: 'sessions', points: trendPoints(team) }));
+    reply.header('cache-control', 'private, max-age=3600').type('image/png');
+    return charts.get(team);
   });
 
   // ---------------------------------------------------------------- spare parts

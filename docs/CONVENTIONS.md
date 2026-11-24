@@ -151,8 +151,9 @@ shopping `:7770`, admin `:7780/admin`, gitlab `:8024`, forum `:9999`, wiki
   - `exact` / `must_include` / `numeric` / `must_exclude` on the file text (answer matching).
   A missing file fails the check (not an error).
 - `modality: ['image']`: the answer needs the pixels of an image (a photo's colour, a count of drawn
-  holes). Such tasks are held out (`split_hint: heldout`, `heldout_reason: image`) and are for evals
-  that serve images; a text-only RL agent loop cannot solve them.
+  holes, a chart, a receipt photo given as an input file). Some image templates are in the train split
+  (for training with images, e.g. SFT), others held out; a text-only agent loop cannot solve them, so a
+  harness without image support should leave them out.
 
 ## Licences and attribution
 

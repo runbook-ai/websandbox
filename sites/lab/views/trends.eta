@@ -1,0 +1,9 @@
+<% layout('layout') %>
+<nav class="crumbs"><a href="/reports">Usage reports</a> &rsaquo; Trends</nav>
+<h1>Usage trends</h1>
+<form method="get" action="/reports/trends" class="inline-form">
+  <label>Team <select name="team" data-autosubmit><% for (const t of it.teams) { %><option<% if (t === it.team) { %> selected<% } %>><%= t %></option><% } %></select></label>
+  <noscript><button type="submit">Show</button></noscript>
+</form>
+<p class="muted">Monthly sessions, from the usage reports. Exact figures per month are in each report.</p>
+<figure class="trend"><img src="<%= it.src %>" alt="Bar chart of monthly sessions for the <%= it.team %> team" style="max-width: 100%; height: auto;"></figure>

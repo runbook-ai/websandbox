@@ -63,10 +63,17 @@ Rows use the generated-task format of the other sites (docs/GENERATOR.md, `start
 | `policy-lookup` | G | read | 20 | a hotel cap from the attached policy (2025 value and the meal cap excluded) | held out |
 | `part-photo-spec` | I | read | 116 | SKU of the part whose photo has the tag colour + weight from its spec-sheet CSV | held out (image) |
 | `part-photo-holes` | I | read | 88 | strict count of parts whose photo shows N holes | held out (image) |
+| `part-photo-color` | I | read | 116 | the tag colour in one part's photo (the other colours excluded) | train |
+| `part-photo-most-holes` | I | read | 13 | SKU of the family's part with the most holes (the others excluded) | train |
+| `chart-peak` | I | read | 8 | month with the most sessions on the team's trends chart (an image; runner-up excluded) | train |
+| `chart-value` | I | read | 120 | one month's sessions read off the chart | held out |
+| `receipt-claim` | I | write | 120 | exactly one claim with the attached receipt photo's merchant, date and total | train |
+| `receipt-total` | I | read | 60 | the attached receipt's total (subtotal excluded) | held out |
 
 Held out: one template per family (A-H) plus the `sections` list kind (its tasks form the three
-`-sections` templates, so every split stays template-disjoint), and every image template (family I, eval
-only: the RL agent loop is text-only). `tasks/tools/consolidate.py` does
+`-sections` templates, so every split stays template-disjoint), and in family I (images) the two part-photo
+templates listed first plus `chart-value` and `receipt-total`. Image templates (`modality: ['image']`) in the
+train split are for SFT; the RL harness keeps them out of its sets while its agent loop is text-only. `tasks/tools/consolidate.py` does
 not read `split_hint` yet; until it does, its seeded draw decides.
 
 Verification evidence: `tasks/lab/verify-generated.jsonl` (written by `ui-check.js`).

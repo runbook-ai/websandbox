@@ -541,6 +541,14 @@
 "split": "heldout",
 "why": "gen-hint"
 },
+"gen-lab-chart-peak": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-chart-value": {
+"split": "heldout",
+"why": "gen-hint"
+},
 "gen-lab-chat-draft": {
 "split": "heldout",
 "why": "gen-hint"
@@ -605,8 +613,16 @@
 "split": "train",
 "why": "gen-hint"
 },
+"gen-lab-part-photo-color": {
+"split": "train",
+"why": "gen-hint"
+},
 "gen-lab-part-photo-holes": {
 "split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-part-photo-most-holes": {
+"split": "train",
 "why": "gen-hint"
 },
 "gen-lab-part-photo-spec": {
@@ -622,6 +638,14 @@
 "why": "gen-hint"
 },
 "gen-lab-policy-lookup": {
+"split": "heldout",
+"why": "gen-hint"
+},
+"gen-lab-receipt-claim": {
+"split": "train",
+"why": "gen-hint"
+},
+"gen-lab-receipt-total": {
 "split": "heldout",
 "why": "gen-hint"
 },

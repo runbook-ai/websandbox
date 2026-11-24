@@ -1,5 +1,6 @@
 <% layout('layout') %>
 <h1>Usage reports</h1>
+<p><a href="/reports/trends">Trends: monthly sessions per team</a></p>
 <form method="post" action="/reports/run" class="stack narrow">
   <%~ it.csrfInput() %>
   <label>Team <select name="team" required><option value="">Choose a team</option><% for (const t of it.teams) { %><option><%= t %></option><% } %></select></label>

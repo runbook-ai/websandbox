@@ -39,9 +39,9 @@ Generated tasks keep their generator's skills and difficulty.
 
 ## Counts
 
-28193 tasks (807 WebArena + 27386 generated), 5 dropped.
-Train 21982 tasks / 443 templates; held-out 6211 tasks / 183 templates
-(WebArena 140 tasks / 33 templates; generated 6071 / 150).
+28630 tasks (807 WebArena + 27823 generated), 5 dropped.
+Train 22239 tasks / 447 templates; held-out 6391 tasks / 185 templates
+(WebArena 140 tasks / 33 templates; generated 6251 / 152).
 
 ### By source and site
 
@@ -50,7 +50,7 @@ Train 21982 tasks / 443 templates; held-out 6211 tasks / 183 templates
 | generated | devblog | 14 | 3 | 1337 | 306 |
 | generated | forum | 32 | 8 | 2072 | 562 |
 | generated | gitlab | 32 | 8 | 2172 | 639 |
-| generated | lab | 25 | 13 | 2996 | 1234 |
+| generated | lab | 29 | 15 | 3253 | 1414 |
 | generated | mail | 18 | 5 | 1541 | 455 |
 | generated | makers | 12 | 3 | 972 | 267 |
 | generated | map | 28 | 7 | 1415 | 355 |
@@ -69,32 +69,32 @@ Train 21982 tasks / 443 templates; held-out 6211 tasks / 183 templates
 | webarena | map+wiki | 3 | 1 | 13 | 4 |
 | webarena | shopping | 42 | 5 | 170 | 16 |
 | webarena | shopping_admin | 34 | 6 | 151 | 28 |
-| **all** |  | 443 | 183 | 21982 | 6211 |
+| **all** |  | 447 | 185 | 22239 | 6391 |
 
 ### By kind, difficulty and skill (tasks)
 
 | kind | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
-| read | 359 | 70 | 11907 | 3636 |
-| write | 308 | 70 | 9153 | 2330 |
+| read | 359 | 70 | 12044 | 3816 |
+| write | 308 | 70 | 9273 | 2330 |
 
 | difficulty | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
 | 1 | 227 | 51 | 5976 | 1113 |
-| 2 | 300 | 44 | 11729 | 3696 |
-| 3 | 140 | 45 | 3366 | 1262 |
+| 2 | 300 | 44 | 11853 | 3876 |
+| 3 | 140 | 45 | 3499 | 1262 |
 
 | skill | WA train | WA held-out | gen train | gen held-out |
 |---|---|---|---|---|
 | aggregate | 101 | 10 | 4056 | 1169 |
-| compare | 12 | 7 | 2002 | 721 |
-| create | 189 | 38 | 4876 | 1495 |
+| compare | 12 | 7 | 2023 | 721 |
+| create | 189 | 38 | 4996 | 1495 |
 | filter-sort | 175 | 26 | 4282 | 1295 |
-| form-edit | 155 | 32 | 5362 | 1355 |
+| form-edit | 155 | 32 | 5482 | 1355 |
 | moderation | 0 | 0 | 326 | 75 |
 | multi-step | 124 | 26 | 3764 | 1195 |
-| navigate | 169 | 46 | 10543 | 2643 |
-| read-detail | 282 | 46 | 7960 | 2656 |
+| navigate | 169 | 46 | 10680 | 2763 |
+| read-detail | 282 | 46 | 8196 | 2836 |
 | safety | 0 | 0 | 130 | 130 |
 | search | 52 | 5 | 7883 | 2459 |
 | vote | 0 | 0 | 71 | 76 |
@@ -147,8 +147,8 @@ Old train templates (-> train): `wa-t4`, `wa-t5`, `wa-t6`, `wa-t7`, `wa-t9`, `wa
   - train (28): `gen-map-bike-time`, `gen-map-closest-of-n`, `gen-map-compare-destinations`, `gen-map-compare-modes`, `gen-map-count-within-radius`, `gen-map-directions-from-coords`, `gen-map-drive-distance`, `gen-map-drive-time`, `gen-map-multi-leg-trip`, `gen-map-nearest-category`, `gen-map-nearest-category-distance`, `gen-map-open-nearest-place`, `gen-map-open-place`, `gen-map-open-place-by-address`, `gen-map-place-address`, `gen-map-place-area`, `gen-map-place-category`, `gen-map-place-coords`, `gen-map-place-cuisine`, `gen-map-place-phone`, `gen-map-place-postcode`, `gen-map-place-website`, `gen-map-reverse-place`, `gen-map-reverse-postcode`, `gen-map-route-first-street`, `gen-map-search-category-near`, `gen-map-walk-distance`, `gen-map-walk-time`
 - **mail** held out (11): `gen-mail-add-contact`, `gen-mail-archive-newsletter`, `gen-mail-campaign-accepted`, `gen-mail-exchanged-count`, `gen-mail-label-conversation`, `gen-mail-label-conversations`, `gen-mail-latest-subject-from`, `gen-mail-newsletter-count`, `gen-mail-star-unread-from`, `gen-mail-unread-count-from`, `gen-mail-vendor-quote-amount`
   - train (18): `gen-mail-campaign-bounced-who`, `gen-mail-campaign-follow-up`, `gen-mail-campaign-personal-replies`, `gen-mail-colleague-request-when`, `gen-mail-create-filter`, `gen-mail-exchanged-count`, `gen-mail-forward-quote`, `gen-mail-friend-plan-day`, `gen-mail-label-conversation`, `gen-mail-label-conversations`, `gen-mail-newsletter-count`, `gen-mail-remove-unsubscribed-contacts`, `gen-mail-reply-in-thread`, `gen-mail-resend-bounced`, `gen-mail-send-new-to-contact`, `gen-mail-star-unread-from`, `gen-mail-unread-count-from`, `gen-mail-vacation-responder`
-- **lab** held out (13): `gen-lab-account-metric`, `gen-lab-chat-draft`, `gen-lab-flight-book`, `gen-lab-import-rejected`, `gen-lab-injection-write`, `gen-lab-option-mid`, `gen-lab-part-photo-holes`, `gen-lab-part-photo-spec`, `gen-lab-policy-lookup`, `gen-lab-tracker-ticket`, `gen-lab-vlist-count-sections`, `gen-lab-vlist-find-sections`, `gen-lab-vlist-list-sections`
-  - train (25): `gen-lab-chat-post`, `gen-lab-chat-window-count`, `gen-lab-directory-count`, `gen-lab-expense-once`, `gen-lab-flight-cheapest`, `gen-lab-frame-pay`, `gen-lab-frame-read`, `gen-lab-grid-owner-list`, `gen-lab-injection-read`, `gen-lab-option-liquid`, `gen-lab-option-strike`, `gen-lab-playbook-checkpoints`, `gen-lab-policy-claim`, `gen-lab-register-batch`, `gen-lab-register-csv`, `gen-lab-release-build`, `gen-lab-report-code`, `gen-lab-statement-claims`, `gen-lab-tracker-eta`, `gen-lab-vendor-expiring`, `gen-lab-vendor-export`, `gen-lab-vendor-spend`, `gen-lab-vlist-count`, `gen-lab-vlist-find`, `gen-lab-vlist-list`
+- **lab** held out (15): `gen-lab-account-metric`, `gen-lab-chart-value`, `gen-lab-chat-draft`, `gen-lab-flight-book`, `gen-lab-import-rejected`, `gen-lab-injection-write`, `gen-lab-option-mid`, `gen-lab-part-photo-holes`, `gen-lab-part-photo-spec`, `gen-lab-policy-lookup`, `gen-lab-receipt-total`, `gen-lab-tracker-ticket`, `gen-lab-vlist-count-sections`, `gen-lab-vlist-find-sections`, `gen-lab-vlist-list-sections`
+  - train (29): `gen-lab-chart-peak`, `gen-lab-chat-post`, `gen-lab-chat-window-count`, `gen-lab-directory-count`, `gen-lab-expense-once`, `gen-lab-flight-cheapest`, `gen-lab-frame-pay`, `gen-lab-frame-read`, `gen-lab-grid-owner-list`, `gen-lab-injection-read`, `gen-lab-option-liquid`, `gen-lab-option-strike`, `gen-lab-part-photo-color`, `gen-lab-part-photo-most-holes`, `gen-lab-playbook-checkpoints`, `gen-lab-policy-claim`, `gen-lab-receipt-claim`, `gen-lab-register-batch`, `gen-lab-register-csv`, `gen-lab-release-build`, `gen-lab-report-code`, `gen-lab-statement-claims`, `gen-lab-tracker-eta`, `gen-lab-vendor-expiring`, `gen-lab-vendor-export`, `gen-lab-vendor-spend`, `gen-lab-vlist-count`, `gen-lab-vlist-find`, `gen-lab-vlist-list`
 - **social** held out (15): `gen-social-comments-by-user-on-post`, `gen-social-dm-notify-meet`, `gen-social-dm-unread-count`, `gen-social-follow-commenters`, `gen-social-karma-gap`, `gen-social-message-mods`, `gen-social-mod-lock-pin-top`, `gen-social-mod-remove-title-rule`, `gen-social-oldest-comment-phrase`, `gen-social-reply-and-dm-op`, `gen-social-reply-newest-unanswered`, `gen-social-reply-unread-replies`, `gen-social-save-top-flair`, `gen-social-top-flair-post-week`, `gen-social-upvote-user-comments`
   - train (27): `gen-social-can-post-where`, `gen-social-dm-answer-topic`, `gen-social-dm-borrow-item`, `gen-social-dm-meet-when`, `gen-social-dm-reply-unread`, `gen-social-dm-send-post-link`, `gen-social-dm-thread-length`, `gen-social-dm-unread-from`, `gen-social-dm-work-deadline`, `gen-social-edit-post-update`, `gen-social-follow-commenters`, `gen-social-join-mod-spaces`, `gen-social-karma-total`, `gen-social-link-blocking-rule`, `gen-social-mod-lock-pin-top`, `gen-social-moderated-spaces`, `gen-social-no-self-promo-post`, `gen-social-post-with-flair`, `gen-social-release-version`, `gen-social-replied-to-me-recent`, `gen-social-reply-and-dm-op`, `gen-social-reply-newest-unanswered`, `gen-social-reply-unread-replies`, `gen-social-save-top-flair`, `gen-social-top-flair-post-week`, `gen-social-top-space-of-user`, `gen-social-upvote-user-comments`
 - **devblog** held out (10): `gen-devblog-author-tag-count`, `gen-devblog-follow-top-tag-author`, `gen-devblog-my-top-article`, `gen-devblog-publish-limit`, `gen-devblog-react-kind`, `gen-devblog-readinglist-tag-count`, `gen-devblog-reply-to-comment`, `gen-devblog-save-latest-article`, `gen-devblog-top-follower-commenter`, `gen-devblog-top-tag-article`

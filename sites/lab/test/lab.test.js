@@ -222,6 +222,13 @@ test('lab site', { skip: !have && `no ${DATA}/base.db` }, async (t) => {
     assert.ok(!famPage.includes(pt.tag_color) && !famPage.includes(String(pt.weight_g)), 'photo facts and weight stay off the page');
     const spec = await c.get(`/parts/spec/${pt.spec}.csv`);
     assert.match(spec.headers.get('content-disposition'), /attachment/); assert.match(spec.text, new RegExp(`Weight \\(g\\),${pt.weight_g}`));
+    // trends: a chart image whose bar labels read back to the report figures
+    const team = await one('SELECT team FROM reports ORDER BY id LIMIT 1');
+    assert.match((await c.get(`/reports/trends?team=${team}`)).text, new RegExp(`/reports/trends/${team.toLowerCase()}\\.png`));
+    const chartPng = await fetch(`${base}/reports/trends/${team.toLowerCase()}.png`, { headers: { cookie: c.cookie() } });
+    const bars = require('../lib/textimg').readChartBlind(Buffer.from(await chartPng.arrayBuffer()));
+    const want = (await q(base, `SELECT sessions FROM reports WHERE team = '${team}' AND period NOT LIKE 'Q%' ORDER BY id`)).map((r) => r.sessions);
+    assert.deepStrictEqual(bars.map((b) => b[1]), want);
     // vendors: 20 a page in the UI, 100 per API call with contacts
     const v = (await c.get('/api/v2/vendors?limit=100&status=active&category=Sensors')).json();
     assert.strictEqual(v.total, await one("SELECT count(*) FROM vendors WHERE status = 'active' AND category = 'Sensors'"));

@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseCsv } = require('../../../kit/lib/grader');
+const textimg = require('../../../sites/lab/lib/textimg');
 
 module.exports = function uiMore({ H, sleep, nav, clickLink, bodyText, ROOT, photo, MONTHS }) {
   const longIso = (s) => { const m = /(\w+) (\d+), (\d{4})/.exec(s); return `${m[3]}-${String(MONTHS.indexOf(m[1]) + 1).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`; };
@@ -109,6 +110,25 @@ module.exports = function uiMore({ H, sleep, nav, clickLink, bodyText, ROOT, pho
     const cards = await page.$$eval('.part-card', (cs) => cs.map((c) => ({ sku: c.querySelector('.muted').textContent.split(' ')[0], src: c.querySelector('img').getAttribute('src') })));
     for (const c of cards) c.seen = photo.analyze(Buffer.from(await fetchB64(page, c.src), 'base64'));
     return cards;
+  };
+
+  // the trends chart of a team, read from its pixels
+  const trendChart = async (page, team) => {
+    await page.goto(`${H}/reports`, { waitUntil: 'networkidle0' });
+    await clickLink(page, 'Trends: monthly sessions per team');
+    if ((await page.$eval('select[name=team]', (e) => e.value)) !== team) await nav(page, () => page.select('select[name=team]', team));
+    const src = await page.$eval('figure.trend img', (i) => i.getAttribute('src'));
+    return textimg.readChartBlind(Buffer.from(await fetchB64(page, src), 'base64'));
+  };
+  // a receipt input file, read from its pixels: merchant, date, subtotal and total
+  const receiptFacts = (t, name) => {
+    const f = t.input_files.find((x) => x.name === name);
+    const r = textimg.readReceiptBlind(fs.readFileSync(path.join(ROOT, f.path)));
+    const amt = (l) => l.trim().split(/\s+/).pop().replace('$', '');
+    const items = r.lines.filter((l) => /\$\d/.test(l) && !/^(TAX|TOTAL)/.test(l)).map((l) => +amt(l));
+    const titled = r.merchant.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+    return { merchant: titled, date: /DATE (\d{4}-\d{2}-\d{2})/.exec(r.lines[0])[1], total: amt(r.lines.find((l) => l.startsWith('TOTAL'))),
+      subtotal: items.reduce((s, v) => s + v, 0).toFixed(2) };
   };
 
   return {
@@ -226,6 +246,42 @@ module.exports = function uiMore({ H, sleep, nav, clickLink, bodyText, ROOT, pho
       const weight = spec.find((r) => r[0] === 'Weight (g)')[1];
       const other = cards.find((c) => c !== hit[0]);
       return { answer: `${hit[0].sku}, ${weight} g`, wrong: `${other.sku}, ${weight} g`, how: `read ${cards.length} photos' pixels (tag colour), spec sheet CSV` };
+    },
+    async 'part-photo-color'(page, t) {
+      const sku = t.instantiation_dict.sku;
+      await page.goto(`${H}/parts/p/${sku}`, { waitUntil: 'networkidle0' });
+      const src = await page.$eval('.part-detail img', (i) => i.getAttribute('src'));
+      const seen = photo.analyze(Buffer.from(await fetchB64(page, src), 'base64'));
+      const other = Object.keys(photo.COLORS).find((c) => c !== seen.tag);
+      return { answer: seen.tag, wrong: other, how: 'part page, read the photo\'s pixels (tag colour)' };
+    },
+    async 'part-photo-most-holes'(page, t) {
+      const cards = await familyPhotos(page, t.instantiation_dict.family);
+      const s = [...cards].sort((a, b) => b.seen.holes - a.seen.holes);
+      return { answer: s[0].sku, wrong: s[1].sku, how: `counted holes in ${cards.length} photos` };
+    },
+    async 'chart-peak'(page, t) {
+      const pts = await trendChart(page, t.instantiation_dict.team);
+      const s = [...pts].sort((a, b) => b[1] - a[1]);
+      const lab = (l) => { const [m, y] = l.split(' '); return `${MONTHS.find((x) => x.toUpperCase().startsWith(m))} 20${y}`; };
+      return { answer: lab(s[0][0]), wrong: lab(s[1][0]), how: `trends chart, read ${pts.length} bar labels from the pixels` };
+    },
+    async 'chart-value'(page, t) {
+      const d = t.instantiation_dict;
+      const pts = await trendChart(page, d.team);
+      const [m, y] = d.month.split(' ');
+      const hit = pts.find((p) => p[0] === `${m.slice(0, 3).toUpperCase()} ${y.slice(2)}`);
+      return { answer: String(hit[1]), wrong: String(hit[1] + 100), how: 'trends chart, read the bar label from the pixels' };
+    },
+    async 'receipt-claim'(page, t, { neg } = {}) {
+      const d = t.instantiation_dict;
+      const x = receiptFacts(t, d.file);
+      await fileExpense(page, { iso: x.date, category: d.category, amount: neg ? x.subtotal : x.total, merchant: x.merchant, desc: d.desc });
+      return { how: `read the receipt image (merchant, date, total), filed the claim${neg ? ' with the subtotal' : ''}` };
+    },
+    async 'receipt-total'(page, t) {
+      const x = receiptFacts(t, t.instantiation_dict.file);
+      return { answer: `$${x.total}`, wrong: `$${x.subtotal}`, how: 'read the receipt image\'s TOTAL line' };
     },
     async 'part-photo-holes'(page, t) {
       const d = t.instantiation_dict;
