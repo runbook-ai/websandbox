@@ -7,13 +7,15 @@
 //   node tasks/tools/grade-server.js [--port 7990] [--host 127.0.0.1] [--site-port 80]
 //        [--token-file F | env WSB_CONTROL_TOKEN]
 //
-//   POST /grade  {task, answer, url, tenants: {<task site>: i, ...} | tenant: i}
+//   POST /grade  {task, answer, url, files?, tenants: {<task site>: i, ...} | tenant: i}
 //     task     a row of tasks/splits/*.jsonl (eval, site(s), grade_site, grader, intent)
 //     tenants  tenant index per task site name (shopping, shopping_admin, forum, gitlab, wiki, map, mail,
 //              social, lab, devblog, micro, makers);
 //              `tenant` = the same index for every site. Site k of tenant i is 127.10.<i>.<k>:<site-port>
 //              (sites.sh up --bind rl: shopping 2, shopping_admin 3 -- one store tenant --, forum 4,
 //              gitlab 5, wiki 6, map 7, lab 8, mail 10, social 11, devblog 12, micro 13, makers 14).
+//     files    the run's task files {name: {base64, mimeType} | {text}} for eval.files checks (the agent's
+//              saved / downloaded files; the task's input_files may be included, the grader skips them)
 //     -> {pass: true|false|null, checks, ms}; pass null = a fuzzy check is pending: the caller runs
 //        its LLM judge on the checks with `pending: 'fuzzy'` (their `reference`) and combines (all
 //        checks must pass). A check with `error` is a grader/infrastructure failure, not the agent's.
@@ -71,7 +73,7 @@ async function gradeOne(b) {
     queries[s] = kitGrader.remoteQuery(base(s, i), { token });
   }
   const query = queries[own];
-  const r = await graderFor(task)(task, { answer: b.answer || '', url: b.url || '', query, queries });
+  const r = await graderFor(task)(task, { answer: b.answer || '', url: b.url || '', query, queries, files: b.files || {} });
   graded++;
   return { pass: r.pass, checks: r.checks };
 }
@@ -81,7 +83,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') return send(200, { ok: true, graded });
   if (req.method !== 'POST' || req.url !== '/grade') return send(404, { error: 'POST /grade or GET /health' });
   let body = '';
-  req.on('data', (c) => { body += c; if (body.length > 8e6) req.destroy(); });
+  req.on('data', (c) => { body += c; if (body.length > 64e6) req.destroy(); });
   req.on('end', async () => {
     const t0 = process.hrtime.bigint();
     try {

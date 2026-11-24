@@ -1,8 +1,9 @@
 'use strict';
 // Task grader for the eval format in docs/CONVENTIONS.md ("WebArena tasks"):
 //   eval: { type: 'answer'|'url'|'state' | [...], answer: {exact|must_include|fuzzy|numeric: ..., must_exclude?} | [specs],
-//           answer_sql, url, state_sql, state_expect }
-// grade(task, {answer, url, query, queries, fuzzy}) -> {pass: true|false|null, score, checks: [...]}
+//           answer_sql, url, state_sql, state_expect, files: [spec] }
+// grade(task, {answer, url, query, queries, fuzzy, files}) -> {pass: true|false|null, score, checks: [...]}
+// `files` = the run's task files {name: {text} | {base64}} for eval.files (fileCheck below).
 // `query(sql)` -> rows (array of objects or arrays); see remoteQuery()/tenant.query().
 // Cross-site tasks: `queries` = {<site>: query fn} (task site names: shopping, shopping_admin, gitlab,
 // forum, wiki, map); eval.state = [{site, sql, expect}] runs each check on its site's DB and
@@ -321,13 +322,112 @@ function excludeCheck(type, answer, items, base) {
   return { ...base, type, mode: base.mode || 'must_exclude', reference: refs, excluded, pass: excluded.length === 0 };
 }
 
-async function grade(task, { answer = '', url = '', query, queries, fuzzy } = {}) {
+// ---- files: the task files the agent saved (eval.files, CONVENTIONS.md "Task files")
+// ctx.files = {name: {text} | {base64, mimeType?}}: every file of the run. The task's own input
+// files (task.input_files) are not candidates unless a spec names them.
+const fileText = (f) => (f == null ? '' : typeof f === 'string' ? f : f.text != null ? String(f.text)
+  : f.base64 != null ? Buffer.from(String(f.base64), 'base64').toString('utf8') : '').replace(/^﻿/, '');
+// RFC 4180: quoted fields, doubled quotes, CRLF or LF; blank lines dropped
+function parseCsv(text) {
+  const rows = [];
+  let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch;
+    } else if (ch === '"' && cell === '') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); cell = '';
+      if (row.some((c) => c.trim() !== '')) rows.push(row);
+      row = [];
+    } else cell += ch;
+  }
+  row.push(cell);
+  if (row.some((c) => c.trim() !== '')) rows.push(row);
+  return rows;
+}
+const colKey = (s) => clean(s).replace(/[\s_-]+/g, '');
+// a cell compared like a state value (numbers by value, "$1,250.00" ~ 1250) or as cleaned text
+function cellEq(got, want) {
+  const g = clean(got), w = clean(want);
+  if (g === w) return true;
+  const x = num(String(got).replace(/[$€£,\s]/g, '')), y = num(String(want).replace(/[$€£,\s]/g, ''));
+  return x != null && y != null && Math.abs(x - y) < 1e-6;
+}
+// spec.csv: {columns: [header, ...] (required, any order, extra columns allowed), key: [header, ...]
+// (default: the first column), rows_sql (one row per expected record, columns in `columns` order),
+// site?, unique (default true: a key twice fails), extra_rows (default false: rows not in rows_sql fail)}
+async function csvCheck(text, spec, needQuery) {
+  const out = { mode: 'csv' };
+  const rows = parseCsv(text);
+  if (!rows.length) return { ...out, pass: false, why: 'empty file' };
+  const head = rows[0].map(colKey);
+  const cols = spec.columns.map((c) => head.indexOf(colKey(c)));
+  const missingCols = spec.columns.filter((c, i) => cols[i] < 0);
+  if (missingCols.length) return { ...out, pass: false, why: 'missing columns', missing_columns: missingCols, header: rows[0] };
+  const keys = [].concat(spec.key || spec.columns[0]).map((k) => spec.columns.findIndex((c) => colKey(c) === colKey(k)));
+  if (keys.some((k) => k < 0)) throw new Error('files.csv.key must name entries of csv.columns');
+  const want = (await needQuery(spec.site)(spec.rows_sql)).map(rowVals);
+  const kOf = (vals) => keys.map((k) => clean(vals[k])).join('\u0001');
+  const got = rows.slice(1).map((r) => cols.map((c) => r[c] ?? ''));
+  const byKey = new Map();
+  const dups = [];
+  for (const g of got) { const k = kOf(g); if (byKey.has(k)) dups.push(g[keys[0]]); else byKey.set(k, g); }
+  const missing = [], mismatched = [];
+  const wanted = new Set();
+  for (const w of want) {
+    const k = kOf(w.map((v) => (v == null ? '' : String(v))));
+    wanted.add(k);
+    const g = byKey.get(k);
+    if (!g) { missing.push(w[keys[0]]); continue; }
+    const bad = spec.columns.filter((c, i) => !keys.includes(i) && !cellEq(g[i], w[i] == null ? '' : w[i]));
+    if (bad.length) mismatched.push({ key: w[keys[0]], columns: bad });
+  }
+  const extra = [...byKey.keys()].filter((k) => !wanted.has(k)).map((k) => byKey.get(k)[keys[0]]);
+  const pass = !missing.length && !mismatched.length && (spec.unique === false || !dups.length) && (spec.extra_rows === true || !extra.length);
+  return { ...out, pass, rows: got.length, expected: want.length, missing: missing.slice(0, 10), n_missing: missing.length,
+    extra: extra.slice(0, 10), n_extra: extra.length, duplicates: dups.slice(0, 10), mismatched: mismatched.slice(0, 10) };
+}
+// pick the file(s) a spec is about: spec.name (case-insensitive), else name_re / ext over the
+// non-input files, else every non-input file
+function filesFor(spec, files, inputs) {
+  const names = Object.keys(files || {});
+  if (spec.name) return names.filter((n) => n.toLowerCase() === String(spec.name).toLowerCase());
+  const re = spec.name_re ? new RegExp(spec.name_re, 'i') : null;
+  return names.filter((n) => !inputs.has(n.toLowerCase()) && (!re || re.test(n)) && (!spec.ext || n.toLowerCase().endsWith(String(spec.ext).toLowerCase())));
+}
+async function fileCheck(task, spec, files, needQuery) {
+  const inputs = new Set((task.input_files || []).map((f) => String(f.name).toLowerCase()));
+  const cands = filesFor(spec, files, inputs);
+  const base = { type: 'files', want: spec.name || spec.name_re || spec.ext || '*' };
+  if (!cands.length) return { ...base, pass: false, found: Object.keys(files || {}).slice(0, 20), why: 'no such file' };
+  let last;
+  for (const name of cands) {
+    const text = fileText(files[name]);
+    const sub = [];
+    if (spec.csv) sub.push(await csvCheck(text, spec.csv, needQuery));
+    for (const mode of ['exact', 'must_include', 'numeric']) {
+      if (spec[mode] == null) continue;
+      sub.push({ mode, pass: mode === 'exact' ? exactMatch(text, spec[mode]) : mode === 'numeric' ? numericMatch(text, spec[mode]) : mustInclude(text, spec[mode]) });
+    }
+    if (spec.must_exclude != null) sub.push(excludeCheck('files', text, spec.must_exclude, {}));
+    if (!sub.length) sub.push({ mode: 'exists', pass: text.length > 0 });
+    last = { ...base, name, size: text.length, checks: sub, pass: sub.every((c) => c.pass === true) };
+    if (last.pass) return last;
+  }
+  return last;
+}
+
+async function grade(task, { answer = '', url = '', query, queries, fuzzy, files } = {}) {
   const ev = task.eval || task;
   let types = ev.type ? [].concat(ev.type) : [];
   if (!types.length) {
     if (ev.answer || ev.answer_sql) types.push('answer');
     if (ev.url) types.push('url');
     if (ev.state_sql || ev.state) types.push('state');
+    if (ev.files) types.push('files');
   }
   const checks = [];
   const own = task.grade_site || task.site;
@@ -405,6 +505,9 @@ async function grade(task, { answer = '', url = '', query, queries, fuzzy } = {}
           } catch (e) { Object.assign(c, { pass: false, error: String(e.message || e) }); }
           checks.push(c);
         }
+      } else if (type === 'files') {
+        if (!ev.files || ![].concat(ev.files).length) throw new Error('files check without eval.files');
+        for (const spec of [].concat(ev.files)) checks.push(await fileCheck(task, spec, files || {}, needQuery));
       } else throw new Error(`unknown eval type '${type}'`);
     } catch (e) {
       checks.push({ type, pass: false, error: String(e.message || e) });
@@ -428,4 +531,4 @@ function remoteQuery(base, { tenant, token } = {}) {
   };
 }
 
-module.exports = { grade, remoteQuery, clean, exactMatch, mustInclude, excludeCheck, extraNumbers, strictNumbersOn, askedPart, COUNT_INTENT, numericMatch, quantities, urlMatch, normUrl, stateMatch };
+module.exports = { grade, remoteQuery, clean, exactMatch, mustInclude, excludeCheck, extraNumbers, strictNumbersOn, askedPart, COUNT_INTENT, numericMatch, quantities, urlMatch, normUrl, stateMatch, parseCsv, fileText };

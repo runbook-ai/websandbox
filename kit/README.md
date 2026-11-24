@@ -438,10 +438,10 @@ curl -s -XPOST -H 'content-type: application/json' -d '{"sql":"SELECT count(*) n
 
 ## Grading
 
-`eval` format: CONVENTIONS.md "WebArena tasks" (plus `answer.numeric` and answer lists, below). `kit.grader.grade(task, {answer, url, query, fuzzy})`
+`eval` format: CONVENTIONS.md "WebArena tasks" (plus `answer.numeric` and answer lists, below). `kit.grader.grade(task, {answer, url, query, fuzzy, files})`
 → `{pass: true|false|null, score, checks: [...]}` (`null` = waiting for the LLM judge).
 
-- `type`: `'answer' | 'url' | 'state'` or a list (all must pass); inferred from keys if absent.
+- `type`: `'answer' | 'url' | 'state' | 'files'` or a list (all must pass); inferred from keys if absent.
 - `answer: {exact: s}` -- WebArena clean (trim, strip enclosing quotes, lowercase; also accents
   folded, quote marks / backslashes dropped and spaces collapsed, so `4' Cypress` ~ `4\' Cypress`
   ~ `4 Cypress`, `Men's` ~ `Mens`) then equal.
@@ -501,6 +501,11 @@ curl -s -XPOST -H 'content-type: application/json' -d '{"sql":"SELECT count(*) n
   unless `{rows, ordered: true}`; object rows match the listed columns only), `{count: n}`,
   `{nonempty: true}`, `{empty: true}`, `{includes: [rows]}`, `{min, max}`.
 
+- `files` (CONVENTIONS.md "Task files and images"): `eval.files: [spec]` checks the files the agent
+  saved, passed as `grade(task, {..., files: {name: {text} | {base64}}})`; `csv: {columns, key, rows_sql}`
+  compares a CSV's rows with SQL rows (header names in any order, duplicates and extra rows fail), and
+  `exact` / `must_include` / `numeric` / `must_exclude` match the file text. The task's `input_files`
+  are skipped unless a spec names them.
 - **Cross-site tasks** (CONVENTIONS.md "Cross-site tasks"): `grade(task, {..., queries: {site: fn}})`;
   `eval.state: [{site, sql, expect}]` runs each check on its site's query function (one check
   each, so a failing site does not hide the others), `eval.answer_site` names the DB of

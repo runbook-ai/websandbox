@@ -134,6 +134,26 @@ shopping `:7770`, admin `:7780/admin`, gitlab `:8024`, forum `:9999`, wiki
   `--remote-debugging-port` in your port range; never reuse a Chrome you did
   not start. Kill your Chrome by PID when done.
 
+## Task files and images
+
+- `input_files: [{name, mime, text} | {name, mime, path}]` on a task row: files the agent starts with
+  (its task files; the RL harness hands them over as the agent's saved files). `text` is inline
+  content; `path` is relative to the repo root (shared documents, binary files: `tasks/<site>/files/`).
+  The intent refers to them by name ("the attached card statement card-statement-2026-02.csv").
+- `eval.files: [spec]` (type `files`): checks on the files the agent saves. The grader gets them as
+  `grade(task, {..., files: {name: {text} | {base64, mimeType}}})` (grade server: `POST /grade {files}`;
+  CLI: `wsb-grade --file NAME=PATH`). A spec picks its file by `name` (case-insensitive), else
+  `name_re` / `ext` over the files that are not inputs, and checks it with
+  - `csv: {columns, key?, rows_sql, site?, unique?, extra_rows?}`: the file is a CSV with those header
+    names (any order, extra columns allowed; `Vendor ID` ~ `vendor_id`); its rows, matched on `key`
+    (default the first column), equal the rows of `rows_sql` (columns in `columns` order; cells compared
+    like answers, numbers by value); a key twice or a row that is not in `rows_sql` fails;
+  - `exact` / `must_include` / `numeric` / `must_exclude` on the file text (answer matching).
+  A missing file fails the check (not an error).
+- `modality: ['image']`: the answer needs the pixels of an image (a photo's colour, a count of drawn
+  holes). Such tasks are held out (`split_hint: heldout`, `heldout_reason: image`) and are for evals
+  that serve images; a text-only RL agent loop cannot solve them.
+
 ## Licences and attribution
 
 Keep `sites/<site>/SOURCES.md`: where the data came from, its licence and

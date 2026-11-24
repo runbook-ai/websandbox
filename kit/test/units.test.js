@@ -275,3 +275,33 @@ test('grader: strict numbers for count/amount questions', async () => {
   r = await grader.grade({ intent: 'Count the reviews', eval: { answer: { must_include: '$sql' }, answer_sql: 'SELECT 3' } }, { answer: '2 or 3', query });
   assert.equal(r.pass, false);
 });
+
+test('grader: task files (eval.files)', async () => {
+  const grader = kit.grader;
+  const db = new Database(':memory:');
+  db.exec("CREATE TABLE v(id, name, email); INSERT INTO v VALUES ('V-1', 'Acme, Inc.', 'a@x.example'), ('V-2', 'Brightdesk', 'b@x.example')");
+  const query = async (sql) => db.prepare(sql).all();
+  const csv = { columns: ['Vendor ID', 'Email'], rows_sql: 'SELECT id, email FROM v' };
+  const task = { input_files: [{ name: 'in.csv' }], eval: { type: 'files', files: [{ name: 'out.csv', csv }] } };
+  const b64 = (s) => ({ base64: Buffer.from(s).toString('base64') });
+  // any column order, extra columns, quoted cells, CRLF, BOM, case-insensitive name
+  let r = await grader.grade(task, { query, files: { 'OUT.csv': b64('﻿name,email,vendor_id\r\n"Acme, Inc.",a@x.example,V-1\r\nBrightdesk,B@X.example,V-2\r\n') } });
+  assert.equal(r.pass, true, JSON.stringify(r.checks));
+  r = await grader.grade(task, { query, files: { 'out.csv': { text: 'Vendor ID,Email\nV-1,a@x.example\n' } } });
+  assert.equal(r.pass, false); assert.deepEqual(r.checks[0].checks[0].missing, ['V-2']);
+  r = await grader.grade(task, { query, files: { 'out.csv': { text: 'Vendor ID,Email\nV-1,a@x.example\nV-2,b@x.example\nV-2,b@x.example\nV-3,c@x.example\n' } } });
+  assert.equal(r.pass, false); assert.deepEqual(r.checks[0].checks[0].duplicates, ['V-2']); assert.deepEqual(r.checks[0].checks[0].extra, ['V-3']);
+  r = await grader.grade(task, { query, files: { 'out.csv': { text: 'Vendor ID,Email\nV-1,wrong@x.example\nV-2,b@x.example\n' } } });
+  assert.equal(r.pass, false); assert.equal(r.checks[0].checks[0].mismatched[0].key, 'V-1');
+  r = await grader.grade(task, { query, files: { 'out.csv': { text: 'ID,Email\nV-1,a@x.example\n' } } });
+  assert.equal(r.pass, false); assert.deepEqual(r.checks[0].checks[0].missing_columns, ['Vendor ID']);
+  r = await grader.grade(task, { query, files: {} });
+  assert.equal(r.pass, false); assert.equal(r.checks[0].why, 'no such file');
+  // no name: any file except the inputs; text checks reuse the answer matching
+  const t2 = { input_files: [{ name: 'in.csv' }], eval: { files: [{ ext: '.csv', must_include: ['V-2'], must_exclude: ['V-9'] }] } };
+  r = await grader.grade(t2, { files: { 'in.csv': { text: 'V-2' } } });
+  assert.equal(r.pass, false);
+  r = await grader.grade(t2, { files: { 'in.csv': { text: 'V-2' }, 'notes.csv': { text: 'id\nV-2\n' } } });
+  assert.equal(r.pass, true);
+  assert.deepEqual(grader.parseCsv('a,"b ""q"", c"\n\n1,2\n'), [['a', 'b "q", c'], ['1', '2']]);
+});
