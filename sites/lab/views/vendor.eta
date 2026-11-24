@@ -1,0 +1,13 @@
+<% layout('layout') %>
+<% const v = it.v; %>
+<nav class="crumbs"><a href="/vendors">Vendors</a> &rsaquo; <%= v.vendor_id %></nav>
+<h1><%= v.name %></h1>
+<dl class="facts">
+  <dt>Vendor ID</dt><dd><%= v.vendor_id %></dd>
+  <dt>Category</dt><dd><%= v.category %></dd>
+  <dt>Region</dt><dd><%= v.region %></dd>
+  <dt>Status</dt><dd><%= v.status %></dd>
+  <dt>Contact email</dt><dd><%= v.contact_email %></dd>
+  <dt>Contract ends</dt><dd><%= v.contract_end %></dd>
+  <dt>Annual spend</dt><dd><%= it.lab.money(v.spend_cents) %></dd>
+</dl>

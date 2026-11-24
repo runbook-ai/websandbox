@@ -110,3 +110,28 @@ body.verify { background: #f8f0fc; } .verify-box { padding: 10px 12px; font-size
 .panel { border: 1px solid var(--line); border-radius: 8px; padding: 4px 14px 14px; max-width: 680px; }
 .note { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; max-width: 680px; background: #fffef5; } .note p { margin: 4px 0; }
 .pager-js { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+
+/* travel */
+.travel-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); max-width: 980px; }
+.tf-field { display: flex; flex-direction: column; gap: 3px; position: relative; } .tf-field input[type=text] { width: 220px; }
+.tf-check { padding-bottom: 6px; }
+.ac-list { position: absolute; top: 100%; left: 0; z-index: 20; list-style: none; margin: 2px 0 0; padding: 0; width: 380px; background: #fff; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.ac-list li { padding: 6px 10px; cursor: pointer; } .ac-list li.on, .ac-list li:hover { background: #eef2ff; } .ac-list .code { color: #868e96; float: right; } .ac-list .none { color: #868e96; cursor: default; }
+.cal-pop { position: absolute; top: 100%; left: 0; z-index: 20; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+.cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; } .cal-head button { padding: 0 10px; }
+.cal-grid { border-collapse: collapse; } .cal-grid th { font-size: 11px; color: #868e96; padding: 2px; } .cal-grid td { padding: 1px; }
+.cal-day { width: 34px; height: 30px; padding: 0; background: #fff; color: #222; border: 1px solid #e9ecef; } .cal-day.on { background: #3b5bdb; color: #fff; } .cal-day:disabled { color: #ced4da; background: #f8f9fa; }
+.from-price { font-size: 15px; } .flights { list-style: none; padding: 0; max-width: 760px; }
+.flight { display: grid; grid-template-columns: 1fr 90px 80px; grid-template-rows: auto auto; gap: 2px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+.fl-time { font-size: 15px; } .fl-meta { grid-row: 2; color: #495057; font-size: 13px; } .fl-fare { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 18px; font-weight: 600; }
+.fl-book { grid-row: 1 / span 2; grid-column: 3; align-self: center; }
+
+/* parts */
+.part-grid { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; } .part-card { width: 256px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+.part-card img { display: block; border-radius: 4px; } .part-detail { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; } .part-detail img { border-radius: 6px; border: 1px solid var(--line); }
+
+/* markets */
+.num { text-align: right; } .neg { color: #c92a2a; } .pos { color: #2b8a3e; } .quote .spot { font-size: 24px; }
+.tabs.expiries { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; } .tabs.expiries a { padding: 4px 10px; border: 1px solid var(--line); border-radius: 14px; text-decoration: none; } .tabs.expiries a.on { background: #3b5bdb; color: #fff; border-color: #3b5bdb; }
+table.chain td, table.chain th { text-align: right; font-size: 12.5px; } table.chain .strike { text-align: center; background: #f1f3f5; } table.chain td.itm { background: #fff9db; }
+table.chain th.calls, table.chain th.puts { text-align: center; }

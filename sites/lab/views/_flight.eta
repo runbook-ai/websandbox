@@ -1,0 +1,11 @@
+<% const f = it.f; if (f) { %><li class="flight" data-number="<%= f.number %>">
+  <div class="fl-time"><b><%= f.dep_label %></b> &ndash; <b><%= f.arr_label %></b><%= f.next_day ? ' +1' : '' %></div>
+  <div class="fl-meta"><%= it.airlines[f.airline] %> <%= f.number %> &middot; <%= f.duration %> &middot; <%= f.stops ? `1 stop (${f.via})` : 'Nonstop' %></div>
+  <div class="fl-fare">$<%= f.fare %></div>
+  <a class="fl-book" href="/travel/book?flight=<%= encodeURIComponent(f.number) %>&amp;date=<%= it.date %>">Select</a>
+</li><% } else { %><li class="flight" data-number="">
+  <div class="fl-time"><b class="t-dep"></b> &ndash; <b class="t-arr"></b><span class="t-next"></span></div>
+  <div class="fl-meta"></div>
+  <div class="fl-fare"></div>
+  <a class="fl-book" href="#">Select</a>
+</li><% } %>

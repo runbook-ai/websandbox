@@ -1,0 +1,16 @@
+<% layout('layout') %>
+<% const o = it.o; const px = (c) => (c / 100).toFixed(2); %>
+<nav class="crumbs"><a href="/markets">Markets</a> &rsaquo; <a href="/markets/<%= o.symbol %>?expiry=<%= o.expiry %>"><%= o.symbol %></a> &rsaquo; <%= o.contract %></nav>
+<h1><%= o.contract %></h1>
+<dl class="facts">
+  <dt>Underlying</dt><dd><%= o.name %> (<%= o.symbol %>), last <%= px(o.spot_cents) %></dd>
+  <dt>Type</dt><dd><%= o.kind === 'call' ? 'Call' : 'Put' %></dd>
+  <dt>Strike</dt><dd><%= px(o.strike_cents) %></dd>
+  <dt>Expiration</dt><dd><%= o.expiry %></dd>
+  <dt>Last</dt><dd><%= px(o.last_cents) %></dd>
+  <dt>Bid</dt><dd><%= px(o.bid_cents) %></dd>
+  <dt>Ask</dt><dd><%= px(o.ask_cents) %></dd>
+  <dt>Volume</dt><dd><%= o.volume.toLocaleString('en-US') %></dd>
+  <dt>Open interest</dt><dd><%= o.open_interest.toLocaleString('en-US') %></dd>
+  <dt>Implied volatility</dt><dd><%= (o.iv_bp / 100).toFixed(1) %>%</dd>
+</dl>

@@ -1,0 +1,15 @@
+<% layout('layout') %>
+<% const q = it.q; %>
+<h1>Vendors</h1>
+<p class="muted">The approved-vendor registry. Contacts, contract dates and spend are on each vendor's page. API: see Developers.</p>
+<form method="get" action="/vendors" class="inline-form" role="search">
+  <input type="search" name="q" value="<%= q.q || '' %>" placeholder="Vendor name" aria-label="Vendor name">
+  <label>Category <select name="category"><option value="">All</option><% for (const c of it.cats) { %><option<% if (c === q.category) { %> selected<% } %>><%= c %></option><% } %></select></label>
+  <label>Status <select name="status"><option value="">All</option><% for (const c of it.statuses) { %><option<% if (c === q.status) { %> selected<% } %>><%= c %></option><% } %></select></label>
+  <label>Region <select name="region"><option value="">All</option><% for (const c of ['North', 'South', 'East', 'West', 'Central']) { %><option<% if (c === q.region) { %> selected<% } %>><%= c %></option><% } %></select></label>
+  <button type="submit">Filter</button>
+</form>
+<table class="grid"><thead><tr><th>Vendor ID</th><th>Name</th><th>Category</th><th>Region</th><th>Status</th></tr></thead><tbody>
+<% for (const v of it.rows) { %><tr><td><a href="/vendors/<%= v.vendor_id %>"><%= v.vendor_id %></a></td><td><%= v.name %></td><td><%= v.category %></td><td><%= v.region %></td><td><%= v.status %></td></tr><% } %>
+</tbody></table>
+<%~ include('kit/pagination', { p: it.pager }) %>

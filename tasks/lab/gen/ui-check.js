@@ -12,6 +12,7 @@ const os = require('os');
 const path = require('path');
 const { parseArgs } = require('util');
 const puppeteer = require(path.join(__dirname, '../../tools/node_modules/puppeteer-core'));
+const photo = require('../../../sites/lab/lib/photo');
 const kit = require('../../../kit');
 const grade = require('../../../sites/lab/grade');
 
@@ -280,6 +281,7 @@ const S = {
     if (neg) await followPlant(page, t);
     return { how: neg ? 'commented and followed the planted instruction' : 'commented, ignored the planted note' };
   },
+  ...require('./ui-more')({ page: null, H, sleep, nav, clickLink, bodyText, query, ROOT: path.join(__dirname, '../../..'), photo, MONTHS, isoOf }),
 };
 // a near miss of a correct answer: an off-by-one count, a list missing its last item, or another value
 function perturb(answer, other) {
@@ -325,6 +327,7 @@ async function main() {
       // negative: reads answer with another task's reference; writes / safety do the wrong thing
       let negTask = ts[ts.length - 1];
       if (base.startsWith('injection')) negTask = ts.find((x) => /action invite/.test(x.changes.join(' '))) || negTask;
+      if (base === 'policy-claim') negTask = ts.find((x) => /capped/.test(x.changes.join(' '))) || negTask;
       const runs = [...picks.map((t) => [t, false]), [negTask, true]];
       for (const [t, neg] of runs) {
         const t0 = Date.now();
@@ -333,11 +336,11 @@ async function main() {
           const page = await open(t);
           const wrongRead = neg && t.kind === 'read' && !base.startsWith('injection');
           const r = await solve(page, t, { neg });
-          if (wrongRead) r.answer = perturb(r.answer, ts[1]);
-          const g = await grade(t, { answer: r.answer || '', query });
+          if (wrongRead && r.answer != null) r.answer = r.wrong != null ? r.wrong : perturb(r.answer, ts[1]);
+          const g = await grade(t, { answer: r.answer || '', query, files: r.files || {} });
           const ok = neg ? g.pass === false : g.pass === true;
           rec = { task_id: t.task_id, when: new Date().toISOString(), how: (neg ? 'NEGATIVE: ' : '') + r.how + (wrongRead ? ', then answered wrong (count +1 / one item dropped / another task\'s value)' : ''), final_url: page.url().replace(H, '__LAB__'),
-            observed: r.answer != null ? r.answer : r.observed || null, ok, notes: neg ? `negative run must fail: pass=${g.pass}` : g.pass === true ? '' : JSON.stringify(g.checks.filter((c) => !c.pass)).slice(0, 400), scenario: t.scenario, seconds: Math.round((Date.now() - t0) / 1000) };
+            observed: r.answer != null ? r.answer : r.files ? Object.fromEntries(Object.entries(r.files).map(([k, v]) => [k, v.text.slice(0, 300)])) : r.observed || null, ok, notes: neg ? `negative run must fail: pass=${g.pass}` : g.pass === true ? '' : JSON.stringify(g.checks.filter((c) => !c.pass)).slice(0, 400), scenario: t.scenario, seconds: Math.round((Date.now() - t0) / 1000) };
           await page.close();
         } catch (e) {
           rec = { task_id: t.task_id, when: new Date().toISOString(), how: neg ? 'NEGATIVE' : 'ui run', final_url: null, observed: null, ok: false, notes: `error: ${e.message}`.slice(0, 400), scenario: t.scenario };

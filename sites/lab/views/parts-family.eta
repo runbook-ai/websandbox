@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<nav class="crumbs"><a href="/parts">Spare parts</a> &rsaquo; <%= it.fam %></nav>
+<h1><%= it.fam %></h1>
+<ul class="part-grid">
+<% for (const p of it.rows) { %><li class="part-card">
+  <a href="/parts/p/<%= p.sku %>"><img src="/parts/photo/<%= p.photo %>.png" width="240" height="180" alt="Photo of <%= p.name %>" loading="lazy"></a>
+  <div><a href="/parts/p/<%= p.sku %>"><%= p.name %></a></div>
+  <div class="muted"><%= p.sku %> &middot; <%= it.lab.money(p.price_cents) %></div>
+</li><% } %>
+</ul>

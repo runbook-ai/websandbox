@@ -194,6 +194,54 @@ test('lab site', { skip: !have && `no ${DATA}/base.db` }, async (t) => {
     assert.strictEqual(await one(`SELECT count(*) FROM invites WHERE email = '${p.action_arg}'`), 1);
   });
 
+  await t.test('C/E/G/I: travel search and booking; part photos and spec sheets; vendor API; option chains; registration codes', async () => {
+    const c = await login(admin);
+    // travel: an airport must come from the suggestions (hidden code); fares in departure order, 6 at a time
+    assert.match((await c.get('/travel?from_q=Ashby&to=ELS&date=2026-04-02')).text, /Choose a departure airport from the suggestions/);
+    const ac = (await c.get('/api/travel/airports?q=ash')).json().airports.map((x) => x.code);
+    assert.deepStrictEqual(ac.sort(), ['ASB', 'ASF']);
+    const rt = (await q(base, 'SELECT origin, dest FROM flights GROUP BY origin, dest HAVING count(*) > 12 ORDER BY origin, dest LIMIT 1'))[0];
+    const page = (await c.get(`/travel?from=${rt.origin}&to=${rt.dest}&date=2026-04-02`)).text;
+    assert.strictEqual((page.match(/<li class="flight" data-number="[^"]/g) || []).length, 6);
+    assert.match(page, /Fares from <strong>\$\d+/);
+    const more = (await c.get(`/api/travel/flights?from=${rt.origin}&to=${rt.dest}&date=2026-04-02&offset=6`)).json();
+    assert.ok(more.total > 6 && more.flights.length > 0 && more.offset === 6);
+    const non = (await c.get(`/api/travel/flights?from=${rt.origin}&to=${rt.dest}&date=2026-04-02&nonstop=1&limit=6`)).json();
+    assert.ok(non.flights.every((f) => f.stops === 0));
+    const f = non.flights[0];
+    const cc = await one("SELECT 'CC-110 Platform'");
+    await form(c, '/travel/book', { flight: f.number, date: '2026-04-02', traveler: 'Mirela Fairbanks', cost_center: cc }, `/travel/book?flight=${encodeURIComponent(f.number)}&date=2026-04-02`);
+    assert.strictEqual(await one(`SELECT fare_cents FROM bookings WHERE source = 'site' AND flight_number = '${f.number}' AND traveler = 'Mirela Fairbanks'`), f.fare * 100);
+    // parts: the photo is a PNG whose pixels carry the tag colour and holes; the spec sheet is a CSV download
+    const pt = (await q(base, 'SELECT * FROM parts ORDER BY id LIMIT 1'))[0];
+    const png = await fetch(`${base}/parts/photo/${pt.photo}.png`, { headers: { cookie: c.cookie() } });
+    assert.strictEqual(png.status, 200); assert.match(png.headers.get('content-type'), /image\/png/);
+    const seen = require('../lib/photo').analyze(Buffer.from(await png.arrayBuffer()));
+    assert.deepStrictEqual([seen.tag, seen.holes], [pt.tag_color, pt.holes]);
+    const famPage = (await c.get(`/parts/f/${pt.family.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)).text;
+    assert.ok(!famPage.includes(pt.tag_color) && !famPage.includes(String(pt.weight_g)), 'photo facts and weight stay off the page');
+    const spec = await c.get(`/parts/spec/${pt.spec}.csv`);
+    assert.match(spec.headers.get('content-disposition'), /attachment/); assert.match(spec.text, new RegExp(`Weight \\(g\\),${pt.weight_g}`));
+    // vendors: 20 a page in the UI, 100 per API call with contacts
+    const v = (await c.get('/api/v2/vendors?limit=100&status=active&category=Sensors')).json();
+    assert.strictEqual(v.total, await one("SELECT count(*) FROM vendors WHERE status = 'active' AND category = 'Sensors'"));
+    assert.ok(v.vendors[0].contact_email && v.vendors[0].contract_end);
+    assert.strictEqual(((await c.get('/vendors?per_page=100')).text.match(/<tr><td><a href="\/vendors\/VEN-/g) || []).length, 20);
+    // option chains: 13 strikes around the money, all of them on request; contract pages by symbol
+    const sym = await one('SELECT symbol FROM tickers ORDER BY symbol LIMIT 1');
+    const near = (await c.get(`/markets/${sym}`)).text, all = (await c.get(`/markets/${sym}?strikes=all`)).text;
+    assert.strictEqual((near.match(/class="strike"/g) || []).length, 13);
+    assert.ok((all.match(/class="strike"/g) || []).length > 13);
+    const ct = await one(`SELECT contract FROM options WHERE symbol = '${sym}' LIMIT 1`);
+    assert.match((await c.get(`/markets/c/${ct}`)).text, /Open interest/);
+    // registration: a confirmation code per attendee, stored with the row
+    const e = (await q(base, 'SELECT slug FROM events ORDER BY id LIMIT 1'))[0];
+    const r = await form(c, `/events/${e.slug}/register`, { form_token: /name="form_token" value="(\w+)"/.exec((await c.get(`/events/${e.slug}/register`)).text)[1], name: 'Code Check', email: 'code.check@partner-guest.example', team: 'Data', dietary: 'None' }, `/events/${e.slug}/register`);
+    const code = await one("SELECT code FROM registrations WHERE email = 'code.check@partner-guest.example'");
+    assert.match(code, /^REG-[0-9A-F]{6}$/);
+    assert.match((await c.get(r.location)).text, new RegExp(`Confirmation code: <strong>${code}`));
+  });
+
   await t.test('reset restores the base state; tenants are isolated', async () => {
     const c0 = await login(admin);
     await api(c0, 'POST', '/api/chat/general/messages', { body: 'only in tenant zero' }, '/chat/general');

@@ -1,0 +1,13 @@
+<% layout('layout') %>
+<% const p = it.p; %>
+<nav class="crumbs"><a href="/parts">Spare parts</a> &rsaquo; <a href="/parts/f/<%= it.famSlug %>"><%= p.family %></a> &rsaquo; <%= p.sku %></nav>
+<h1><%= p.name %></h1>
+<div class="part-detail">
+  <img src="/parts/photo/<%= p.photo %>.png" width="360" height="270" alt="Photo of <%= p.name %>">
+  <dl class="facts">
+    <dt>SKU</dt><dd><%= p.sku %></dd>
+    <dt>Family</dt><dd><%= p.family %></dd>
+    <dt>Price</dt><dd><%= it.lab.money(p.price_cents) %></dd>
+    <dt>Specifications</dt><dd><a href="/parts/spec/<%= p.spec %>.csv" download>Spec sheet (CSV)</a></dd>
+  </dl>
+</div>

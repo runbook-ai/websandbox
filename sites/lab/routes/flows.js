@@ -3,6 +3,7 @@
 // event registration (single-use form tokens + rate limit), admin invites.
 const L = require('../lib/lab');
 const W = require('../build/words');
+const { regCode } = require('../build/more');
 
 const RATE_SECONDS = 4; // at most one registration per user per 4 s of site time
 
@@ -116,7 +117,7 @@ module.exports = async function flows(app, kit, A) {
   const regForm = (req, reply, e, extra = {}, status) => reply.render('register', { title: `Register for ${e.title}`, e, token: issueToken(req), teams: W.TEAMS, diets: W.DIETARY, values: {}, errors: {}, ...extra }, status);
   app.get('/events/:slug/register', A, async (req, reply) => {
     const e = event(req.params.slug);
-    return regForm(req, reply, e, { done: req.query.done ? String(req.query.done).slice(0, 80) : null });
+    return regForm(req, reply, e, { done: req.query.done ? String(req.query.done).slice(0, 80) : null, code: /^REG-[0-9A-F]{6}$/.test(req.query.code || '') ? req.query.code : null });
   });
   app.post('/events/:slug/register', A, async (req, reply) => {
     const e = event(req.params.slug);
@@ -138,10 +139,11 @@ module.exports = async function flows(app, kit, A) {
       return regForm(req, reply, e, { values: v.values, errors: {}, limited: wait }, 429);
     }
     const x = v.values;
-    db.prepare("INSERT INTO registrations (event_id, name, email, team, dietary, registered_by, created_at, source) VALUES (?, ?, ?, ?, ?, ?, now(), 'site')")
-      .run(e.id, x.name.trim().replace(/\s+/g, ' '), x.email.trim().toLowerCase(), x.team, x.dietary, req.user.id);
+    const code = regCode(e.slug, x.email.trim());
+    db.prepare("INSERT INTO registrations (event_id, name, email, team, dietary, registered_by, created_at, source, code) VALUES (?, ?, ?, ?, ?, ?, now(), 'site', ?)")
+      .run(e.id, x.name.trim().replace(/\s+/g, ' '), x.email.trim().toLowerCase(), x.team, x.dietary, req.user.id, code);
     kit.events.log('register.ok', { event: e.slug });
-    return reply.redirect(`/events/${e.slug}/register?done=${encodeURIComponent(x.name.trim())}`);
+    return reply.redirect(`/events/${e.slug}/register?done=${encodeURIComponent(x.name.trim())}&code=${code}`);
   });
 
   // ---------------------------------------------------------------- admin: members + invites

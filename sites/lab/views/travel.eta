@@ -1,0 +1,42 @@
+<% layout('layout') %>
+<% it.scripts = ['/static/travel.js']; const s = it.s, q = it.q, er = s.errors || {}; %>
+<h1>Book travel</h1>
+<p class="muted">Company travel: one-way flights. Fares are per traveler and include taxes. <a href="/travel/trips">My trips</a></p>
+<form id="flight-search" method="get" action="/travel" class="travel-form" autocomplete="off">
+  <div class="tf-field ac" data-for="from">
+    <label for="from-q">From</label>
+    <input id="from-q" name="from_q" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="from-list" placeholder="City or airport" value="<%= s.from ? `${s.from.city} (${s.from.code})` : (q.from_q || '') %>">
+    <input type="hidden" name="from" value="<%= s.from ? s.from.code : '' %>">
+    <ul id="from-list" role="listbox" class="ac-list" hidden></ul>
+    <% if (er.from) { %><div class="kit-error" role="alert"><%= er.from %></div><% } %>
+  </div>
+  <div class="tf-field ac" data-for="to">
+    <label for="to-q">To</label>
+    <input id="to-q" name="to_q" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="to-list" placeholder="City or airport" value="<%= s.to ? `${s.to.city} (${s.to.code})` : (q.to_q || '') %>">
+    <input type="hidden" name="to" value="<%= s.to ? s.to.code : '' %>">
+    <ul id="to-list" role="listbox" class="ac-list" hidden></ul>
+    <% if (er.to) { %><div class="kit-error" role="alert"><%= er.to %></div><% } %>
+  </div>
+  <div class="tf-field cal">
+    <label for="date-shown">Depart</label>
+    <input id="date-shown" type="text" readonly placeholder="Choose a date" aria-haspopup="dialog" value="<%= s.date || '' %>">
+    <input type="hidden" name="date" value="<%= s.date || '' %>">
+    <div class="cal-pop" role="dialog" aria-label="Choose a departure date" data-min="<%= it.min %>" data-max="<%= it.max %>" hidden></div>
+    <% if (er.date) { %><div class="kit-error" role="alert"><%= er.date %></div><% } %>
+  </div>
+  <label class="tf-check"><input type="checkbox" name="nonstop" value="1"<%= s.nonstop ? ' checked' : '' %>> Nonstop only</label>
+  <button type="submit">Search flights</button>
+</form>
+<% if (s.results) { %>
+<section id="results" data-from="<%= s.from.code %>" data-to="<%= s.to.code %>" data-date="<%= s.date %>" data-nonstop="<%= s.nonstop ? 1 : 0 %>" data-total="<%= it.total %>">
+  <h2><%= s.from.city %> &rarr; <%= s.to.city %>, <%= s.date %></h2>
+  <% if (s.fromPrice != null) { %><p class="from-price">Fares from <strong>$<%= s.fromPrice %></strong></p><% } %>
+  <p class="muted" id="result-count"><%= it.total %> flight<%= it.total === 1 ? '' : 's' %><%= s.nonstop ? ' (nonstop only)' : '' %>, by departure time</p>
+  <ol class="flights" id="flight-list">
+  <% for (const f of it.shown) { %><%~ include('_flight', { f, date: s.date, airlines: it.airlines }) %><% } %>
+  </ol>
+  <% if (it.total > it.shown.length) { %><button type="button" id="more-flights" data-offset="<%= it.shown.length %>">Show more flights</button><% } %>
+  <% if (!it.total) { %><p>No flights match. Try another date<%= s.nonstop ? ' or include flights with a stop' : '' %>.</p><% } %>
+</section>
+<% } %>
+<template id="flight-tpl"><%~ include('_flight', { f: null, date: s.date, airlines: it.airlines }) %></template>

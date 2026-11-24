@@ -1,0 +1,18 @@
+<% layout('layout') %>
+<% const v = it.values || {}, er = it.errors || {}, f = it.fo; %>
+<nav class="crumbs"><a href="/travel">Travel</a> &rsaquo; Book</nav>
+<h1>Book flight <%= f.number %></h1>
+<dl class="facts">
+  <dt>Route</dt><dd><%= it.o.city %> (<%= it.o.code %>) &rarr; <%= it.d.city %> (<%= it.d.code %>)</dd>
+  <dt>Date</dt><dd><%= it.date %></dd>
+  <dt>Departs</dt><dd><%= f.dep_label %>, arrives <%= f.arr_label %><%= f.next_day ? ' (next day)' : '' %></dd>
+  <dt>Stops</dt><dd><%= f.stops ? `1 stop (${f.via})` : 'Nonstop' %></dd>
+  <dt>Fare</dt><dd>$<%= f.fare %></dd>
+</dl>
+<form method="post" action="/travel/book" class="stack narrow" id="book-form">
+  <%~ it.csrfInput() %>
+  <input type="hidden" name="flight" value="<%= f.number %>"><input type="hidden" name="date" value="<%= it.date %>">
+  <%~ include('kit/field', { name: 'traveler', label: 'Traveler (full name)', value: v.traveler, error: er.traveler, required: true }) %>
+  <%~ include('kit/field', { name: 'cost_center', label: 'Cost center', type: 'select', options: [['', 'Choose...'], ...it.ccs.map((c) => [c, c])], value: v.cost_center, error: er.cost_center, required: true }) %>
+  <button type="submit">Confirm booking</button>
+</form>

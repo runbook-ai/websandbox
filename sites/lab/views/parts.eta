@@ -1,0 +1,6 @@
+<% layout('layout') %>
+<h1>Spare parts</h1>
+<p class="muted">Machined and moulded parts for the robot lines. Each part page has a photo and a spec sheet.</p>
+<table class="grid"><thead><tr><th>Family</th><th>Parts</th><th>From</th></tr></thead><tbody>
+<% for (const f of it.fams) { %><tr><td><a href="/parts/f/<%= f.slug %>"><%= f.family %></a></td><td><%= f.n %></td><td><%= it.lab.money(f.lo) %></td></tr><% } %>
+</tbody></table>

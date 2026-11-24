@@ -1,0 +1,20 @@
+<% layout('layout') %>
+<% const t = it.t; const px = (c) => (c / 100).toFixed(2); const iv = (b) => (b / 100).toFixed(1) + '%'; %>
+<nav class="crumbs"><a href="/markets">Markets</a> &rsaquo; <%= t.symbol %></nav>
+<h1><%= t.name %> <span class="muted">(<%= t.symbol %>)</span></h1>
+<p class="quote"><b class="spot"><%= px(t.spot_cents) %></b> <span class="<%= t.change_bp < 0 ? 'neg' : 'pos' %>"><%= t.change_bp > 0 ? '+' : '' %><%= (t.change_bp / 100).toFixed(2) %>%</span> <span class="muted">USD, delayed</span></p>
+<nav class="tabs expiries" aria-label="Expiration dates">
+<% for (const e of it.expiries) { %><a href="/markets/<%= t.symbol %>?expiry=<%= e %><%= it.all ? '&strikes=all' : '' %>"<% if (e === it.expiry) { %> aria-current="page" class="on"<% } %>><%= it.lab.shortDate(e) %></a><% } %>
+</nav>
+<table class="grid chain"><thead>
+<tr><th colspan="6" class="calls">Calls</th><th></th><th colspan="6" class="puts">Puts</th></tr>
+<tr><th>Last</th><th>Bid</th><th>Ask</th><th>Volume</th><th>Open int.</th><th>IV</th><th>Strike</th><th>Last</th><th>Bid</th><th>Ask</th><th>Volume</th><th>Open int.</th><th>IV</th></tr>
+</thead><tbody>
+<% for (const r of it.rows) { const c = r.call, p = r.put; %><tr>
+  <td class="<%= r.itm ? 'itm' : '' %>"><a href="/markets/c/<%= c.contract %>" title="<%= c.contract %>"><%= px(c.last_cents) %></a></td><td class="<%= r.itm ? 'itm' : '' %>"><%= px(c.bid_cents) %></td><td class="<%= r.itm ? 'itm' : '' %>"><%= px(c.ask_cents) %></td><td class="<%= r.itm ? 'itm' : '' %>"><%= c.volume.toLocaleString('en-US') %></td><td class="<%= r.itm ? 'itm' : '' %>"><%= c.open_interest.toLocaleString('en-US') %></td><td class="<%= r.itm ? 'itm' : '' %>"><%= iv(c.iv_bp) %></td>
+  <th class="strike"><%= px(r.strike) %></th>
+  <td class="<%= r.itm ? '' : 'itm' %>"><a href="/markets/c/<%= p.contract %>" title="<%= p.contract %>"><%= px(p.last_cents) %></a></td><td class="<%= r.itm ? '' : 'itm' %>"><%= px(p.bid_cents) %></td><td class="<%= r.itm ? '' : 'itm' %>"><%= px(p.ask_cents) %></td><td class="<%= r.itm ? '' : 'itm' %>"><%= p.volume.toLocaleString('en-US') %></td><td class="<%= r.itm ? '' : 'itm' %>"><%= p.open_interest.toLocaleString('en-US') %></td><td class="<%= r.itm ? '' : 'itm' %>"><%= iv(p.iv_bp) %></td>
+</tr><% } %>
+</tbody></table>
+<% if (!it.all && it.hidden) { %><p><a href="/markets/<%= t.symbol %>?expiry=<%= it.expiry %>&amp;strikes=all">Show all strikes</a> <span class="muted">(<%= it.hidden %> more)</span></p><% } else if (it.all) { %><p><a href="/markets/<%= t.symbol %>?expiry=<%= it.expiry %>">Show strikes near the money</a></p><% } %>
+<p class="muted">Shaded: in the money. Open a contract from its Last price.</p>

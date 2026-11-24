@@ -124,7 +124,8 @@ def normalise(source, path, t):
         'instantiation_dict': t.get('instantiation_dict'), 'file': path,
     }
     for k in ('reference_answer', 'reference_url', 'ref', 'evidence', 'reference_sql', 'original_intent', 'phrasing',
-              'scenario', 'aids', 'aid_variant', 'family', 'split_hint', 'heldout_reason', 'variant_of', 'widget'):
+              'scenario', 'aids', 'aid_variant', 'family', 'split_hint', 'heldout_reason', 'variant_of', 'widget',
+              'input_files', 'modality'):
         if k in t: out[k] = t[k]
     out['changes'] = t.get('changes') or []
     if t.get('status') == 'dropped': out['drop_reason'] = t.get('drop_reason')

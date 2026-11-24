@@ -8,15 +8,21 @@
 //   scenario     the POST /__rl/reset {scenario} the task must be reset with ({} = site defaults)
 //   aids         [{name, path}] skills offered to the agent (tasks/lab/aids/<name>/SKILL.md), and
 //   aid_variant  none | correct | decoy (unrelated, to ignore) | stale (documents a retired API)
-//   family       design family (A lists/scrolling, B frames/data, D editors/forms, F async, H safety)
-//   split_hint   train | heldout (heldout_reason: template | variant); the lead's split may use it
+//   family       design family (A lists/scrolling, B frames/data, C arithmetic over tables, D editors/forms,
+//                E pickers (autocomplete, calendar), F async, G task files, H safety, I images)
+//   split_hint   train | heldout (heldout_reason: template | variant | image); the lead's split may use it
+//   input_files  [{name, mime, text} | {name, mime, path}] files the agent starts with (CONVENTIONS.md "Task files")
+//   modality     ['image'] when the answer needs the pixels of an image (eval only: the RL loop is text-only)
 const fs = require('fs');
 const path = require('path');
 const { parseArgs } = require('util');
 const L = require('./lib');
 
-const MODULES = { lists: 'A', docs: 'A', reading: 'A', frames: 'B', forms: 'D', jobs: 'F', safety: 'H' };
-const TEMPLATES = Object.entries(MODULES).flatMap(([m, fam]) => require(`./${m}`).map((t) => ({ ...t, module: m, family: fam })));
+// module -> default family (a template's own `family` wins). Later modules are appended so the
+// earlier templates keep their seeded draws.
+const MODULES = { lists: 'A', docs: 'A', reading: 'A', frames: 'B', forms: 'D', jobs: 'F', safety: 'H',
+  travel: 'E', markets: 'C', records: 'A', taskfiles: 'G', catalog: 'I' };
+const TEMPLATES = Object.entries(MODULES).flatMap(([m, fam]) => require(`./${m}`).map((t) => ({ ...t, module: m, family: t.family || fam })));
 const DEFAULT_MAX = 120;
 
 // aids per template group: the right skill, a stale one (documents API v1, which the site retired)
@@ -81,6 +87,7 @@ function main() {
         intent, intent_template: tpl, intent_template_id: id, phrasing: k, instantiation_dict: x.slots,
         start_url: x.start_url || '__LAB__', require_login: true, login_user: x.login_user,
         scenario: x.scenario || {}, aids, aid_variant: variant,
+        ...(x.input_files ? { input_files: x.input_files } : {}), ...(t.modality ? { modality: t.modality } : {}),
         eval: x.eval, kind: t.kind, skills: t.skills, difficulty: t.difficulty,
         split_hint: t.heldout ? 'heldout' : 'train', ...(t.heldout ? { heldout_reason: t.heldout } : {}),
         changes: x.changes || [], status: 'verified', drop_reason: null,

@@ -380,6 +380,9 @@ function main() {
       plant('chat', 'message', String(m.id));
     }
     stats.plants = pci;
+
+    // ---------------------------------------------------------------- later additions (own seeded streams)
+    require('./more')({ db, ins, R, users, TODAY, DAY, sqlT, sqlD, SEED, stats });
   })();
 
   // sanity

@@ -34,4 +34,5 @@ module.exports = async function routes(app, kit) {
   await require('./work')(app, kit, A);
   await require('./biz')(app, kit, A);
   await require('./flows')(app, kit, A);
+  await require('./more')(app, kit, A);
 };

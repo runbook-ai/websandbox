@@ -1,0 +1,7 @@
+<% layout('layout') %>
+<h1>My trips</h1>
+<p><a href="/travel">Book travel</a></p>
+<table class="grid"><thead><tr><th>Booking</th><th>Flight</th><th>Date</th><th>Route</th><th>Traveler</th><th>Cost center</th><th>Fare</th></tr></thead><tbody>
+<% for (const b of it.rows) { %><tr><td><%= b.ref %></td><td><%= b.flight_number %></td><td><%= b.travel_date %></td><td><%= b.origin %> &rarr; <%= b.dest %></td><td><%= b.traveler %></td><td><%= b.cost_center %></td><td><%= it.lab.money(b.fare_cents) %></td></tr><% } %>
+<% if (!it.rows.length) { %><tr><td colspan="7" class="muted">No trips yet.</td></tr><% } %>
+</tbody></table>

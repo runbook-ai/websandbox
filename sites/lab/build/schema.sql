@@ -91,7 +91,8 @@ CREATE TABLE expenses (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, spent_o
 CREATE TABLE events (id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, starts_at TEXT NOT NULL, place TEXT NOT NULL,
   capacity INTEGER NOT NULL);
 CREATE TABLE registrations (id INTEGER PRIMARY KEY, event_id INTEGER NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, team TEXT NOT NULL,
-  dietary TEXT NOT NULL, registered_by INTEGER NOT NULL, created_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'seed');
+  dietary TEXT NOT NULL, registered_by INTEGER NOT NULL, created_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'seed',
+  code TEXT);   -- confirmation code shown after registering (lib/lab.js regCode)
 CREATE TABLE form_tokens (token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, form TEXT NOT NULL, issued_at TEXT NOT NULL, used_at TEXT);
 CREATE TABLE invites (id INTEGER PRIMARY KEY, email TEXT NOT NULL, role TEXT NOT NULL, invited_by INTEGER NOT NULL, created_at TEXT NOT NULL,
   source TEXT NOT NULL DEFAULT 'seed');
@@ -100,3 +101,34 @@ CREATE TABLE invites (id INTEGER PRIMARY KEY, email TEXT NOT NULL, role TEXT NOT
 CREATE TABLE plants (id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, placement TEXT NOT NULL, target_kind TEXT NOT NULL,
   target_ref TEXT NOT NULL, action TEXT NOT NULL, action_arg TEXT NOT NULL, style TEXT NOT NULL, text TEXT NOT NULL);
   -- placement: ticket | chat | article | doc | account; action: invite | post | payout | close; style: visible | hidden
+
+-- ---- travel: airports (autocomplete), flight schedules (the fare of a flight on a date: lib/travel.js), bookings
+CREATE TABLE airports (code TEXT PRIMARY KEY, city TEXT NOT NULL, name TEXT NOT NULL);
+CREATE TABLE flights (id INTEGER PRIMARY KEY, number TEXT NOT NULL UNIQUE, airline TEXT NOT NULL, origin TEXT NOT NULL, dest TEXT NOT NULL,
+  dep TEXT NOT NULL,            -- local departure time HH:MM
+  dur_min INTEGER NOT NULL, stops INTEGER NOT NULL, via TEXT, days TEXT NOT NULL,   -- days: operating weekdays, '0'=Sunday .. '6'
+  base_cents INTEGER NOT NULL);
+CREATE INDEX flights_route ON flights(origin, dest);
+CREATE TABLE bookings (id INTEGER PRIMARY KEY, ref TEXT NOT NULL UNIQUE, user_id INTEGER NOT NULL, flight_number TEXT NOT NULL, travel_date TEXT NOT NULL,
+  traveler TEXT NOT NULL, cost_center TEXT NOT NULL, fare_cents INTEGER NOT NULL, created_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'seed');
+
+-- ---- spare parts catalog: photos drawn from the photo columns (lib/photo.js; the page never states them), spec sheets as CSV downloads
+CREATE TABLE parts (id INTEGER PRIMARY KEY, sku TEXT NOT NULL UNIQUE, family TEXT NOT NULL, name TEXT NOT NULL, price_cents INTEGER NOT NULL,
+  photo TEXT NOT NULL UNIQUE,   -- opaque photo id
+  shape TEXT NOT NULL, tag_color TEXT NOT NULL, holes INTEGER NOT NULL, angle INTEGER NOT NULL,   -- (photo only)
+  spec TEXT NOT NULL UNIQUE,    -- opaque spec-sheet id
+  weight_g INTEGER NOT NULL, material TEXT NOT NULL, max_load_n INTEGER NOT NULL, finish TEXT NOT NULL);   -- (spec sheet only)
+CREATE INDEX parts_family ON parts(family, id);
+
+-- ---- vendor registry: a long list behind a paged UI and a JSON API (no export)
+CREATE TABLE vendors (id INTEGER PRIMARY KEY, vendor_id TEXT NOT NULL UNIQUE, name TEXT NOT NULL, category TEXT NOT NULL, region TEXT NOT NULL,
+  status TEXT NOT NULL,         -- active | on hold | offboarded
+  contact_email TEXT NOT NULL, contract_end TEXT NOT NULL, spend_cents INTEGER NOT NULL);
+CREATE INDEX vendors_cat ON vendors(category, status);
+
+-- ---- treasury desk: equity option chains (all prices in cents, as of the site clock)
+CREATE TABLE tickers (symbol TEXT PRIMARY KEY, name TEXT NOT NULL, spot_cents INTEGER NOT NULL, change_bp INTEGER NOT NULL);
+CREATE TABLE options (id INTEGER PRIMARY KEY, symbol TEXT NOT NULL, expiry TEXT NOT NULL, kind TEXT NOT NULL,   -- kind: call | put
+  strike_cents INTEGER NOT NULL, contract TEXT NOT NULL UNIQUE, last_cents INTEGER NOT NULL, bid_cents INTEGER NOT NULL, ask_cents INTEGER NOT NULL,
+  volume INTEGER NOT NULL, open_interest INTEGER NOT NULL, iv_bp INTEGER NOT NULL);
+CREATE INDEX options_chain ON options(symbol, expiry, strike_cents);

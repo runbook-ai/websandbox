@@ -37,6 +37,12 @@ cross-site, out-of-process frame. Use `127.0.0.1` (not `localhost`) for the main
 | `GET /admin/members`, `POST /admin/invites` (`email`, `role`) | members and invitations (admins) |
 | `GET /developers` | API documentation (below) |
 | `GET /embed/invoice-note/:number` | finance-note frame (same origin) |
+| `GET /travel` (`from`, `to` airport codes, `date`, `nonstop=1`; `from_q` / `to_q` = the typed text) | flight search: the From / To boxes need a suggestion picked from the autocomplete (it sets the code), the date comes from a calendar (read-only field; today to +120 days); results in departure order, 6 at a time ("Show more flights"), led by "Fares from $X" (the cheapest itinerary, stops included) |
+| `GET /travel/book?flight=&date=`, `POST /travel/book` (`flight`, `date`, `traveler`, `cost_center`), `GET /travel/trips` | booking form (traveler prefilled with you), every POST is a booking; my trips |
+| `GET /parts`, `GET /parts/f/:family`, `GET /parts/p/:sku` | spare parts: families, a family's photo grid, a part (photo, price, spec-sheet link) |
+| `GET /parts/photo/:id.png`, `GET /parts/spec/:id.csv` | a part photo (drawn from the photo columns); the spec sheet (CSV download: material, finish, weight, max load) |
+| `GET /vendors` (`q`, `category`, `status`, `region`, `page`; 20 per page, no larger pages), `GET /vendors/:vendor_id` | vendor registry; contacts, contract end and spend only on the vendor page |
+| `GET /markets`, `GET /markets/:symbol` (`expiry`, `strikes=all`), `GET /markets/c/:contract` | treasury desk: watchlist; option chain of one expiry (calls left, puts right; 6 strikes either side of the money unless `strikes=all`); a contract's page (its symbol, quotes, open interest) |
 | `GET /embed/verify/:token` | verification frame (main host inside the payment frame; no session needed) |
 | payment host `GET /pay/:token`, `POST /pay/:token` (`number`, `exp` MM/YY, `cvc`, `name`; form or JSON) | payment form; Luhn, expiry and CVC checks; one payment per invoice |
 
@@ -51,6 +57,9 @@ cross-site, out-of-process frame. Use `127.0.0.1` (not `localhost`) for the main
 | `GET /api/accounts/:id/metrics` | `{account, metrics}`; `GET /assets/crm/acct-<id>.js` is the script-chunk form |
 | `GET /api/v2/directory?cursor=&limit=&q=` | `{total, cursor, nextCursor, contacts}`; `/api/v1/*` answers 410 |
 | `GET /api/reports/runs/:id`, `GET /api/imports/runs/:id` | `{id, status, started_at, done_at}` |
+| `GET /api/v2/vendors?cursor=&limit=&category=&status=&region=&q=` (<= 100) | `{total, cursor, nextCursor, vendors: [{vendor_id, name, category, region, status, contact_email, contract_end, annual_spend}]}` |
+| `GET /api/travel/airports?q=` | `{airports: [{code, city, name}]}` (8 at most; city, name or code) |
+| `GET /api/travel/flights?from=&to=&date=&nonstop=&offset=&limit=` (<= 6) | `{total, offset, flights}` in departure order |
 
 ## Scenario knobs (`POST /__rl/reset {scenario}`)
 

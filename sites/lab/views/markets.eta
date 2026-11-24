@@ -1,0 +1,6 @@
+<% layout('layout') %>
+<h1>Markets</h1>
+<p class="muted">Treasury desk watchlist. Prices are delayed. Open a symbol for its option chain.</p>
+<table class="grid"><thead><tr><th>Symbol</th><th>Company</th><th class="num">Last</th><th class="num">Change</th></tr></thead><tbody>
+<% for (const t of it.rows) { %><tr><td><a href="/markets/<%= t.symbol %>"><%= t.symbol %></a></td><td><%= t.name %></td><td class="num"><%= (t.spot_cents / 100).toFixed(2) %></td><td class="num <%= t.change_bp < 0 ? 'neg' : 'pos' %>"><%= t.change_bp > 0 ? '+' : '' %><%= (t.change_bp / 100).toFixed(2) %>%</td></tr><% } %>
+</tbody></table>
